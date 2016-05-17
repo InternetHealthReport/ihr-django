@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block body %}
+  <h2>Contact Form</h2>
+  <p>To send us a message fill out the below form.</p>
+  <form method="post">{% csrf_token %}
+    <p>Name: <input type="text" name="name"></p>
+    <p>Your e-mail: <input type="text" name="email"></p>
+    <p>Message: <textarea name="body" rows="10" cols="50"></textarea></p>
+    <input type="submit" value="Submit">
+  </form>
+{% endblock %}

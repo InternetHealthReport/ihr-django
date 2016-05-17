@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+
+{% block body %}
+
+<div class="row">
+    <div class="col-12">
+        <h1>{{ object_list|length }} Monitored ASes</h1> 
+    </div>
+    <div class="col-6">
+        <ul>
+        {% for asn in object_list %}
+        <li><a href="{% url "ihr:asnDetail" asn.number %}">AS{{ asn.number }} {{ asn.name }}</a></li>
+        {% endfor %}
+        </ul>
+    </div>
+</div>
+
+{% endblock %}

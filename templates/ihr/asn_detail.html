@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block head %}
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+{% endblock %}
+
+
+{% block body %}
+
+<div class="row">
+    <div class="col-12">
+        <h1>AS{{ asn.number }} {{ asn.name }}</h1> 
+    </div>
+    <div class="col-12">
+        <h2>Congestion Level</h2>
+        <div id="plotCongestion" ></div>
+    </div>
+        
+    <div class="col-12">
+        <h2>Forwarding Anomalies</h2>
+        <div id="plotForwarding"></div>
+        <script>
+            function makeplot() {
+                Plotly.d3.json("{% url "ihr:congestionData" %}?asn={{ asn.number }}", function(data){ makePlotly(data, "plotCongestion", "Congestion level") } );
+                Plotly.d3.json("{% url "ihr:forwardingData" %}?asn={{ asn.number }}", function(data){ makePlotly(data, "plotForwarding", "Forwarding anomalies") } );
+
+            };
+
+            function makePlotly( data, divId, title ){
+                var plotDiv = document.getElementById(divId);
+                var traces = [{
+                    x: data["x"],
+                    y: data["y"]
+                }];
+
+                Plotly.newPlot(divId, traces,
+                    {title: title});
+            };
+            makeplot();
+        </script>
+    </div>
+        
+</div>
+
+{% endblock %}
