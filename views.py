@@ -58,25 +58,32 @@ class DateTimeEncoder(json.JSONEncoder):
 def index(request):
     monitoredAsn = ASN.objects.order_by("number")
 
-    today = date.today()
-    if "today" in request.GET:
-        part = request.GET["today"].split("-")
-        today = date(int(part[0]), int(part[1]), int(part[2]))
-    limitDate = today-timedelta(days=7)
-    print(limitDate)
-    # TODO remove the following line (used only with test data)
-    limitDate = datetime(2015,1,1)
+    # Top congested ASs
+    # today = date.today()
+    # if "today" in request.GET:
+        # part = request.GET["today"].split("-")
+        # today = date(int(part[0]), int(part[1]), int(part[2]))
+    # limitDate = today-timedelta(days=7)
+    # print(limitDate)
+    # # TODO remove the following line (used only with test data)
+    # limitDate = datetime(2015,1,1)
 
-    topCongestion = ASN.objects.filter(congestion__timebin__gt=limitDate).annotate(score=Sum("congestion__magnitude")).order_by("-score")[:5]
+    # topCongestion = ASN.objects.filter(congestion__timebin__gt=limitDate).annotate(score=Sum("congestion__magnitude")).order_by("-score")[:5]
 
-    print(topCongestion)
+    tier1 = ASN.objects.filter(number__in = [7018,174,209,3320,3257,286,3356,3549,2914,5511,1239,6453,6762,12956,1299,701,702,703,2828,6461])
+    topTier1 = ASN.objects.filter(number__in = [3356, 174, 3257, 1299, 2914])
+    rootServers = ASN.objects.filter(number__in = [26415, 2149, 27, 297, 3557, 5927, 13, 29216, 26415, 25152, 20144, 7500, 226])
+
     ulLen = 5
     if len(monitoredAsn)<15:
         ulLen = 2 #len(monitoredAsn)/3
 
-    context = {"monitoredAsn0": monitoredAsn[:ulLen], "monitoredAsn1": monitoredAsn[ulLen:ulLen*2],
-            "monitoredAsn2": monitoredAsn[ulLen*2:ulLen*3],"nbMonitoredAsn": len(monitoredAsn)-ulLen*3,
-            "topCongestion": topCongestion }
+    context = {"monitoredAsn0": monitoredAsn[1:ulLen+1], "monitoredAsn1": monitoredAsn[ulLen+1:1+ulLen*2],
+            "monitoredAsn2": monitoredAsn[1+ulLen*2:1+ulLen*3],"monitoredAsn3": monitoredAsn[1+ulLen*3:1+ulLen*4],
+            "nbMonitoredAsn": len(monitoredAsn)-ulLen*4,
+            "topTier1": topTier1 ,
+            "rootServers": rootServers ,
+            }
     return render(request, "ihr/index.html", context)
 
 def search(request):

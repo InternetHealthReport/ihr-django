@@ -9,15 +9,17 @@
 {% block body %}
 <div class="row">
     
-    <h2>Top ASes reported in the last 7 days</h2>
     <div class="col-lg-12">
-        <div id="plotCongestion"></div>
-    
+    <h2>Top tier 1 networks</h2>
+        <div id="plotCongestionTier1"></div>
+        <div id="plotForwardingTier1"></div>
     </div>
-    <div class="col-md-3"></div>
-    <div class="col-md-9">
+    <div class="col-lg-12">
+    <h2>Networks hosting DNS root servers</h2>
+        <div id="plotCongestionRoot"></div>
+        <div id="plotForwardingRoot"></div>
     </div>
-    <h2>See other ASes</h2> 
+    <h2><a href="{% url "ihr:asnList" %}">Other ASes</a></h2> 
     <div class="col-md-3">
         <ul>
         {% for asn in monitoredAsn0 %}
@@ -37,15 +39,31 @@
         {% for asn in monitoredAsn2 %}
         <li><a href="{% url "ihr:asnDetail" asn.number %}">AS{{ asn.number }} {{ asn.name }}</a></li>
         {% endfor %}
+        </ul>
+    </div>
+    <div class="col-md-3">
+        <ul>
+        {% for asn in monitoredAsn3 %}
+        <li><a href="{% url "ihr:asnDetail" asn.number %}">AS{{ asn.number }} {{ asn.name }}</a></li>
+        {% endfor %}
         and <a href="{% url "ihr:asnList" %}" >{{ nbMonitoredAsn }} more...</a>
         </ul>
     </div>
 </div>
 <script>
     function makeplot() {
-        Plotly.newPlot("plotCongestion", []);
-        {% for asn in topCongestion %}
-        Plotly.d3.json("{% url "ihr:congestionData" %}?asn={{ asn.number }}", function(data){ addPlotly(data, "plotCongestion", "AS{{ asn.number }}") } );
+        var layout = {
+            yaxis: {
+                title: 'Congestion Level',
+            }
+        };
+        Plotly.newPlot("plotCongestionTier1", [], layout);
+        {% for asn in topTier1 %}
+        Plotly.d3.json("{% url "ihr:congestionData" %}?asn={{ asn.number }}", function(data){ addPlotly(data, "plotCongestionTier1", "AS{{ asn.number }}") } );
+        {% endfor %}
+        Plotly.newPlot("plotCongestionRoot", [], layout);
+        {% for asn in rootServers %}
+        Plotly.d3.json("{% url "ihr:congestionData" %}?asn={{ asn.number }}", function(data){ addPlotly(data, "plotCongestionRoot", "AS{{ asn.number }}") } );
         {% endfor %}
     };
 
@@ -54,7 +72,7 @@
         var traces = [{
             x: data["x"],
             y: data["y"],
-            name: label
+            name: label,
         }];
 
         Plotly.addTraces(divId, traces);
