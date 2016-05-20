@@ -9,17 +9,21 @@
 {% block body %}
 <div class="row">
     
+    <h1>Top tier 1 networks</h1>
+        <h4><a href="3356/asn/">Level3</a>, <a href="174/asn/">Cogent</a>, <a href="3257/asn/">Tinet</a>, <a href="1299/asn/">TeliaSonera</a>, <a href="2914/asn/">NTT</a></h4>
     <div class="col-lg-12">
-    <h2>Top tier 1 networks</h2>
         <div id="plotCongestionTier1"></div>
         <div id="plotForwardingTier1"></div>
+        <br>
     </div>
+    <h1>Networks hosting DNS root servers</h1>
+    <h4><a href="26415/asn/">Verisign (A)</a>, <a href="B/asn/">Los Nettos (B)</a>, <a href="2149/asn/">Cogent (C)</a>, <a href="27/asn/">Uni. Maryland (D)</a>, <a href="297/asn/">NASA (E)</a>, <a href="3557/asn/">ISC (F)</a>, <a href="5927/asn/">U.S. DOD (G)</a>, <a href="13/asn/">U.S. Army (H)</a>, <a href="29216/asn/">Netnod (I)</a>, <a href="26415/asn/">Verisign (J)</a>, <a href="25152/asn/">RIPE (K)</a>, <a href="20144/asn/">ICANN (L)</a>, <a href="7500/asn/">WIDE (M)</a></h4>
     <div class="col-lg-12">
-    <h2>Networks hosting DNS root servers</h2>
         <div id="plotCongestionRoot"></div>
         <div id="plotForwardingRoot"></div>
+        <br>
     </div>
-    <h2><a href="{% url "ihr:asnList" %}">Other ASes</a></h2> 
+    <h1><a href="{% url "ihr:asnList" %}">Other ASes</a></h1> 
     <div class="col-md-3">
         <ul>
         {% for asn in monitoredAsn0 %}
@@ -55,15 +59,26 @@
         var layout = {
             yaxis: {
                 title: 'Congestion Level',
-            }
+            },
+            margin: {
+                t: 50,
+                b: 50,
+            },
         };
         Plotly.newPlot("plotCongestionTier1", [], layout);
         {% for asn in topTier1 %}
-        Plotly.d3.json("{% url "ihr:congestionData" %}?asn={{ asn.number }}", function(data){ addPlotly(data, "plotCongestionTier1", "AS{{ asn.number }}") } );
+        Plotly.d3.json("{% url "ihr:congestionData" %}?asn={{ asn.number }}", function(data){ addPlotly(data, "plotCongestionTier1", "{{ asn.name }}") } );
         {% endfor %}
+
+        var layout = {
+            yaxis: {
+                title: 'Congestion Level',
+            },
+        };
+
         Plotly.newPlot("plotCongestionRoot", [], layout);
         {% for asn in rootServers %}
-        Plotly.d3.json("{% url "ihr:congestionData" %}?asn={{ asn.number }}", function(data){ addPlotly(data, "plotCongestionRoot", "AS{{ asn.number }}") } );
+        Plotly.d3.json("{% url "ihr:congestionData" %}?asn={{ asn.number }}", function(data){ addPlotly(data, "plotCongestionRoot", "{{ asn.name|truncatewords:3 }}") } );
         {% endfor %}
     };
 
