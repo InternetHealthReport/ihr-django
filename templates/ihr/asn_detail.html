@@ -35,7 +35,7 @@
             };
             Plotly.newPlot("plotAs", [], layout);
             Plotly.d3.json("{% url "ihr:congestionData" %}?asn={{ asn.number }}", function(data){ addPlotly(data, "plotAs", "Congestion", 1, -5, 50) } );
-            Plotly.d3.json("{% url "ihr:forwardingData" %}?asn={{ asn.number }}", function(data){ addPlotly(data, "plotAs", "Forwarding anomalies", 2, -25, 25) } );
+            Plotly.d3.json("{% url "ihr:forwardingData" %}?asn={{ asn.number }}", function(data){ addPlotly(data, "plotAs", "Forwarding anomalies", 2, -15, 15) } );
         };
 
         function addPlotly( data, divId, label, ynum , rangeLow, rangeHigh){
