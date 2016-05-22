@@ -12,40 +12,73 @@
         <h1>AS{{ asn.number }} {{ asn.name }}</h1> 
     </div>
     <div class="col-12">
-        <h2>Congestion</h2>
-        <div id="plotCongestion" ></div>
+        <div id="plotAs" ></div>
     </div>
         
-    <div class="col-12">
-        <h2>Packet Forwarding Anomalies</h2>
-        <div id="plotForwarding"></div>
         <script>
-            function makeplot() {
-                Plotly.d3.json("{% url "ihr:congestionData" %}?asn={{ asn.number }}", function(data){ makePlotly(data, "plotCongestion", "Congestion level") } );
-                Plotly.d3.json("{% url "ihr:forwardingData" %}?asn={{ asn.number }}", function(data){ makePlotly(data, "plotForwarding", "Forwarding anomaly level") } );
-
+        function makeplot() {
+            var layout = {
+                yaxis: {
+                    title: 'Congestion Level',
+                    domain: [0.55, 1],
+                    autorange: true,
+                },
+                yaxis2:{
+                    title: 'Forwarding Anomaly Level',
+                    domain: [0, 0.45],
+                    autorange: true,
+                },
+                margin: {
+                    t: 50,
+                    b: 50,
+                },
             };
+            Plotly.newPlot("plotAs", [], layout);
+            Plotly.d3.json("{% url "ihr:congestionData" %}?asn={{ asn.number }}", function(data){ addPlotly(data, "plotAs", "Congestion", 1, -5, 50) } );
+            Plotly.d3.json("{% url "ihr:forwardingData" %}?asn={{ asn.number }}", function(data){ addPlotly(data, "plotAs", "Forwarding anomalies", 2, -25, 25) } );
+        };
 
-            function makePlotly( data, divId, title ){
-                var plotDiv = document.getElementById(divId);
-                var traces = [{
-                    x: data["x"],
-                    y: data["y"],
-                    mode: "lines+markers",
-                }];
+        function addPlotly( data, divId, label, ynum , rangeLow, rangeHigh){
+            var plotDiv = document.getElementById(divId);
+            var traces = [{
+                x: data["x"],
+                y: data["y"],
+                name: label,
+                yaxis: "y"+ynum,
+            }];
 
-                Plotly.newPlot(divId, traces,
-                    {
-                        yaxis: {title: title},
-                        margin: {
-                            t: 50,
-                            b: 50,
-                        },
-                    });
-            };
-            makeplot();
+            Plotly.addTraces(divId, traces);
+
+            <!--Correct yaxis range-->
+            var min = Math.min.apply(null, data["y"]),
+                max = Math.max.apply(null, data["y"]);
+
+            if(ynum == 1){
+                yaxis = plotDiv.layout.yaxis;
+            }
+            else{
+                yaxis = plotDiv.layout["yaxis"+ynum];
+            }
+
+            var axisChanged = false
+            if(yaxis.range[0] > rangeLow){
+                yaxis.range[0] = rangeLow;
+                axisChanged = true
+            }
+
+            axisChanged = false
+            if(yaxis.range[1] < rangeHigh){
+                yaxis.range[1] = rangeHigh;
+                axisChanged = true
+            }
+            if(axisChanged){
+               yaxis.autorange= false
+               Plotly.redraw(plotDiv);
+            }
+
+        };
+        makeplot();
         </script>
-    </div>
         
 </div>
 
