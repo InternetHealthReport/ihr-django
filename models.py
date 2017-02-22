@@ -26,9 +26,9 @@ class Congestion_alarms(models.Model):
     ip = models.CharField(max_length=64, db_index=True)
     link = models.CharField(max_length=128, db_index=True)
     medianrtt = models.FloatField(default=0.0)
-    diffMedian = models.FloatField(default=0.0)
+    diffmedian = models.FloatField(default=0.0)
     deviation = models.FloatField(default=0.0)
-    nbProbes = models.IntergerField(default=0)
+    nbprobes = models.IntegerField(default=0)
 
     def __str__(self):
         return "%s AS%s" % (self.timebin, self.asn.number)
@@ -39,9 +39,9 @@ class Forwarding_alarms(models.Model):
     timebin = models.DateTimeField(db_index=True)
     ip = models.CharField(max_length=64, db_index=True)
     correlation = models.FloatField(default=0.0)
-    nbSamples = models.IntegerField(default=0)
-    refhops   = models.CharField(max_length=1024)
-    obshops   = models.CharField(max_length=1024)
+    responsibility = models.FloatField(default=0.0)
+    pktdiff = models.FloatField(default=0.0)
+    previoushop   = models.CharField(max_length=64)
 
     def __str__(self):
         return "%s AS%s %s" % (self.timebin, self.asn.number, self.ip)

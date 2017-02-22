@@ -104,7 +104,7 @@ def search(request):
 
 def congestionData(request):
     asn = get_object_or_404(ASN, number=request.GET["asn"])
-    data = Congestion.objects.filter(asn=asn.number)
+    data = Congestion.objects.filter(asn=asn.number).order_by("timebin")
     formatedData = {
             "x": list(data.values_list("timebin", flat=True)),
             "y": list(data.values_list("magnitude", flat=True))
@@ -113,7 +113,7 @@ def congestionData(request):
 
 def forwardingData(request):
     asn = get_object_or_404(ASN, number=request.GET["asn"])
-    data = Forwarding.objects.filter(asn=asn.number) 
+    data = Forwarding.objects.filter(asn=asn.number).order_by("timebin") 
     formatedData = {
             "x": list(data.values_list("timebin", flat=True)),
             "y": list(data.values_list("magnitude", flat=True))
