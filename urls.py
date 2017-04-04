@@ -13,4 +13,6 @@ urlpatterns = [
     url(r'^api/$', views.restful_API, name="root"),
     url(r'^api/congestion/$', views.CongestionView.as_view(), name='congestionListView'),
     url(r'^api/forwarding/$', views.ForwardingView.as_view(), name='forwardingListView'),
+    url(r'^api/congestion_alarms/$', views.CongestionAlarmsView.as_view(), name='congestionAlarmsListView'),
+    url(r'^api/forwarding_alarms/$', views.ForwardingAlarmsView.as_view(), name='forwardingAlarmsListView'),
 ]

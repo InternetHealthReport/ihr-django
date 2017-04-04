@@ -8,13 +8,13 @@ from django.db.models import Avg, When, Sum, Case, FloatField
 from datetime import datetime, date, timedelta
 import json
 
-from .models import ASN, Congestion, Forwarding
+from .models import ASN, Congestion, Forwarding, Congestion_alarms, Forwarding_alarms
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework import filters, generics
-from .serializers import CongestionSerializer, ForwardingSerializer
+from .serializers import CongestionSerializer, ForwardingSerializer, CongestionAlarmsSerializer, ForwardingAlarmsSerializer
 
 
 class CongestionView(generics.ListAPIView): #viewsets.ModelViewSet):
@@ -37,6 +37,26 @@ class ForwardingView(generics.ListAPIView):
     filter_fields = ('asn', 'timebin', 'magnitude', 'resp', 'label')
 
 
+class CongestionAlarmsView(generics.ListAPIView): 
+    """
+    API endpoint that allows to view the congestion alarms.
+    """
+    queryset = Congestion_alarms.objects.all() #.order_by('-asn')
+    serializer_class = CongestionAlarmsSerializer
+    filter_backends = (filters.DjangoFilterBackend,)
+    filter_fields = ('asn', 'timebin',  'link', 'deviation', 'nbprobes' ) 
+
+
+class ForwardingAlarmsView(generics.ListAPIView):
+    """
+    API endpoint that allows to view the forwarding alarms.
+    """
+    queryset = Forwarding_alarms.objects.all()
+    serializer_class = ForwardingAlarmsSerializer
+    filter_backends = (filters.DjangoFilterBackend,)
+    filter_fields = ('asn', 'timebin', 'ip', 'previoushop', 'correlation', 'responsibility')
+
+
 @api_view(['GET'])
 def restful_API(request, format=None):
     """
@@ -45,6 +65,8 @@ def restful_API(request, format=None):
     return Response({
         'forwarding': reverse('ihr:forwardingListView', request=request, format=format),
         'congestion': reverse('ihr:congestionListView', request=request, format=format),
+        'forwarding_alarms': reverse('ihr:forwardingAlarmsListView', request=request, format=format),
+        'congestion_alarms': reverse('ihr:congestionAlarmsListView', request=request, format=format),
     })
 
 class DateTimeEncoder(json.JSONEncoder):
