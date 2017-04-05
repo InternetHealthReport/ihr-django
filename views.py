@@ -23,8 +23,9 @@ class CongestionView(generics.ListAPIView): #viewsets.ModelViewSet):
     """
     queryset = Congestion.objects.all() #.order_by('-asn')
     serializer_class = CongestionSerializer
-    filter_backends = (filters.DjangoFilterBackend,)
+    filter_backends = (filters.DjangoFilterBackend,filters.OrderingFilter,)
     filter_fields = ('asn', 'timebin',  'magnitude', 'deviation', 'label' ) 
+    ordering_fields = ('timebin', 'magnitude', 'deviation')
 
 
 class ForwardingView(generics.ListAPIView):
@@ -33,8 +34,9 @@ class ForwardingView(generics.ListAPIView):
     """
     queryset = Forwarding.objects.all()
     serializer_class = ForwardingSerializer
-    filter_backends = (filters.DjangoFilterBackend,)
+    filter_backends = (filters.DjangoFilterBackend,filters.OrderingFilter,)
     filter_fields = ('asn', 'timebin', 'magnitude', 'resp', 'label')
+    ordering_fields = ('timebin', 'magnitude', 'deviation')
 
 
 class CongestionAlarmsView(generics.ListAPIView): 
@@ -43,8 +45,9 @@ class CongestionAlarmsView(generics.ListAPIView):
     """
     queryset = Congestion_alarms.objects.all() #.order_by('-asn')
     serializer_class = CongestionAlarmsSerializer
-    filter_backends = (filters.DjangoFilterBackend,)
+    filter_backends = (filters.DjangoFilterBackend,filters.OrderingFilter,)
     filter_fields = ('asn', 'timebin',  'link', 'deviation', 'nbprobes' ) 
+    ordering_fields = ('timebin', 'deviation', 'nbprobes', 'medianrtt', 'diffmedian')
 
 
 class ForwardingAlarmsView(generics.ListAPIView):
@@ -53,8 +56,9 @@ class ForwardingAlarmsView(generics.ListAPIView):
     """
     queryset = Forwarding_alarms.objects.all()
     serializer_class = ForwardingAlarmsSerializer
-    filter_backends = (filters.DjangoFilterBackend,)
+    filter_backends = (filters.DjangoFilterBackend,filters.OrderingFilter,)
     filter_fields = ('asn', 'timebin', 'ip', 'previoushop', 'correlation', 'responsibility')
+    ordering_fields = ('timebin', 'correlation', 'responsibility')
 
 
 @api_view(['GET'])

@@ -6,80 +6,154 @@
 
 
 {% block body %}
-
 <div class="row">
     <div class="col-12">
         <h1>AS{{ asn.number }} {{ asn.name }}</h1> 
     </div>
+</div>
+<div class="row">
     <div class="col-12">
         <div id="plotAs" ></div>
     </div>
-        
-        <script>
-        function makeplot() {
-            var layout = {
-                yaxis: {
-                    title: 'Congestion Level',
-                    domain: [0.55, 1],
-                    autorange: true,
-                },
-                yaxis2:{
-                    title: 'Forwarding Anomaly Level',
-                    domain: [0, 0.45],
-                    autorange: true,
-                },
-                margin: {
-                    t: 50,
-                    b: 50,
-                },
-            };
-            Plotly.newPlot("plotAs", [], layout);
-            Plotly.d3.json("{% url "ihr:congestionData" %}?asn={{ asn.number }}", function(data){ addPlotly(data, "plotAs", "Congestion", 1, -5, 50) } );
-            Plotly.d3.json("{% url "ihr:forwardingData" %}?asn={{ asn.number }}", function(data){ addPlotly(data, "plotAs", "Forwarding anomalies", 2, -15, 15) } );
-        };
-
-        function addPlotly( data, divId, label, ynum , rangeLow, rangeHigh){
-            var plotDiv = document.getElementById(divId);
-            var traces = [{
-                x: data["x"],
-                y: data["y"],
-                name: label,
-                yaxis: "y"+ynum,
-            }];
-
-            Plotly.addTraces(divId, traces);
-
-            <!--Correct yaxis range-->
-            var min = Math.min.apply(null, data["y"]),
-                max = Math.max.apply(null, data["y"]);
-
-            if(ynum == 1){
-                yaxis = plotDiv.layout.yaxis;
-            }
-            else{
-                yaxis = plotDiv.layout["yaxis"+ynum];
-            }
-
-            var axisChanged = false
-            if(yaxis.range[0] > rangeLow){
-                yaxis.range[0] = rangeLow;
-                axisChanged = true
-            }
-
-            axisChanged = false
-            if(yaxis.range[1] < rangeHigh){
-                yaxis.range[1] = rangeHigh;
-                axisChanged = true
-            }
-            if(axisChanged){
-               yaxis.autorange= false
-               Plotly.redraw(plotDiv);
-            }
-
-        };
-        makeplot();
-        </script>
-        
 </div>
+<div class="row">
+    <div class="col-lg-2 col-m-2"></div>
+    <div class="col-lg-8 col-m-8"><div id="details_title"></div> </div>
+    <div class="col-lg-2 col-m-2"></div>
+</div> 
+<div class="row">
+    <div class="col-lg-3 col-m-3"></div>
+    <div class="col-lg-6 col-m-6"> <div class="response-info"> <pre class="prettyprint"> <div id="details_data" > <center><i>Click on the graph to display reported links.</i></center> </div> </pre> </div> </div>
+    <div class="col-lg-3 col-m-3"></div>
+</div> 
+<div class="row">
+    <div class="col-lg-2 col-m-2"></div>
+    <div class="col-lg-8 col-m-8">
+        <div id="details_footer"></div>
+    </div>
+    <div class="col-lg-2 col-m-2"></div>
+</div>
+
+<script>
+function makeplot() {
+    var layout = {
+        yaxis: {
+            title: 'Congestion Level',
+            domain: [0.55, 1],
+            autorange: true,
+        },
+        yaxis2:{
+            title: 'Forwarding Anomaly Level',
+            domain: [0, 0.45],
+            autorange: true,
+        },
+        margin: {
+            t: 50,
+            b: 50,
+        },
+    };
+    Plotly.newPlot("plotAs", [], layout);
+    Plotly.d3.json("{% url "ihr:congestionData" %}?asn={{ asn.number }}", function(data){ addPlotly(data, "plotAs", "Congestion", 1, -5, 50) } );
+    Plotly.d3.json("{% url "ihr:forwardingData" %}?asn={{ asn.number }}", function(data){ addPlotly(data, "plotAs", "Forwarding anomalies", 2, -15, 15) } );
+};
+
+function addPlotly( data, divId, label, ynum , rangeLow, rangeHigh){
+    var plotDiv = document.getElementById(divId);
+    var traces = [{
+        x: data["x"],
+        y: data["y"],
+        name: label,
+        yaxis: "y"+ynum,
+    }];
+
+    Plotly.addTraces(divId, traces);
+
+    <!--Correct yaxis range-->
+    var min = Math.min.apply(null, data["y"]),
+        max = Math.max.apply(null, data["y"]);
+
+    if(ynum == 1){
+        yaxis = plotDiv.layout.yaxis;
+    }
+    else{
+        yaxis = plotDiv.layout["yaxis"+ynum];
+    }
+
+    var axisChanged = false
+    if(yaxis.range[0] > rangeLow){
+        yaxis.range[0] = rangeLow;
+        axisChanged = true
+    }
+
+    axisChanged = false
+    if(yaxis.range[1] < rangeHigh){
+        yaxis.range[1] = rangeHigh;
+        axisChanged = true
+    }
+    if(axisChanged){
+        yaxis.autorange= false
+        Plotly.redraw(plotDiv);
+    }
+
+};
+makeplot();
+
+var mainPlot = document.getElementById('plotAs');
+mainPlot.on('plotly_click', function(data){
+
+        pt = data.points[0]
+        date = JSON.stringify(pt.x).replace('"','').replace('"','');
+        console.log(date);
+        date = date.replace(" ", "+")
+        date = date.replace(":", "%3A")
+
+        <!--[>Debug output<]-->
+        obj = pt;
+        var output = '';
+        for (var property in obj) {
+            output += property + ': ' + obj[property]+'; ';
+            }
+        console.log(output);
+
+
+        if(data.points[0].yaxis._id == 'y'){
+            title = "<h3>Congestion on "+pt.x+"</h3><br>";
+            url =  "{% url "ihr:congestionAlarmsListView" %}?asn={{ asn.number }}&format=json&timebin="+date+"&ordering=-deviation"; 
+        }
+        else{
+            title = "<h3>Forwarding anomalies on "+pt.x+"</h3><br>";
+            url =  "{% url "ihr:forwardingAlarmsListView" %}?asn={{ asn.number }}&format=json&timebin="+date+"&ordering=correlation"; 
+        }
+        $.getJSON(url, function(data){
+            body = JSON.stringify(data.results, null, 2);
+            if (data.count == 0){
+                txt = "No significant alarm reported."
+                footer = "";
+                body = "";
+            }
+            else if (data.count > data.results.length){
+                txt = '<span class="meta nocode"><b>10 most significant alarms:</b></span>\n';
+                footer = "See the "+data.count+" reported alarms here: <a href='"+data.next.replace("format=json", "format=api")+"'>"+data.next.replace("format=json", "format=api")+"</a>";
+            }
+            else {
+                alarm = " alarms";
+                if ( data.count == 1){
+                    alarm = " alarm";
+                }
+                    
+                txt = '<span class="meta nocode"><b>'+data.results.length+alarm+' reported:</b></span>\n';
+                footer = "";
+            }
+            $("#details_title").html(title);
+            $("#details_data").html(txt+body);
+            $("#details_footer").html(footer);
+            console.log(data);
+            prettyPrint();
+        });
+
+});
+</script>
+
+<script src="/static/rest_framework/js/prettify-min.js"></script>
 
 {% endblock %}
