@@ -6,6 +6,7 @@ from django.core import serializers
 from django.db.models import Avg, When, Sum, Case, FloatField
 
 from datetime import datetime, date, timedelta
+import pytz
 import json
 
 from .models import ASN, Congestion, Forwarding, Congestion_alarms, Forwarding_alarms
@@ -103,12 +104,22 @@ def index(request):
     ulLen = 5
     if len(monitoredAsn)<15:
         ulLen = 2 #len(monitoredAsn)/3
+    
+    date = ""
+    if "date" in request.GET:
+        date = request.GET["date"]
+
+    last = 7
+    if "last" in request.GET:
+        last = request.GET["last"]
 
     context = {"monitoredAsn0": monitoredAsn[1:ulLen+1], "monitoredAsn1": monitoredAsn[ulLen+1:1+ulLen*2],
             "monitoredAsn2": monitoredAsn[1+ulLen*2:1+ulLen*3],"monitoredAsn3": monitoredAsn[1+ulLen*3:1+ulLen*4],
             "nbMonitoredAsn": len(monitoredAsn)-ulLen*4,
             "topTier1": topTier1 ,
             "rootServers": rootServers ,
+            "date": date,
+            "last": last,
             }
     return render(request, "ihr/index.html", context)
 
@@ -130,7 +141,21 @@ def search(request):
 
 def congestionData(request):
     asn = get_object_or_404(ASN, number=request.GET["asn"])
-    data = Congestion.objects.filter(asn=asn.number).order_by("timebin")
+
+    dtEnd = datetime.now(pytz.utc)
+    if "date" in request.GET and request.GET["date"].count("-") == 2:
+        date = request.GET["date"].split("-")
+        dtEnd = datetime(int(date[0]), int(date[1]), int(date[2]), tzinfo=pytz.utc) 
+
+    last = 7
+    if "last" in request.GET:
+        last = int(request.GET["last"])
+        if last > 356:
+            last = 356
+
+    dtStart = dtEnd - timedelta(last)
+
+    data = Congestion.objects.filter(asn=asn.number, timebin__gte=dtStart,  timebin__lte=dtEnd).order_by("timebin")
     formatedData = {
             "x": list(data.values_list("timebin", flat=True)),
             "y": list(data.values_list("magnitude", flat=True))
@@ -139,7 +164,21 @@ def congestionData(request):
 
 def forwardingData(request):
     asn = get_object_or_404(ASN, number=request.GET["asn"])
-    data = Forwarding.objects.filter(asn=asn.number).order_by("timebin") 
+
+    dtEnd = datetime.now(pytz.utc)
+    if "date" in request.GET and request.GET["date"].count("-") == 2:
+        date = request.GET["date"].split("-")
+        dtEnd = datetime(int(date[0]), int(date[1]), int(date[2]), tzinfo=pytz.utc) 
+
+    last = 7
+    if "last" in request.GET:
+        last = int(request.GET["last"])
+        if last > 356:
+            last = 356
+
+    dtStart = dtEnd - timedelta(last)
+
+    data = Forwarding.objects.filter(asn=asn.number, timebin__gte=dtStart,  timebin__lte=dtEnd).order_by("timebin") 
     formatedData = {
             "x": list(data.values_list("timebin", flat=True)),
             "y": list(data.values_list("magnitude", flat=True))
@@ -149,6 +188,24 @@ def forwardingData(request):
 
 class ASNDetail(generic.DetailView):
     model = ASN
+    
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super(ASNDetail, self).get_context_data(**kwargs)
+
+        date = ""
+        if "date" in self.request.GET:
+            date = self.request.GET["date"]
+
+        last = 7
+        if "last" in self.request.GET:
+            last = self.request.GET["last"]
+
+        context["date"] = date;
+        context["last"] = last;
+
+        return context;
+
     # template_name = "ihr/asn_detail.html"
 
 

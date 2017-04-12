@@ -10,8 +10,24 @@
     <div class="col-12">
         <h1>AS{{ asn.number }} {{ asn.name }}</h1> 
     </div>
-</div>
 <div class="row">
+    <div class="col-lg-8"></div>
+    <div class="col-lg-4">
+        <div class="col-md-4">
+            <form class="form-inline">
+            <div class="form-group">
+                <select name="show-last" id="show-last" class="form-control">
+                    <option value="7"> Show last 1 week </option>
+                    <option value="30"> Show last 1 month </option>
+                    <option value="90"> Show last 3 months </option>
+                    <option value="180"> Show last 6 months </option>
+                </select>
+            </div>
+            </form>
+        </div>
+    </div>
+
+</div>
     <div class="col-12">
         <div id="plotAs" ></div>
     </div>
@@ -35,7 +51,25 @@
 </div>
 
 <script>
-function makeplot() {
+function updateArg(search, arg, val){
+
+    if(search.indexOf(arg) == -1){
+        if(search.indexOf("?") == -1){
+            search += "?"+arg+"="+val;
+        }
+        else{
+            search += "&"+arg+"="+val;
+        }
+    }
+    else{
+        var re = new RegExp(arg+"=[^&$]*","i");
+        search = search.replace(re, arg+'='+val);
+    }
+
+    return search;
+}
+
+function makeplot(dt, last) {
     var layout = {
         yaxis: {
             title: 'Congestion Level',
@@ -52,12 +86,18 @@ function makeplot() {
             b: 50,
         },
     };
+
     Plotly.newPlot("plotAs", [], layout);
-    Plotly.d3.json("{% url "ihr:congestionData" %}?asn={{ asn.number }}", function(data){ addPlotly(data, "plotAs", "Congestion", 1, -5, 50) } );
-    Plotly.d3.json("{% url "ihr:forwardingData" %}?asn={{ asn.number }}", function(data){ addPlotly(data, "plotAs", "Forwarding anomalies", 2, -15, 15) } );
+    Plotly.d3.json("{% url "ihr:congestionData" %}?asn={{ asn.number }}&date="+dt+"&last="+last, function(data){ addPlotly(data, "plotAs", "Congestion", 1, -5, 50, last); } );
+    Plotly.d3.json("{% url "ihr:forwardingData" %}?asn={{ asn.number }}&date="+dt+"&last="+last, function(data){ addPlotly(data, "plotAs", "Forwarding anomalies", 2, -15, 15, last); } );
+
+    var mainPlot = document.getElementById('plotAs');
+    mainPlot.on('plotly_click', mainPlotClick); 
+
+
 };
 
-function addPlotly( data, divId, label, ynum , rangeLow, rangeHigh){
+function addPlotly( data, divId, label, ynum , rangeLow, rangeHigh, last){
     var plotDiv = document.getElementById(divId);
     var traces = [{
         x: data["x"],
@@ -67,6 +107,12 @@ function addPlotly( data, divId, label, ynum , rangeLow, rangeHigh){
     }];
 
     Plotly.addTraces(divId, traces);
+
+    lastDate = data["x"][data["x"].length - 1]
+    var search = location.search;
+    search = updateArg(search, "date", lastDate.slice(0,10));
+    search = updateArg(search, "last", last);
+    history.replaceState(last,"", location.origin + location.pathname + search);
 
     <!--Correct yaxis range-->
     var min = Math.min.apply(null, data["y"]),
@@ -96,24 +142,15 @@ function addPlotly( data, divId, label, ynum , rangeLow, rangeHigh){
     }
 
 };
-makeplot();
+makeplot('{{ date }}', '{{ last }}');
 
-var mainPlot = document.getElementById('plotAs');
-mainPlot.on('plotly_click', function(data){
+function mainPlotClick(data){
 
         pt = data.points[0]
         date = JSON.stringify(pt.x).replace('"','').replace('"','');
         console.log(date);
         date = date.replace(" ", "+")
         date = date.replace(":", "%3A")
-
-        <!--[>Debug output<]-->
-        obj = pt;
-        var output = '';
-        for (var property in obj) {
-            output += property + ': ' + obj[property]+'; ';
-            }
-        console.log(output);
 
 
         if(data.points[0].yaxis._id == 'y'){
@@ -147,11 +184,19 @@ mainPlot.on('plotly_click', function(data){
             $("#details_title").html(title);
             $("#details_data").html(txt+body);
             $("#details_footer").html(footer);
-            console.log(data);
             prettyPrint();
         });
 
-});
+};
+
+    <!--Selector for "show last"-->
+    $('select[name="show-last"] option[value="{{ last }}"]').prop('selected', true);
+    $(function(){
+              $("#show-last").change(function(){
+                  makeplot('{{ date }}', this.value);
+                        });
+              });
+
 </script>
 
 <script src="/static/rest_framework/js/prettify-min.js"></script>

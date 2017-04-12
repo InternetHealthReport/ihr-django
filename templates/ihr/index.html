@@ -8,9 +8,27 @@
 
 {% block body %}
 <div class="row">
+    <div class="col-lg-12">
+        <h1>Top tier 1 networks</h1>
+        <div class="row">
+            <div class="col-md-8">
+                <h4><a href="3356/asn/">Level3</a>, <a href="174/asn/">Cogent</a>, <a href="3257/asn/">Tinet</a>, <a href="1299/asn/">TeliaSonera</a>, <a href="2914/asn/">NTT</a></h4>
+            </div>
+            <div class="col-md-4">
+                <form class="form-inline">
+                <div class="form-group">
+                    <select name="show-last" id="show-last" class="form-control">
+                        <option value="7"> Show last 1 week </option>
+                        <option value="30"> Show last 1 month </option>
+                        <option value="90"> Show last 3 months </option>
+                        <option value="180"> Show last 6 months </option>
+                    </select>
+                </div>
+                </form>
+            </div>
+        </div>
     
-    <h1>Top tier 1 networks</h1>
-        <h4><a href="3356/asn/">Level3</a>, <a href="174/asn/">Cogent</a>, <a href="3257/asn/">Tinet</a>, <a href="1299/asn/">TeliaSonera</a>, <a href="2914/asn/">NTT</a></h4>
+    </div>
     <div class="col-lg-12">
         <div id="plotCongestionTier1"></div>
         <div id="plotForwardingTier1"></div>
@@ -55,7 +73,25 @@
     </div>
 </div>
 <script>
-    function makeplot() {
+    function updateArg(search, arg, val){
+
+        if(search.indexOf(arg) == -1){
+            if(search.indexOf("?") == -1){
+                search += "?"+arg+"="+val;
+            }
+            else{
+                search += "&"+arg+"="+val;
+            }
+        }
+        else{
+            var re = new RegExp(arg+"=[^&$]*","i");
+            search = search.replace(re, arg+'='+val);
+        }
+
+        return search;
+    }
+
+    function makeplot(dt, last) {
         var layout = {
             yaxis: {
                 title: 'Congestion Level',
@@ -67,7 +103,7 @@
         };
         Plotly.newPlot("plotCongestionTier1", [], layout);
         {% for asn in topTier1 %}
-        Plotly.d3.json("{% url "ihr:congestionData" %}?asn={{ asn.number }}", function(data){ addPlotly(data, "plotCongestionTier1", "{{ asn.name }}") } );
+        Plotly.d3.json("{% url "ihr:congestionData" %}?asn={{ asn.number }}&date="+dt+"&last="+last, function(data){ addPlotly(data, "plotCongestionTier1", "{{ asn.name }}", last) } );
         {% endfor %}
 
         var layout = {
@@ -78,11 +114,12 @@
 
         Plotly.newPlot("plotCongestionRoot", [], layout);
         {% for asn in rootServers %}
-        Plotly.d3.json("{% url "ihr:congestionData" %}?asn={{ asn.number }}", function(data){ addPlotly(data, "plotCongestionRoot", "{{ asn.name|truncatewords:3 }}") } );
+        Plotly.d3.json("{% url "ihr:congestionData" %}?asn={{ asn.number }}&date="+dt+"&last="+last, function(data){ addPlotly(data, "plotCongestionRoot", "{{ asn.name|truncatewords:3 }}", last) } );
         {% endfor %}
+
     };
 
-    function addPlotly( data, divId, label ){
+    function addPlotly( data, divId, label , last){
         var plotDiv = document.getElementById(divId);
         var traces = [{
             x: data["x"],
@@ -91,7 +128,22 @@
         }];
 
         Plotly.addTraces(divId, traces);
+
+        lastDate = data["x"][data["x"].length - 1]
+        var search = location.search;
+        search = updateArg(search, "date", lastDate.slice(0,10));
+        search = updateArg(search, "last", last);
+        history.replaceState(last,"", location.origin + location.pathname + search);
+
     };
-    makeplot();
+    makeplot('{{ date }}', '{{ last }}');
+
+    <!--Selector for "show last"-->
+    $('select[name="show-last"] option[value="{{ last }}"]').prop('selected', true);
+    $(function(){
+              $("#show-last").change(function(){
+                  makeplot('{{ date }}', this.value);
+                        });
+              });
 </script>
 {% endblock %}
