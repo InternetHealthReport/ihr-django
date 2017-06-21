@@ -3,11 +3,23 @@ from django.db import models
 class ASN(models.Model):
     number = models.IntegerField(primary_key=True)
     name   = models.CharField(max_length=255)
+    tartiflette = models.BooleanField(default=False)
+    disco = models.BooleanField(default=False)
 
     def __str__(self):
         return "ASN%s %s" % (self.number, self.name)
 
+class Country(models.Model):
+    code = models.CharField(max_length=4, primary_key=True)
+    name   = models.CharField(max_length=255)
+    tartiflette = models.BooleanField(default=False)
+    disco = models.BooleanField(default=False)
 
+    def __str__(self):
+        return "%s" % (self.name)
+
+
+# Tartiflette
 class Congestion(models.Model):
     timebin = models.DateTimeField(db_index=True)
     asn = models.ForeignKey(ASN, on_delete=models.CASCADE)
@@ -58,6 +70,32 @@ class Forwarding(models.Model):
     def __str__(self):
         return "%s AS%s" % (self.timebin, self.asn.number)
 
+
+
+# Disco
+class Disco_events(models.Model):
+    streamtype = models.CharField(max_length=10)
+    streamname = models.CharField(max_length=20)
+    starttime = models.DateTimeField()
+    endtime = models.DateTimeField()
+    avglevel = models.FloatField(default=0.0)
+    nbdiscoprobes = models.IntegerField(default=0)
+    totalprobes = models.IntegerField(default=0)
+    ongoing = models.BooleanField(default=False)
+
+    class Meta:
+        index_together = ("streamtype", "streamname", "starttime", "endtime")
+
+class Disco_probes(models.Model):
+    probe_id = models.IntegerField()
+    event = models.ForeignKey(Disco_events, on_delete=models.CASCADE, db_index=True)
+    starttime = models.DateTimeField()
+    endtime = models.DateTimeField()
+    level = models.FloatField(default=0.0)
+
+
+
+# TODO remove the rest:
 class CongestionRanking(models.Model):
     asn = models.ForeignKey(ASN, on_delete=models.CASCADE)
     score = models.FloatField(default=0.0)
@@ -74,3 +112,4 @@ class ForwardingRanking(models.Model):
 
     def __str__(self):
         return "%s AS%s" % (self.timebin, self.asn.number)
+

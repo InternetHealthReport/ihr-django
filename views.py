@@ -9,13 +9,13 @@ from datetime import datetime, date, timedelta
 import pytz
 import json
 
-from .models import ASN, Congestion, Forwarding, Congestion_alarms, Forwarding_alarms
+from .models import ASN, Country, Congestion, Forwarding, Congestion_alarms, Forwarding_alarms, Disco_events, Disco_probes
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework import filters, generics
-from .serializers import CongestionSerializer, ForwardingSerializer, CongestionAlarmsSerializer, ForwardingAlarmsSerializer
+from .serializers import CongestionSerializer, ForwardingSerializer, CongestionAlarmsSerializer, ForwardingAlarmsSerializer, DiscoEventsSerializer, DiscoProbesSerializer
 
 
 class CongestionView(generics.ListAPIView): #viewsets.ModelViewSet):
@@ -61,6 +61,28 @@ class ForwardingAlarmsView(generics.ListAPIView):
     filter_fields = ('asn', 'timebin', 'ip', 'previoushop', 'correlation', 'responsibility')
     ordering_fields = ('timebin', 'correlation', 'responsibility')
 
+class DiscoEventsView(generics.ListAPIView):
+    """
+    API endpoint that allows to view the events reported by disco.
+    """
+    queryset = Disco_events.objects.all()
+    serializer_class = DiscoEventsSerializer
+    filter_backends = (filters.DjangoFilterBackend,filters.OrderingFilter,)
+    filter_fields = ('streamtype', 'streamname', 'starttime', 'endtime', 'avglevel', 'nbdiscoprobes', 'totalprobes', 'ongoing')
+    ordering_fields = ('starttime', 'endtime', 'avglevel', 'nbdiscoprobes')
+
+
+class DiscoProbesView(generics.ListAPIView): 
+    """
+    API endpoint that allows to view disconnected probes.
+    """
+    queryset = Disco_probes.objects.all() #.order_by('-asn')
+    serializer_class = DiscoProbesSerializer
+    filter_backends = (filters.DjangoFilterBackend,filters.OrderingFilter,)
+    filter_fields = ('probe_id', 'event',  'starttime', 'endtime', 'level' ) 
+    ordering_fields = ('starttime', 'endtime', 'level')
+
+
 
 @api_view(['GET'])
 def restful_API(request, format=None):
@@ -72,6 +94,8 @@ def restful_API(request, format=None):
         'congestion': reverse('ihr:congestionListView', request=request, format=format),
         'forwarding_alarms': reverse('ihr:forwardingAlarmsListView', request=request, format=format),
         'congestion_alarms': reverse('ihr:congestionAlarmsListView', request=request, format=format),
+        'disco_events': reverse('ihr:discoEventsListView', request=request, format=format),
+        'disco_probes': reverse('ihr:discoProbesListView', request=request, format=format),
     })
 
 class DateTimeEncoder(json.JSONEncoder):
@@ -185,6 +209,54 @@ def forwardingData(request):
             }
     return JsonResponse(formatedData, encoder=DateTimeEncoder) 
 
+def discoData(request):
+    if "asn" in request.GET:
+        streamtype = "asn"
+        asn = get_object_or_404(ASN, number=request.GET["asn"])
+        streamname = asn.number
+    elif "cc" in request.GET:
+        streamtype= "country"
+        country = get_object_or_404(Country, code=request.GET["cc"])
+        streamname = country.code
+
+    dtEnd = datetime.now(pytz.utc)
+    if "date" in request.GET and request.GET["date"].count("-") == 2:
+        date = request.GET["date"].split("-")
+        dtEnd = datetime(int(date[0]), int(date[1]), int(date[2]), tzinfo=pytz.utc) 
+
+    last = 7
+    if "last" in request.GET:
+        last = int(request.GET["last"])
+        if last > 356:
+            last = 356
+
+    dtStart = dtEnd - timedelta(last)
+
+    data = Disco_events.objects.filter(streamtype=streamtype, streamname=streamname, 
+            endtime__gte=dtStart,  starttime__lte=dtEnd).order_by("starttime") 
+    stime = list(data.values_list("starttime", flat=True))
+    etime = list(data.values_list("endtime", flat=True))
+    lvl =   list(data.values_list("avglevel", flat=True))
+    eventid=list(data.values_list("id", flat=True))
+    x = []
+    y = []
+    ei = []
+    for s, e, l, i in zip(stime,etime,lvl,eventid):
+        x.append(s)
+        x.append(e)
+        y.append(l)
+        y.append(l)
+        ei.append(i)
+        ei.append(i)
+
+    formatedData = {
+            "x": x,
+            "y": y,
+            "eventid": ei,
+            }
+    return JsonResponse(formatedData, encoder=DateTimeEncoder) 
+
+
 
 class ASNDetail(generic.DetailView):
     model = ASN
@@ -209,8 +281,34 @@ class ASNDetail(generic.DetailView):
     # template_name = "ihr/asn_detail.html"
 
 
+
+class CountryDetail(generic.DetailView):
+    model = Country
+    
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super(CountryDetail, self).get_context_data(**kwargs)
+
+        date = ""
+        if "date" in self.request.GET:
+            date = self.request.GET["date"]
+
+        last = 7
+        if "last" in self.request.GET:
+            last = self.request.GET["last"]
+
+        context["date"] = date;
+        context["last"] = last;
+
+        return context;
+
+
+
 class ASNList(generic.ListView):
     model = ASN
-    # template_name = "ihr/asn_detail.html"
+
+
+class CountryList(generic.ListView):
+    model = Country
 
 

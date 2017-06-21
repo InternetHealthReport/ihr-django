@@ -10,6 +10,7 @@
     <div class="col-12">
         <h1>AS{{ asn.number }} {{ asn.name }}</h1> 
     </div>
+</div>
 <div class="row">
     <div class="col-lg-8"></div>
     <div class="col-lg-4">
@@ -26,29 +27,69 @@
             </form>
         </div>
     </div>
-
 </div>
+{% if asn.tartiflette %}
+<div class="row">
     <div class="col-12">
-        <div id="plotAs" ></div>
+        <h3>Delay and Forwarding Anomalies</h3>
+        <hr>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div id="plotTartiflette" ></div>
     </div>
 </div>
 <div class="row">
     <div class="col-lg-2 col-m-2"></div>
-    <div class="col-lg-8 col-m-8"><div id="details_title"></div> </div>
-    <div class="col-lg-2 col-m-2"></div>
-</div> 
-<div class="row">
-    <div class="col-lg-3 col-m-3"></div>
-    <div class="col-lg-6 col-m-6"> <div class="response-info"> <pre class="prettyprint"> <div id="details_data" > <center><i>Click on the graph to display reported links.</i></center> </div> </pre> </div> </div>
-    <div class="col-lg-3 col-m-3"></div>
-</div> 
-<div class="row">
-    <div class="col-lg-2 col-m-2"></div>
-    <div class="col-lg-8 col-m-8">
-        <div id="details_footer"></div>
-    </div>
+    <div class="col-lg-8 col-m-8"><div id="tartiflette_details_title"></div> </div>
     <div class="col-lg-2 col-m-2"></div>
 </div>
+<div class="row">
+    <div class="col-lg-3 col-m-3"></div>
+    <div class="col-lg-6 col-m-6">  <pre class="prettyprint"> <div id="tartiflette_details_data" > <i>Click on the graphs for more details.</i> </div> </pre>  </div>
+    <div class="col-lg-3 col-m-3"></div>
+</div>
+<div class="row">
+    <div class="col-lg-2 col-m-3"></div>
+    <div class="col-lg-8 col-m-6"> <div id="tartiflette_details_footer"></div> </div>
+    <div class="col-lg-2 col-m-3"></div>
+
+</div> 
+<div class="row">
+    <br>
+</div>
+{% endif %}
+
+{% if asn.disco  %}
+<div class="row">
+    <div class="col-12">
+        <h3>Network Disconnections</h3>
+        <hr>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div id="plotDisco" ></div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-2 col-m-2"></div>
+    <div class="col-lg-8 col-m-8"><div id="disco_details_title"></div> </div>
+    <div class="col-lg-2 col-m-2"></div>
+</div>
+<div class="row">
+    <div class="col-lg-3 col-m-3"></div>
+    <div class="col-lg-6 col-m-6">  <pre class="prettyprint"> <div id="disco_details_data" > <i>Click on the graph for more details.</i> </div> </pre>  </div>
+    <div class="col-lg-3 col-m-3"></div>
+</div>
+<div class="row">
+    <div class="col-lg-2 col-m-3"></div>
+    <div class="col-lg-8 col-m-6"> <div id="disco_details_footer"></div> </div>
+    <div class="col-lg-2 col-m-3"></div>
+</div>
+{% endif %}
 
 <script>
 function updateArg(search, arg, val){
@@ -69,10 +110,10 @@ function updateArg(search, arg, val){
     return search;
 }
 
-function makeplot(dt, last) {
+function makeplot_tartiflette(dt, last) {
     var layout = {
         yaxis: {
-            title: 'Congestion Level',
+            title: 'Delay Change Level',
             domain: [0.55, 1],
             autorange: true,
         },
@@ -87,15 +128,38 @@ function makeplot(dt, last) {
         },
     };
 
-    Plotly.newPlot("plotAs", [], layout);
-    Plotly.d3.json("{% url "ihr:congestionData" %}?asn={{ asn.number }}&date="+dt+"&last="+last, function(data){ addPlotly(data, "plotAs", "Congestion", 1, -5, 50, last); } );
-    Plotly.d3.json("{% url "ihr:forwardingData" %}?asn={{ asn.number }}&date="+dt+"&last="+last, function(data){ addPlotly(data, "plotAs", "Forwarding anomalies", 2, -15, 15, last); } );
+    Plotly.newPlot("plotTartiflette", [], layout);
+    Plotly.d3.json("{% url "ihr:congestionData" %}?asn={{ asn.number }}&date="+dt+"&last="+last, function(data){ addPlotly(data, "plotTartiflette", "Delay Changes", 1, -5, 50, last); } );
+    Plotly.d3.json("{% url "ihr:forwardingData" %}?asn={{ asn.number }}&date="+dt+"&last="+last, function(data){ addPlotly(data, "plotTartiflette", "Forwarding anomalies", 2, -15, 15, last); } );
 
-    var mainPlot = document.getElementById('plotAs');
-    mainPlot.on('plotly_click', mainPlotClick); 
+    var mainPlot = document.getElementById('plotTartiflette');
+    mainPlot.on('plotly_click', tartiflettePlotClick); 
 
 
 };
+
+function makeplot_disco(dt, last) {
+    var layout = {
+        yaxis: {
+            title: 'Disconnection Level',
+            autorange: true,
+        },
+        margin: {
+            t: 50,
+            b: 50,
+        },
+        height: 250,
+    };
+
+    Plotly.newPlot("plotDisco", [], layout);
+    Plotly.d3.json("{% url "ihr:discoData" %}?asn={{ asn.number }}&date="+dt+"&last="+last, function(data){ addPlotly(data, "plotDisco", "Disconnections", 1, 0, 20, last); } );
+
+    var mainPlot = document.getElementById('plotDisco');
+    mainPlot.on('plotly_click', discoPlotClick); 
+
+
+};
+
 
 function addPlotly( data, divId, label, ynum , rangeLow, rangeHigh, last){
     var plotDiv = document.getElementById(divId);
@@ -104,7 +168,13 @@ function addPlotly( data, divId, label, ynum , rangeLow, rangeHigh, last){
         y: data["y"],
         name: label,
         yaxis: "y"+ynum,
+        z: data["eventid"],
     }];
+    console.log(traces);
+    if(data["x"].length == 0){
+        $(plotDiv).html("No data to display");
+        return
+    }
 
     Plotly.addTraces(divId, traces);
 
@@ -142,9 +212,16 @@ function addPlotly( data, divId, label, ynum , rangeLow, rangeHigh, last){
     }
 
 };
-makeplot('{{ date }}', '{{ last }}');
+if( '{{ asn.tartiflette }}' == 'True'){
+makeplot_tartiflette('{{ date }}', '{{ last }}');
+}
 
-function mainPlotClick(data){
+if( '{{ asn.disco }}' == 'True'){
+makeplot_disco('{{ date }}', '{{ last }}');
+}
+
+function tartiflettePlotClick(data){
+        $("#tartiflette_details_data").html('<span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span> Loading...')
 
         pt = data.points[0]
         date = JSON.stringify(pt.x).replace('"','').replace('"','');
@@ -181,21 +258,55 @@ function mainPlotClick(data){
                 txt = '<span class="meta nocode"><b>'+data.results.length+alarm+' reported:</b></span>\n';
                 footer = "";
             }
-            $("#details_title").html(title);
-            $("#details_data").html(txt+body);
-            $("#details_footer").html(footer);
+            $("#tartiflette_details_title").html(title);
+            $("#tartiflette_details_data").html(txt+body);
+            $("#tartiflette_details_footer").html(footer);
             prettyPrint();
         });
 
 };
 
-    <!--Selector for "show last"-->
-    $('select[name="show-last"] option[value="{{ last }}"]').prop('selected', true);
-    $(function(){
-              $("#show-last").change(function(){
-                  makeplot('{{ date }}', this.value);
-                        });
-              });
+function discoPlotClick(data){
+        $("#disco_details_data").html('<span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span> Loading...')
+        pt = data.points[0]
+        date = JSON.stringify(pt.x).replace('"','').replace('"','');
+        console.log(date);
+        date = date.substring(0,10)
+
+        title = "<h3>Disconnected probes on "+date+"</h3><br>";
+        url =  "{% url "ihr:discoProbesListView" %}?event="+pt.data.z[pt.pointNumber]+"&format=json&starttime^"+date+"&ordering=-level"; 
+
+        $.getJSON(url, function(data){
+            body = JSON.stringify(data.results, null, 2);
+            if (data.count == 0){
+                txt = "No significant probe disconnetions."
+                footer = "";
+                body = "";
+            }
+            else if (data.count > data.results.length){
+                txt = ''; 
+                footer = "See the "+data.count+" reported probes here: <a href='"+data.next.replace("format=json", "format=api")+"'>"+data.next.replace("format=json", "format=api")+"</a>";
+            }
+            else {
+                    
+                txt = '';
+                footer = "";
+            }
+            $("#disco_details_title").html(title);
+            $("#disco_details_data").html(txt+body);
+            $("#disco_details_footer").html(footer);
+            prettyPrint();
+        });
+};
+
+<!--Selector for "show last"-->
+$('select[name="show-last"] option[value="{{ last }}"]').prop('selected', true);
+$(function(){
+            $("#show-last").change(function(){
+                makeplot_tartiflette('{{ date }}', this.value);
+                makeplot_disco('{{ date }}', this.value);
+                    });
+            });
 
 </script>
 
