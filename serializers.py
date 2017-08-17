@@ -1,16 +1,19 @@
 from rest_framework import serializers
-from .models import Congestion,  Forwarding, Congestion_alarms, Forwarding_alarms, Disco_events, Disco_probes
+from .models import Delay,  Forwarding, Delay_alarms, Forwarding_alarms, Disco_events, Disco_probes
 
 
-class CongestionSerializer(serializers.ModelSerializer):
+class DelaySerializer(serializers.ModelSerializer):
     class Meta:
-        model = Congestion
+        model = Delay
         fields = ('asn', 'timebin',  'magnitude', 'deviation', 'label')
 
-class CongestionAlarmsSerializer(serializers.ModelSerializer):
+class DelayAlarmsSerializer(serializers.ModelSerializer):
+    msmid = serializers.StringRelatedField(many=True)
+    probeid = serializers.StringRelatedField(many=True)
+
     class Meta:
-        model = Congestion_alarms
-        fields = ('asn', 'timebin',  'link', 'medianrtt', 'diffmedian', 'deviation', 'nbprobes')
+        model = Delay_alarms
+        fields = ('asn', 'timebin',  'link', 'medianrtt', 'diffmedian', 'deviation', 'nbprobes', 'msmid', 'probeid')
 
 class ForwardingSerializer(serializers.ModelSerializer):
     class Meta:
@@ -18,9 +21,12 @@ class ForwardingSerializer(serializers.ModelSerializer):
         fields = ('asn', 'timebin', 'magnitude', 'resp', 'label')
 
 class ForwardingAlarmsSerializer(serializers.ModelSerializer):
+    msmid = serializers.StringRelatedField(many=True)
+    probeid = serializers.StringRelatedField(many=True)
+
     class Meta:
         model = Forwarding_alarms
-        fields = ('asn', 'timebin', 'ip', 'correlation', 'pktdiff', 'previoushop', 'responsibility')
+        fields = ('asn', 'timebin', 'ip', 'correlation', 'pktdiff', 'previoushop', 'responsibility', 'msmid', 'probeid')
 
 class DiscoEventsSerializer(serializers.ModelSerializer):
     class Meta:
@@ -30,4 +36,4 @@ class DiscoEventsSerializer(serializers.ModelSerializer):
 class DiscoProbesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Disco_probes
-        fields = ('probe_id', 'event', 'starttime', 'endtime', 'level')
+        fields = ('probe_id', 'ipv4', 'prefixv4', 'event', 'starttime', 'endtime', 'level')

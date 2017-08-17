@@ -19,7 +19,7 @@
             <div class="form-group">
                 <select name="show-last" id="show-last" class="form-control">
                     <option value="7"> Show last 1 week </option>
-                    <option value="30"> Show last 1 month </option>
+                    <option value="30" selected="selected"> Show last 1 month </option>
                     <option value="90"> Show last 3 months </option>
                     <option value="180"> Show last 6 months </option>
                 </select>
@@ -129,7 +129,7 @@ function makeplot_tartiflette(dt, last) {
     };
 
     Plotly.newPlot("plotTartiflette", [], layout);
-    Plotly.d3.json("{% url "ihr:congestionData" %}?asn={{ asn.number }}&date="+dt+"&last="+last, function(data){ addPlotly(data, "plotTartiflette", "Delay Changes", 1, -5, 50, last); } );
+    Plotly.d3.json("{% url "ihr:delayData" %}?asn={{ asn.number }}&date="+dt+"&last="+last, function(data){ addPlotly(data, "plotTartiflette", "Delay Changes", 1, -5, 50, last); } );
     Plotly.d3.json("{% url "ihr:forwardingData" %}?asn={{ asn.number }}&date="+dt+"&last="+last, function(data){ addPlotly(data, "plotTartiflette", "Forwarding anomalies", 2, -15, 15, last); } );
 
     var mainPlot = document.getElementById('plotTartiflette');
@@ -162,31 +162,33 @@ function makeplot_disco(dt, last) {
 
 
 function addPlotly( data, divId, label, ynum , rangeLow, rangeHigh, last){
+    console.log(data);
     var plotDiv = document.getElementById(divId);
+    var stream = "AS{{ asn.number }}";
     var traces = [{
-        x: data["x"],
-        y: data["y"],
+        x: data[stream]["x"],
+        y: data[stream]["y"],
         name: label,
         yaxis: "y"+ynum,
-        z: data["eventid"],
+        z: data[stream]["eventid"],
     }];
-    console.log(traces);
-    if(data["x"].length == 0){
-        $(plotDiv).html("No data to display");
-        return
-    }
+    <!--console.log(traces);-->
+    <!--if(data[stream]["x"].length == 0){-->
+        <!--$(plotDiv).html("No data to display");-->
+        <!--return-->
+    <!--}-->
 
     Plotly.addTraces(divId, traces);
 
-    lastDate = data["x"][data["x"].length - 1]
+    lastDate = data[stream]["x"][data[stream]["x"].length - 1]
     var search = location.search;
     search = updateArg(search, "date", lastDate.slice(0,10));
     search = updateArg(search, "last", last);
     history.replaceState(last,"", location.origin + location.pathname + search);
 
     <!--Correct yaxis range-->
-    var min = Math.min.apply(null, data["y"]),
-        max = Math.max.apply(null, data["y"]);
+    var min = Math.min.apply(null, data[stream]["y"]),
+        max = Math.max.apply(null, data[stream]["y"]);
 
     if(ynum == 1){
         yaxis = plotDiv.layout.yaxis;
@@ -231,8 +233,8 @@ function tartiflettePlotClick(data){
 
 
         if(data.points[0].yaxis._id == 'y'){
-            title = "<h3>Congestion on "+pt.x+"</h3><br>";
-            url =  "{% url "ihr:congestionAlarmsListView" %}?asn={{ asn.number }}&format=json&timebin="+date+"&ordering=-deviation"; 
+            title = "<h3>Delay anomalies on "+pt.x+"</h3><br>";
+            url =  "{% url "ihr:delayAlarmsListView" %}?asn={{ asn.number }}&format=json&timebin="+date+"&ordering=-deviation"; 
         }
         else{
             title = "<h3>Forwarding anomalies on "+pt.x+"</h3><br>";

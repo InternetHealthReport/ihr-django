@@ -8,22 +8,23 @@ from django.db.models import Avg, When, Sum, Case, FloatField
 from datetime import datetime, date, timedelta
 import pytz
 import json
+import pandas as pd
 
-from .models import ASN, Country, Congestion, Forwarding, Congestion_alarms, Forwarding_alarms, Disco_events, Disco_probes
+from .models import ASN, Country, Delay, Forwarding, Delay_alarms, Forwarding_alarms, Disco_events, Disco_probes
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework import filters, generics
-from .serializers import CongestionSerializer, ForwardingSerializer, CongestionAlarmsSerializer, ForwardingAlarmsSerializer, DiscoEventsSerializer, DiscoProbesSerializer
+from .serializers import DelaySerializer, ForwardingSerializer, DelayAlarmsSerializer, ForwardingAlarmsSerializer, DiscoEventsSerializer, DiscoProbesSerializer
 
 
-class CongestionView(generics.ListAPIView): #viewsets.ModelViewSet):
+class DelayView(generics.ListAPIView): #viewsets.ModelViewSet):
     """
     API endpoint that allows to view the level of congestion.
     """
-    queryset = Congestion.objects.all() #.order_by('-asn')
-    serializer_class = CongestionSerializer
+    queryset = Delay.objects.all() #.order_by('-asn')
+    serializer_class = DelaySerializer
     filter_backends = (filters.DjangoFilterBackend,filters.OrderingFilter,)
     filter_fields = ('asn', 'timebin',  'magnitude', 'deviation', 'label' ) 
     ordering_fields = ('timebin', 'magnitude', 'deviation')
@@ -40,15 +41,15 @@ class ForwardingView(generics.ListAPIView):
     ordering_fields = ('timebin', 'magnitude', 'deviation')
 
 
-class CongestionAlarmsView(generics.ListAPIView): 
+class DelayAlarmsView(generics.ListAPIView): 
     """
-    API endpoint that allows to view the congestion alarms.
+    API endpoint that allows to view the delay alarms.
     """
-    queryset = Congestion_alarms.objects.all() #.order_by('-asn')
-    serializer_class = CongestionAlarmsSerializer
+    queryset = Delay_alarms.objects.all() #.order_by('-asn')
+    serializer_class = DelayAlarmsSerializer
     filter_backends = (filters.DjangoFilterBackend,filters.OrderingFilter,)
     filter_fields = ('asn', 'timebin',  'link', 'deviation', 'nbprobes' ) 
-    ordering_fields = ('timebin', 'deviation', 'nbprobes', 'medianrtt', 'diffmedian')
+    ordering_fields = ('timebin', 'deviation', 'nbprobes', 'diffmedian', 'medianrtt')
 
 
 class ForwardingAlarmsView(generics.ListAPIView):
@@ -91,9 +92,9 @@ def restful_API(request, format=None):
     """
     return Response({
         'forwarding': reverse('ihr:forwardingListView', request=request, format=format),
-        'congestion': reverse('ihr:congestionListView', request=request, format=format),
+        'delay': reverse('ihr:delayListView', request=request, format=format),
         'forwarding_alarms': reverse('ihr:forwardingAlarmsListView', request=request, format=format),
-        'congestion_alarms': reverse('ihr:congestionAlarmsListView', request=request, format=format),
+        'delay_alarms': reverse('ihr:delayAlarmsListView', request=request, format=format),
         'disco_events': reverse('ihr:discoEventsListView', request=request, format=format),
         'disco_probes': reverse('ihr:discoProbesListView', request=request, format=format),
     })
@@ -106,8 +107,7 @@ class DateTimeEncoder(json.JSONEncoder):
 
         return json.JSONEncoder.default(self, o)
 
-def index(request):
-    monitoredAsn = ASN.objects.order_by("number")
+def index_old(request):
 
     # Top congested ASs
     # today = date.today()
@@ -121,9 +121,10 @@ def index(request):
 
     # topCongestion = ASN.objects.filter(congestion__timebin__gt=limitDate).annotate(score=Sum("congestion__magnitude")).order_by("-score")[:5]
 
-    tier1 = ASN.objects.filter(number__in = [7018,174,209,3320,3257,286,3356,3549,2914,5511,1239,6453,6762,12956,1299,701,702,703,2828,6461])
+    # tier1 = ASN.objects.filter(number__in = [7018,174,209,3320,3257,286,3356,3549,2914,5511,1239,6453,6762,12956,1299,701,702,703,2828,6461])
     topTier1 = ASN.objects.filter(number__in = [3356, 174, 3257, 1299, 2914])
     rootServers = ASN.objects.filter(number__in = [26415, 2149, 27, 297, 3557, 5927, 13, 29216, 26415, 25152, 20144, 7500, 226])
+    monitoredAsn = ASN.objects.order_by("number")
 
     ulLen = 5
     if len(monitoredAsn)<15:
@@ -133,7 +134,7 @@ def index(request):
     if "date" in request.GET:
         date = request.GET["date"]
 
-    last = 7
+    last = 30
     if "last" in request.GET:
         last = request.GET["last"]
 
@@ -142,6 +143,67 @@ def index(request):
             "nbMonitoredAsn": len(monitoredAsn)-ulLen*4,
             "topTier1": topTier1 ,
             "rootServers": rootServers ,
+            "date": date,
+            "last": last,
+            }
+    return render(request, "ihr/index.html", context)
+
+def index(request):
+
+    # Top congested ASs
+    # today = date.today()
+    # if "today" in request.GET:
+        # part = request.GET["today"].split("-")
+        # today = date(int(part[0]), int(part[1]), int(part[2]))
+    # limitDate = today-timedelta(days=7)
+
+    # topCongestion = ASN.objects.filter(congestion__timebin__gt=limitDate).annotate(score=Sum("congestion__magnitude")).order_by("-score")[:5]
+
+    # format the end date
+    dtEnd = datetime.now(pytz.utc)
+    if "date" in request.GET and request.GET["date"].count("-") == 2:
+        date = request.GET["date"].split("-")
+        dtEnd = datetime(int(date[0]), int(date[1]), int(date[2]), tzinfo=pytz.utc) 
+
+    # set the data duration
+    last = 30
+    if "last" in request.GET:
+        last = int(request.GET["last"])
+        if last > 356:
+            last = 356
+
+    dtStart = dtEnd - timedelta(last)
+
+    # tier1 = ASN.objects.filter(number__in = [7018,174,209,3320,3257,286,3356,3549,2914,5511,1239,6453,6762,12956,1299,701,702,703,2828,6461])
+    topTier1 = ASN.objects.filter(number__in = [3356, 174, 3257, 1299, 2914])
+    # rootServers = ASN.objects.filter(number__in = [26415, 2149, 27, 297, 3557, 
+        # 5927, 13, 29216, 26415, 25152, 20144, 7500, 226])
+    monitoredAsn = ASN.objects.filter(number__in = [15169, 20940, 7018,209,3320,
+        286,3549,5511,1239,6453,6762,12956,701,702,703,2828,6461])
+    monitoredCountry = Country.objects.filter(code__in = ["NL","FR","US","IR",
+        "ES","DE","JP", "CH", "GB", "IT", "BE", "UA", "PL", "CZ", "CA", "RU", 
+        "BG","SE","AT","DK","AU","FI","GR","IE","NO","NZ","ZA"])
+    nbAsn = ASN.objects.count()
+    nbCountry = Country.objects.count()
+
+    ulLen = monitoredAsn.count()/2
+    ulLen2 = monitoredCountry.count()/2
+    
+    date = ""
+    if "date" in request.GET:
+        date = request.GET["date"]
+
+    last = 30
+    if "last" in request.GET:
+        last = request.GET["last"]
+
+    context = {
+            "nbMonitoredAsn": nbAsn-monitoredAsn.count(),
+            "nbMonitoredCountry": nbCountry-monitoredCountry.count(),
+            "monitoredAsn": monitoredAsn,
+            "monitoredCountry": monitoredCountry,
+            "topTier1": topTier1 ,
+            # "rootServers": rootServers ,
             "date": date,
             "last": last,
             }
@@ -163,7 +225,7 @@ def search(request):
     asn = get_object_or_404(ASN, number=reqNumber)
     return HttpResponseRedirect(reverse("ihr:asnDetail", args=(asn.number,)))
 
-def congestionData(request):
+def delayData(request):
     asn = get_object_or_404(ASN, number=request.GET["asn"])
 
     dtEnd = datetime.now(pytz.utc)
@@ -171,7 +233,7 @@ def congestionData(request):
         date = request.GET["date"].split("-")
         dtEnd = datetime(int(date[0]), int(date[1]), int(date[2]), tzinfo=pytz.utc) 
 
-    last = 7
+    last = 30 
     if "last" in request.GET:
         last = int(request.GET["last"])
         if last > 356:
@@ -179,11 +241,11 @@ def congestionData(request):
 
     dtStart = dtEnd - timedelta(last)
 
-    data = Congestion.objects.filter(asn=asn.number, timebin__gte=dtStart,  timebin__lte=dtEnd).order_by("timebin")
-    formatedData = {
+    data = Delay.objects.filter(asn=asn.number, timebin__gte=dtStart,  timebin__lte=dtEnd).order_by("timebin")
+    formatedData = {"AS"+str(asn.number): {
             "x": list(data.values_list("timebin", flat=True)),
             "y": list(data.values_list("magnitude", flat=True))
-            }
+            }}
     return JsonResponse(formatedData, encoder=DateTimeEncoder) 
 
 def forwardingData(request):
@@ -194,7 +256,7 @@ def forwardingData(request):
         date = request.GET["date"].split("-")
         dtEnd = datetime(int(date[0]), int(date[1]), int(date[2]), tzinfo=pytz.utc) 
 
-    last = 7
+    last = 30
     if "last" in request.GET:
         last = int(request.GET["last"])
         if last > 356:
@@ -203,28 +265,70 @@ def forwardingData(request):
     dtStart = dtEnd - timedelta(last)
 
     data = Forwarding.objects.filter(asn=asn.number, timebin__gte=dtStart,  timebin__lte=dtEnd).order_by("timebin") 
-    formatedData = {
+    formatedData ={"AS"+str(asn.number): {
             "x": list(data.values_list("timebin", flat=True)),
             "y": list(data.values_list("magnitude", flat=True))
-            }
+            }}
     return JsonResponse(formatedData, encoder=DateTimeEncoder) 
 
-def discoData(request):
-    if "asn" in request.GET:
-        streamtype = "asn"
-        asn = get_object_or_404(ASN, number=request.GET["asn"])
-        streamname = asn.number
-    elif "cc" in request.GET:
-        streamtype= "country"
-        country = get_object_or_404(Country, code=request.GET["cc"])
-        streamname = country.code
 
+def eventToStepGraph(dtStart, dtEnd, stime, etime, lvl, eventid):
+    """Convert a disco event to a list of x, y ,eventid values for the step
+    graph.
+    """
+
+    x = [dtStart]
+    y = ["0"]
+    ei = ["0"]
+
+    # change the first value if there is an event starting before dtStart
+    if len(stime) and min(stime) < dtStart:
+        idx = stime.index(min(stime))
+        y[0] = lvl[idx]
+        ei[0] = eventid[idx]
+        x.append(etime[idx])
+        x.append(etime[idx])
+        y.append(y[0])
+        y.append("0")
+        ei.append(ei[0])
+        ei.append("0")
+
+        stime.pop(idx) 
+        etime.pop(idx)
+        lvl.pop(idx)
+        eventid.pop(idx)
+
+    for s, e, l, i in zip(stime,etime,lvl,eventid):
+        x.append(s)
+        x.append(s)
+        x.append(e)
+        x.append(e)
+        y.append("0")
+        y.append(l)
+        y.append(l)
+        y.append("0")
+        ei.append("0")
+        ei.append(i)
+        ei.append(i)
+        ei.append("0")
+    
+    if x[-1] < dtEnd:
+        x.append(dtEnd)
+        y.append("0")
+        ei.append("0")
+
+    return x, y, ei
+
+
+def discoData(request):
+    # format the end date
     dtEnd = datetime.now(pytz.utc)
     if "date" in request.GET and request.GET["date"].count("-") == 2:
         date = request.GET["date"].split("-")
         dtEnd = datetime(int(date[0]), int(date[1]), int(date[2]), tzinfo=pytz.utc) 
 
-    last = 7
+    # set the data duration
+    last = 30
     if "last" in request.GET:
         last = int(request.GET["last"])
         if last > 356:
@@ -232,29 +336,98 @@ def discoData(request):
 
     dtStart = dtEnd - timedelta(last)
 
-    data = Disco_events.objects.filter(streamtype=streamtype, streamname=streamname, 
-            endtime__gte=dtStart,  starttime__lte=dtEnd).order_by("starttime") 
-    stime = list(data.values_list("starttime", flat=True))
-    etime = list(data.values_list("endtime", flat=True))
-    lvl =   list(data.values_list("avglevel", flat=True))
-    eventid=list(data.values_list("id", flat=True))
-    x = []
-    y = []
-    ei = []
-    for s, e, l, i in zip(stime,etime,lvl,eventid):
-        x.append(s)
-        x.append(e)
-        y.append(l)
-        y.append(l)
-        ei.append(i)
-        ei.append(i)
+    # find corresponding ASN or country
+    if "asn" in request.GET:
+        asn = get_object_or_404(ASN, number=request.GET["asn"])
+        streams= [{"streamtype":"asn", "streamname": asn.number}]
+    elif "cc" in request.GET:
+        country = get_object_or_404(Country, code=request.GET["cc"])
+        streams= [{"streamtype":"country", "streamname": country.code}]
+    else:
+        streams = Disco_events.objects.filter(endtime__gte=dtStart,
+            starttime__lte=dtEnd,avglevel__gte=12).exclude(streamtype="geo").distinct("streamname").values("streamname", "streamtype")
+        
+    formatedData = {}
+    for stream in streams:
+        streamtype = stream["streamtype"]
+        streamname = stream["streamname"]
 
-    formatedData = {
-            "x": x,
-            "y": y,
-            "eventid": ei,
-            }
+        data = Disco_events.objects.filter(streamtype=streamtype, streamname=streamname, 
+                endtime__gte=dtStart,  starttime__lte=dtEnd,avglevel__gte=12).order_by("starttime") 
+        stime = list(data.values_list("starttime", flat=True))
+        etime = list(data.values_list("endtime", flat=True))
+        lvl =   list(data.values_list("avglevel", flat=True))
+        eventid=list(data.values_list("id", flat=True))
+
+        x, y ,ei = eventToStepGraph(dtStart, dtEnd, stime, etime, lvl, eventid)
+
+        df = pd.DataFrame({"lvl": y, "eid": ei}, index=x)
+        prefix = "CC" if streamtype=="country" else "AS"
+        formatedData[prefix+str(streamname)] = {
+                "streamtype": streamtype,
+                "streamname": streamname,
+                "dtStart": dtStart,
+                "dtEnd": dtEnd,
+                "stime": stime,
+                "etime": etime,
+                "rawx": x,
+                "rawy": y,
+                "rawe": ei,
+                "x": list(df.index.to_pydatetime()),
+                "y": list(df["lvl"].values),
+                "eventid": list(df["eid"].values),
+                }
+
     return JsonResponse(formatedData, encoder=DateTimeEncoder) 
+
+
+
+# def discoData(request):
+    # if "asn" in request.GET:
+        # streamtype = "asn"
+        # asn = get_object_or_404(ASN, number=request.GET["asn"])
+        # streamname = asn.number
+    # elif "cc" in request.GET:
+        # streamtype= "country"
+        # country = get_object_or_404(Country, code=request.GET["cc"])
+        # streamname = country.code
+
+    # dtEnd = datetime.now(pytz.utc)
+    # if "date" in request.GET and request.GET["date"].count("-") == 2:
+        # date = request.GET["date"].split("-")
+        # dtEnd = datetime(int(date[0]), int(date[1]), int(date[2]), tzinfo=pytz.utc) 
+
+    # last = 30
+    # if "last" in request.GET:
+        # last = int(request.GET["last"])
+        # if last > 356:
+            # last = 356
+
+    # dtStart = dtEnd - timedelta(last)
+
+    # data = Disco_events.objects.filter(streamtype=streamtype, streamname=streamname, 
+            # endtime__gte=dtStart,  starttime__lte=dtEnd).order_by("starttime") 
+    # stime = list(data.values_list("starttime", flat=True))
+    # etime = list(data.values_list("endtime", flat=True))
+    # lvl =   list(data.values_list("avglevel", flat=True))
+    # eventid=list(data.values_list("id", flat=True))
+    # x = []
+    # y = []
+    # ei = []
+    # for s, e, l, i in zip(stime,etime,lvl,eventid):
+        # x.append(s)
+        # x.append(e)
+        # y.append(l)
+        # y.append(l)
+        # ei.append(i)
+        # ei.append(i)
+
+    # formatedData = {
+            # "x": x,
+            # "y": y,
+            # "eventid": ei,
+            # }
+    # return JsonResponse(formatedData, encoder=DateTimeEncoder) 
 
 
 
@@ -269,7 +442,7 @@ class ASNDetail(generic.DetailView):
         if "date" in self.request.GET:
             date = self.request.GET["date"]
 
-        last = 7
+        last = 30
         if "last" in self.request.GET:
             last = self.request.GET["last"]
 
@@ -293,7 +466,7 @@ class CountryDetail(generic.DetailView):
         if "date" in self.request.GET:
             date = self.request.GET["date"]
 
-        last = 7
+        last = 30
         if "last" in self.request.GET:
             last = self.request.GET["last"]
 
@@ -306,9 +479,11 @@ class CountryDetail(generic.DetailView):
 
 class ASNList(generic.ListView):
     model = ASN
+    ordering = ["number"]
 
 
 class CountryList(generic.ListView):
     model = Country
+    ordering = ["name"]
 
 

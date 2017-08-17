@@ -8,9 +8,8 @@
 
 {% block body %}
 <div class="row">
+    <h1>Delay changes for tier 1 networks</h1>
     <div class="col-lg-12">
-        <h1>Top tier 1 networks</h1>
-        <div class="row">
             <div class="col-md-8">
                 <h4><a href="3356/asn/">Level3</a>, <a href="174/asn/">Cogent</a>, <a href="3257/asn/">Tinet</a>, <a href="1299/asn/">TeliaSonera</a>, <a href="2914/asn/">NTT</a></h4>
             </div>
@@ -19,59 +18,96 @@
                 <div class="form-group">
                     <select name="show-last" id="show-last" class="form-control">
                         <option value="7"> Show last 1 week </option>
-                        <option value="30"> Show last 1 month </option>
+                        <option value="30" selected="selected"> Show last 1 month </option>
                         <option value="90"> Show last 3 months </option>
                         <option value="180"> Show last 6 months </option>
                     </select>
                 </div>
                 </form>
             </div>
-        </div>
     
     </div>
+    </div>
+    <div class="row">
     <div class="col-lg-12">
-        <div id="plotCongestionTier1"></div>
+        <div id="plotDelayTier1Info"></div>
+        <div id="plotDelayTier1"></div>
+        <div id="plotForwardingTier1Info"></div>
         <div id="plotForwardingTier1"></div>
         <br>
     </div>
-    <h1>Networks hosting DNS root servers</h1>
-    <h4><a href="26415/asn/">Verisign (A)</a>, <a href="226/asn/">Los Nettos (B)</a>, <a href="2149/asn/">Cogent (C)</a>, <a href="27/asn/">Uni. Maryland (D)</a>, <a href="297/asn/">NASA (E)</a>, <a href="3557/asn/">ISC (F)</a>, <a href="5927/asn/">U.S. DOD (G)</a>, <a href="13/asn/">U.S. Army (H)</a>, <a href="29216/asn/">Netnod (I)</a>, <a href="26415/asn/">Verisign (J)</a>, <a href="25152/asn/">RIPE (K)</a>, <a href="20144/asn/">ICANN (L)</a>, <a href="7500/asn/">WIDE (M)</a></h4>
+    </div>
+    <!--<div class="row">-->
+    <!--<h1>Networks hosting DNS root servers</h1>-->
+    <!--<h4><a href="26415/asn/">Verisign (A)</a>, <a href="226/asn/">Los Nettos (B)</a>, <a href="2149/asn/">Cogent (C)</a>, <a href="27/asn/">Uni. Maryland (D)</a>, <a href="297/asn/">NASA (E)</a>, <a href="3557/asn/">ISC (F)</a>, <a href="5927/asn/">U.S. DOD (G)</a>, <a href="13/asn/">U.S. Army (H)</a>, <a href="29216/asn/">Netnod (I)</a>, <a href="26415/asn/">Verisign (J)</a>, <a href="25152/asn/">RIPE (K)</a>, <a href="20144/asn/">ICANN (L)</a>, <a href="7500/asn/">WIDE (M)</a></h4>-->
+    <!--<div class="col-lg-12">-->
+        <!--<div id="plotDelayRoot"></div>-->
+        <!--<div id="plotForwardingRoot"></div>-->
+        <!--<br>-->
+    <!--</div>-->
+    <!--</div>-->
+    <div class="row">
+
+    <h1>Recent network disconnections</h1>
     <div class="col-lg-12">
-        <div id="plotCongestionRoot"></div>
-        <div id="plotForwardingRoot"></div>
+        <div id="plotDiscoInfo"></div>
+        <div id="plotDisco"></div>
         <br>
     </div>
-    <h1><a href="{% url "ihr:asnList" %}">Other networks</a></h1> 
+    </div>
+    <div class="row">
+    <div class="col-md-8">
+        <h1><a href="{% url "ihr:asnList" %}">Monitored networks</a> </h1>
+    </div>
+    <div class="col-md-4">
+        <h1><a href="{% url "ihr:countryList" %}">Monitored countries</a></h1> 
+    </div>
+    </div>
+    
+    <div class="row">
     <div class="col-md-3">
         <ul>
-        {% for asn in monitoredAsn0 %}
-        <li><a href="{% url "ihr:asnDetail" asn.number %}">AS{{ asn.number }} {{ asn.name }}</a></li>
+        {% for asn in monitoredAsn %}
+            {% if forloop.counter < 12 %}
+                <li><a href="{% url "ihr:asnDetail" asn.number %}">AS{{ asn.number }} {{ asn.name }}</a></li>
+            {% endif %}
         {% endfor %}
         </ul>
     </div>
     <div class="col-md-3">
         <ul>
-        {% for asn in monitoredAsn1 %}
-        <li><a href="{% url "ihr:asnDetail" asn.number %}">AS{{ asn.number }} {{ asn.name }}</a></li>
-        {% endfor %}
-        </ul>
-    </div>
-    <div class="col-md-3">
-        <ul>
-        {% for asn in monitoredAsn2 %}
-        <li><a href="{% url "ihr:asnDetail" asn.number %}">AS{{ asn.number }} {{ asn.name }}</a></li>
-        {% endfor %}
-        </ul>
-    </div>
-    <div class="col-md-3">
-        <ul>
-        {% for asn in monitoredAsn3 %}
-        <li><a href="{% url "ihr:asnDetail" asn.number %}">AS{{ asn.number }} {{ asn.name }}</a></li>
+        {% for asn in monitoredAsn %}
+            {% if forloop.counter >= 12 %}
+            <li><a href="{% url "ihr:asnDetail" asn.number %}">AS{{ asn.number }} {{ asn.name }}</a></li>
+            {% endif %}
         {% endfor %}
         and <a href="{% url "ihr:asnList" %}" >{{ nbMonitoredAsn }} more...</a>
         </ul>
     </div>
-</div>
+    <div class="col-md-2">
+    </div>
+    <div class="col-md-2">
+        <ul>
+        {% for cc in monitoredCountry %}
+            {% if forloop.counter < 16 %}
+            <li><a href="{% url "ihr:countryDetail" cc.code %}">{{ cc.name }}</a></li>
+            {% endif %}
+        {% endfor %}
+        </ul>
+    </div>
+    <div class="col-md-2">
+        <ul>
+        {% for cc in monitoredCountry %}
+            {% if forloop.counter >= 16 %}
+            <li><a href="{% url "ihr:countryDetail" cc.code %}">{{ cc.name }}</a></li>
+            {% endif %}
+        {% endfor %}
+        and <a href="{% url "ihr:countryList" %}" >{{ nbMonitoredCountry }} more...</a>
+        </ul>
+    </div>
+    </div>
+    <div class="row">
+    </div>
 <script>
     function updateArg(search, arg, val){
 
@@ -101,9 +137,9 @@
                 b: 50,
             },
         };
-        Plotly.newPlot("plotCongestionTier1", [], layout);
+        Plotly.newPlot("plotDelayTier1", [], layout);
         {% for asn in topTier1 %}
-        Plotly.d3.json("{% url "ihr:congestionData" %}?asn={{ asn.number }}&date="+dt+"&last="+last, function(data){ addPlotly(data, "plotCongestionTier1", "{{ asn.name }}", last) } );
+        Plotly.d3.json("{% url "ihr:delayData" %}?asn={{ asn.number }}&date="+dt+"&last="+last, function(data){ addPlotly(data, "plotDelayTier1", "{{ asn.name }}", last) } );
         {% endfor %}
 
         var layout = {
@@ -112,37 +148,74 @@
             },
         };
 
-        Plotly.newPlot("plotCongestionRoot", [], layout);
-        {% for asn in rootServers %}
-        Plotly.d3.json("{% url "ihr:congestionData" %}?asn={{ asn.number }}&date="+dt+"&last="+last, function(data){ addPlotly(data, "plotCongestionRoot", "{{ asn.name|truncatewords:3 }}", last) } );
-        {% endfor %}
+        <!--Plotly.newPlot("plotDelayRoot", [], layout);-->
+        <!--{% for asn in rootServers %}-->
+        <!--Plotly.d3.json("{% url "ihr:delayData" %}?asn={{ asn.number }}&date="+dt+"&last="+last, function(data){ addPlotly(data, "plotDelayRoot", "{{ asn.name|truncatewords:3 }}", last) } );-->
+        <!--{% endfor %}-->
+    };
+
+    function makeplot_disco(dt, last) {
+        var layout = {
+            yaxis: {
+                title: 'Disconnection Level',
+                autorange: true,
+            },
+            margin: {
+                t: 50,
+                b: 50,
+            },
+            height: 250,
+            showlegend: true,
+        };
+
+        Plotly.newPlot("plotDisco", [], layout);
+
+        Plotly.d3.json("{% url "ihr:discoData" %}?date="+dt+"&last="+last, function(data){ addPlotly(data, "plotDisco", "AS{{ asn.streamname }}", last); } );
 
     };
+
 
     function addPlotly( data, divId, label , last){
         var plotDiv = document.getElementById(divId);
-        var traces = [{
-            x: data["x"],
-            y: data["y"],
-            name: label,
-        }];
+        if( jQuery.isEmptyObject(data) ){
+            document.getElementById(divId+"Info").textContent="No events reported";
+        }
+        else{
+            document.getElementById(divId+"Info").textContent="";
+            for (var stream in data){
+                var streamname = stream;
+                if (streamname.substring(0,2) == "CC"){
+                    streamname = streamname.substring(2,5);
+                }
+                var traces = [{
+                    x: data[stream]["x"],
+                    y: data[stream]["y"],
+                    name: streamname,
+                }];
 
-        Plotly.addTraces(divId, traces);
+                Plotly.addTraces(divId, traces);
 
-        lastDate = data["x"][data["x"].length - 1]
-        var search = location.search;
-        search = updateArg(search, "date", lastDate.slice(0,10));
-        search = updateArg(search, "last", last);
-        history.replaceState(last,"", location.origin + location.pathname + search);
+                lastDate = data[stream]["x"][data[stream]["x"].length - 1]
+                var search = location.search;
+                search = updateArg(search, "date", lastDate.slice(0,10));
+                search = updateArg(search, "last", last);
+                history.replaceState(last,"", location.origin + location.pathname + search);
+            }
+        }
 
     };
     makeplot('{{ date }}', '{{ last }}');
+    makeplot_disco('{{ date }}', '{{ last }}');
 
+    console.log("{{ monitoredAsn }}");
+    console.log("{{ monitoredAsn0 }}");
+    console.log("{{ monitoredAsn1 }}");
     <!--Selector for "show last"-->
     $('select[name="show-last"] option[value="{{ last }}"]').prop('selected', true);
     $(function(){
               $("#show-last").change(function(){
-                  makeplot('{{ date }}', this.value);
+                makeplot('{{ date }}', this.value);
+                makeplot_disco('{{ date }}', this.value);
                         });
               });
 </script>

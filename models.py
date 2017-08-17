@@ -16,11 +16,11 @@ class Country(models.Model):
     disco = models.BooleanField(default=False)
 
     def __str__(self):
-        return "%s" % (self.name)
+        return "%s (%s)" % (self.name, self.code)
 
 
 # Tartiflette
-class Congestion(models.Model):
+class Delay(models.Model):
     timebin = models.DateTimeField(db_index=True)
     asn = models.ForeignKey(ASN, on_delete=models.CASCADE)
     magnitude = models.FloatField(default=0.0)
@@ -32,7 +32,7 @@ class Congestion(models.Model):
         return "%s AS%s" % (self.timebin, self.asn.number)
 
 
-class Congestion_alarms(models.Model):
+class Delay_alarms(models.Model):
     asn = models.ForeignKey(ASN, on_delete=models.CASCADE, db_index=True)
     timebin = models.DateTimeField(db_index=True)
     ip = models.CharField(max_length=64, db_index=True)
@@ -44,6 +44,24 @@ class Congestion_alarms(models.Model):
 
     def __str__(self):
         return "%s AS%s" % (self.timebin, self.asn.number)
+
+
+class Delay_alarms_probes(models.Model):
+    alarm = models.ForeignKey(Delay_alarms, related_name="probeid", 
+            on_delete=models.CASCADE)
+    probeid = models.IntegerField(default=0)
+
+    def __unicode__(self):
+        return "%s" % probeid
+
+
+class Delay_alarms_msms(models.Model):
+    alarm = models.ForeignKey(Delay_alarms, related_name="msmid", 
+            on_delete=models.CASCADE)
+    msmid = models.IntegerField(default=0)
+
+    def __unicode__(self):
+        return "%s" % msmid
 
     
 class Forwarding_alarms(models.Model):
@@ -57,6 +75,25 @@ class Forwarding_alarms(models.Model):
 
     def __str__(self):
         return "%s AS%s %s" % (self.timebin, self.asn.number, self.ip)
+    
+
+class Forwarding_alarms_probes(models.Model):
+    alarm = models.ForeignKey(Forwarding_alarms, related_name="probeid", 
+            on_delete=models.CASCADE)
+    probeid = models.IntegerField(default=0)
+
+    def __unicode__(self):
+        return "%s" % probeid
+
+
+class Forwarding_alarms_msms(models.Model):
+    alarm = models.ForeignKey(Forwarding_alarms, related_name="msmid", 
+            on_delete=models.CASCADE)
+    msmid = models.IntegerField(default=0)
+
+    def __unicode__(self):
+        return "%s" % msmid
+
     
 
 class Forwarding(models.Model):
@@ -74,6 +111,7 @@ class Forwarding(models.Model):
 
 # Disco
 class Disco_events(models.Model):
+    mongoid = models.CharField(max_length=24, default="000000000000000000000000", db_index=True)
     streamtype = models.CharField(max_length=10)
     streamname = models.CharField(max_length=20)
     starttime = models.DateTimeField()
@@ -92,11 +130,13 @@ class Disco_probes(models.Model):
     starttime = models.DateTimeField()
     endtime = models.DateTimeField()
     level = models.FloatField(default=0.0)
+    ipv4 = models.CharField(max_length=64, default="None") 
+    prefixv4 = models.CharField(max_length=70, default="None")
 
 
 
 # TODO remove the rest:
-class CongestionRanking(models.Model):
+class DelayRanking(models.Model):
     asn = models.ForeignKey(ASN, on_delete=models.CASCADE)
     score = models.FloatField(default=0.0)
     timebin = models.DateTimeField()
