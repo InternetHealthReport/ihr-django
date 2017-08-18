@@ -51,8 +51,8 @@ class Delay_alarms_probes(models.Model):
             on_delete=models.CASCADE)
     probeid = models.IntegerField(default=0)
 
-    def __unicode__(self):
-        return "%s" % probeid
+    def __str__(self):
+        return "%s" % self.probeid
 
 
 class Delay_alarms_msms(models.Model):
@@ -60,8 +60,8 @@ class Delay_alarms_msms(models.Model):
             on_delete=models.CASCADE)
     msmid = models.IntegerField(default=0)
 
-    def __unicode__(self):
-        return "%s" % msmid
+    def __str__(self):
+        return "%s" % self.msmid
 
     
 class Forwarding_alarms(models.Model):
@@ -82,8 +82,8 @@ class Forwarding_alarms_probes(models.Model):
             on_delete=models.CASCADE)
     probeid = models.IntegerField(default=0)
 
-    def __unicode__(self):
-        return "%s" % probeid
+    def __str__(self):
+        return "%s" % self.probeid
 
 
 class Forwarding_alarms_msms(models.Model):
@@ -91,8 +91,8 @@ class Forwarding_alarms_msms(models.Model):
             on_delete=models.CASCADE)
     msmid = models.IntegerField(default=0)
 
-    def __unicode__(self):
-        return "%s" % msmid
+    def __str__(self):
+        return "%s" % self.msmid
 
     
 

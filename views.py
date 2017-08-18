@@ -487,3 +487,13 @@ class CountryList(generic.ListView):
     ordering = ["name"]
 
 
+class DiscoDetail(generic.DetailView):
+    model = Disco_events
+    
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super(DiscoDetail, self).get_context_data(**kwargs)
+
+        return context;
+
+    template_name = "ihr/disco_detail.html"
