@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+
+{% block head %}
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+{% endblock %}
+
+
+{% block body %}
+<div class="row">
+    <div class="col-12">
+        <h1>{{ country.name}}</h1> 
+    </div>
+</div>
+<div class="row">
+    <div class="col-lg-8"></div>
+    <div class="col-lg-4">
+        <div class="col-md-4">
+            <form class="form-inline">
+            <div class="form-group">
+                <select name="show-last" id="show-last" class="form-control">
+                    <option value="7"> Show last 1 week </option>
+                    <option value="30" selected="selected"> Show last 1 month </option>
+                    <option value="90"> Show last 3 months </option>
+                    <option value="180"> Show last 6 months </option>
+                </select>
+            </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% if country.disco  %}
+<div class="row">
+    <div class="col-12">
+        <h3>Network Disconnections</h3>
+        <hr>
+    </div>
+
+    <div class="col-12">
+        <div id="plotDisco" ></div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-2 col-m-2"></div>
+    <div class="col-lg-8 col-m-8"><div id="disco_details_title"></div> </div>
+    <div class="col-lg-2 col-m-2"></div>
+</div>
+<div class="row">
+    <div class="col-lg-3 col-m-3"></div>
+    <div class="col-lg-6 col-m-6">  <pre class="prettyprint"> <div id="disco_details_data" > <i>Click on the graph for more details.</i> </div> </pre>  </div>
+    <div class="col-lg-3 col-m-3"></div>
+</div>
+<div class="row">
+    <div class="col-lg-2 col-m-3"></div>
+    <div class="col-lg-8 col-m-6"> <div id="disco_details_footer"></div> </div>
+    <div class="col-lg-2 col-m-3"></div>
+</div>
+{% endif %}
+
+<div class="row">
+    <div class="col-lg-2 col-m-2"></div>
+    <div class="col-lg-8 col-m-8">
+        <div id="details_footer"></div>
+    </div>
+    <div class="col-lg-2 col-m-2"></div>
+</div>
+
+<script>
+function updateArg(search, arg, val){
+
+    if(search.indexOf(arg) == -1){
+        if(search.indexOf("?") == -1){
+            search += "?"+arg+"="+val;
+        }
+        else{
+            search += "&"+arg+"="+val;
+        }
+    }
+    else{
+        var re = new RegExp(arg+"=[^&$]*","i");
+        search = search.replace(re, arg+'='+val);
+    }
+
+    return search;
+}
+
+function makeplot_disco(dt, last) {
+    var layout = {
+        yaxis: {
+            title: 'Disconnection Level',
+            autorange: true,
+        },
+        margin: {
+            t: 50,
+            b: 50,
+        },
+        height: 250,
+    };
+
+    Plotly.newPlot("plotDisco", [], layout);
+    Plotly.d3.json("{% url "ihr:discoData" %}?cc={{ country.code }}&date="+dt+"&last="+last, function(data){ addPlotly(data, "plotDisco", "Disconnections", 1, 0, 20, last); } );
+
+    var mainPlot = document.getElementById('plotDisco');
+    mainPlot.on('plotly_click', discoPlotClick); 
+
+
+};
+
+
+function addPlotly( data, divId, label, ynum , rangeLow, rangeHigh, last){
+    var plotDiv = document.getElementById(divId);
+    var stream = "CC{{ country.code }}";
+    var traces = [{
+        x: data[stream]["x"],
+        y: data[stream]["y"],
+        name: label,
+        yaxis: "y"+ynum,
+        z: data[stream]["eventid"],
+    }];
+    console.log(traces);
+    if(data[stream]["x"].length == 0){
+        $(plotDiv).html("No data to display");
+        return
+    }
+
+    Plotly.addTraces(divId, traces);
+
+    lastDate = data[stream]["x"][data[stream]["x"].length - 1]
+    var search = location.search;
+    search = updateArg(search, "date", lastDate.slice(0,10));
+    search = updateArg(search, "last", last);
+    history.replaceState(last,"", location.origin + location.pathname + search);
+
+    <!--Correct yaxis range-->
+    var min = Math.min.apply(null, data[stream]["y"]),
+        max = Math.max.apply(null, data[stream]["y"]);
+
+    if(ynum == 1){
+        yaxis = plotDiv.layout.yaxis;
+    }
+    else{
+        yaxis = plotDiv.layout["yaxis"+ynum];
+    }
+
+    var axisChanged = false
+    if(yaxis.range[0] > rangeLow){
+        yaxis.range[0] = rangeLow;
+        axisChanged = true
+    }
+
+    axisChanged = false
+    if(yaxis.range[1] < rangeHigh){
+        yaxis.range[1] = rangeHigh;
+        axisChanged = true
+    }
+    if(axisChanged){
+        yaxis.autorange= false
+        Plotly.redraw(plotDiv);
+    }
+
+};
+
+if( '{{ country.disco }}' == 'True'){
+    makeplot_disco('{{ date }}', '{{ last }}');
+}
+
+function discoPlotClick(data){
+        $("#disco_details_data").html('<span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span> Loading...')
+        pt = data.points[0]
+        date = JSON.stringify(pt.x).replace('"','').replace('"','');
+        date = date.substring(0,10)
+
+        title = "<h3>Disconnected probes on "+date+"</h3><br>";
+        url =  "{% url "ihr:discoProbesListView" %}?event="+pt.data.z[pt.pointNumber]+"&format=json&starttime^"+date+"&ordering=-level"; 
+
+        $.getJSON(url, function(data){
+            body = JSON.stringify(data.results, null, 2);
+            if (data.count == 0){
+                txt = "No significant probe disconnetions."
+                footer = "";
+                body = "";
+            }
+            else if (data.count > data.results.length){
+                txt = ''; 
+                footer = "See the "+data.count+" reported probes here: <a href='"+data.next.replace("format=json", "format=api")+"'>"+data.next.replace("format=json", "format=api")+"</a>";
+            }
+            else {
+                    
+                txt = '';
+                footer = "";
+            }
+            $("#disco_details_title").html(title);
+            $("#disco_details_data").html(txt+body);
+            $("#disco_details_footer").html(footer);
+            prettyPrint();
+        });
+};
+
+
+<!--Selector for "show last"-->
+$('select[name="show-last"] option[value="{{ last }}"]').prop('selected', true);
+$(function(){
+            $("#show-last").change(function(){
+                makeplot_disco('{{ date }}', this.value);
+                    });
+            });
+
+</script>
+
+<script src="/static/rest_framework/js/prettify-min.js"></script>
+
+{% endblock %}

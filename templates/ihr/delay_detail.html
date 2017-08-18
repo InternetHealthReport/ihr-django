@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block head %}
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+{% endblock %}
+
+
+{% block body %}
+<div class="row">
+    <div class="col-12">
+        <h1>Delay change event #{{ delay_events.id }} (AS {{ delay_events.asn_id }})</h1> 
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <h3><a href='{% url "ihr:delayProbesListView" %}?event={{ delay_events.id }}&format=api&ordering=-level'>{{ delay_events.nbdiscoprobes }} probes</a> disconnected between {{delay_events.starttime}} and {{delay_events.endtime}}</h3>
+        <hr>
+    </div>
+
+    <div class="col-12">
+        <div id="tracemon" ></div>
+    </div>
+</div>
+
+<script src="https://atlas.ripe.net/resource/latencymon/latencymon-widget-main.js"></script>
+<script src="https://atlas.ripe.net/resource/tracemon/tracemon-widget-main.js"></script>
+<script>
+    $("#delay_details_data").html('<span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span> Loading...')
+
+    title = "<h3>Disconnected probes </h3><br>";
+    url =  '{% url "ihr:delayProbesListView" %}?event={{ delay_events.id }}&format=json&ordering=-level'; 
+
+    $.getJSON(url, function(data){
+        // TraceMON plot
+        var probeid = [];
+        var startts = new Date('2999-12-31'), endts = new Date('1970-01-01');
+
+        for(i=0; i<data.results.length; i++){
+            probeid.push(data.results[i].probe_id);
+            console.log(data.results[i].starttime);
+            console.log(data.results[i].endtime);
+            start = new Date(data.results[i].starttime);
+            end = new Date(data.results[i].endtime);
+            console.log(start);
+            console.log(end);
+            if( startts>start){
+                startts = start;
+            }
+            if( endts<end){
+                endts = end;
+            }
+        }
+console.log(startts);
+console.log(endts);
+        initTracemon(
+            '#tracemon',
+            {}, // Tool options
+            {
+                measurements:[5030],
+                sources: probeid,
+                startTimestamp:  (startts.getTime()/1000)-1800,
+                stopTimestamp: (endts.getTime()/1000)+1800,
+            } // Query options
+            );
+
+    });
+
+</script>
+<script src="/static/rest_framework/js/prettify-min.js"></script>
+
+{% endblock %}
