@@ -9,11 +9,10 @@ class DelaySerializer(serializers.ModelSerializer):
 
 class DelayAlarmsSerializer(serializers.ModelSerializer):
     msmid = serializers.StringRelatedField(many=True)
-    probeid = serializers.StringRelatedField(many=True)
 
     class Meta:
         model = Delay_alarms
-        fields = ('asn', 'timebin',  'link', 'medianrtt', 'diffmedian', 'deviation', 'nbprobes', 'msmid', 'probeid')
+        fields = ('asn', 'timebin',  'link', 'medianrtt', 'diffmedian', 'deviation', 'nbprobes', 'msmid')
 
 class ForwardingSerializer(serializers.ModelSerializer):
     class Meta:
@@ -22,11 +21,10 @@ class ForwardingSerializer(serializers.ModelSerializer):
 
 class ForwardingAlarmsSerializer(serializers.ModelSerializer):
     msmid = serializers.StringRelatedField(many=True)
-    probeid = serializers.StringRelatedField(many=True)
 
     class Meta:
         model = Forwarding_alarms
-        fields = ('asn', 'timebin', 'ip', 'correlation', 'pktdiff', 'previoushop', 'responsibility', 'msmid', 'probeid')
+        fields = ('asn', 'timebin', 'ip', 'correlation', 'pktdiff', 'previoushop', 'responsibility', 'msmid')
 
 class DiscoEventsSerializer(serializers.ModelSerializer):
     class Meta:

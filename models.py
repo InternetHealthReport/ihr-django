@@ -46,22 +46,14 @@ class Delay_alarms(models.Model):
         return "%s AS%s" % (self.timebin, self.asn.number)
 
 
-class Delay_alarms_probes(models.Model):
-    alarm = models.ForeignKey(Delay_alarms, related_name="probeid", 
-            on_delete=models.CASCADE)
-    probeid = models.IntegerField(default=0)
-
-    def __str__(self):
-        return "%s" % self.probeid
-
-
 class Delay_alarms_msms(models.Model):
     alarm = models.ForeignKey(Delay_alarms, related_name="msmid", 
             on_delete=models.CASCADE)
     msmid = models.IntegerField(default=0)
+    probeid = models.IntegerField(default=0)
 
     def __str__(self):
-        return "%s" % self.msmid
+        return "%s %s" % (self.msmid, self.probeid)
 
     
 class Forwarding_alarms(models.Model):
@@ -77,23 +69,14 @@ class Forwarding_alarms(models.Model):
         return "%s AS%s %s" % (self.timebin, self.asn.number, self.ip)
     
 
-class Forwarding_alarms_probes(models.Model):
-    alarm = models.ForeignKey(Forwarding_alarms, related_name="probeid", 
-            on_delete=models.CASCADE)
-    probeid = models.IntegerField(default=0)
-
-    def __str__(self):
-        return "%s" % self.probeid
-
-
 class Forwarding_alarms_msms(models.Model):
     alarm = models.ForeignKey(Forwarding_alarms, related_name="msmid", 
             on_delete=models.CASCADE)
     msmid = models.IntegerField(default=0)
+    probeid = models.IntegerField(default=0)
 
     def __str__(self):
-        return "%s" % self.msmid
-
+        return "%s %s" % (self.msmid, self.probeid)
     
 
 class Forwarding(models.Model):
