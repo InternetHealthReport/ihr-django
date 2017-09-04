@@ -50,20 +50,16 @@
     <div class="col-lg-1 col-m-1"></div>
 </div>
 <div class="row">
-    <div class="col-lg-12 col-m-12"><div id="tartiflette_mon_title"></div> </div>
-</div>
-<div class="row">
-    <div class="col-lg-12 col-m-12"><div id="tartiflette_latencymon"></div> </div>
-</div>
-<div class="row">
-    <div class="col-lg-12 col-m-12"><div id="tartiflette_tracemon"></div> </div>
-</div>
-<div class="row">
     <div class="col-lg-1 col-m-0"></div>
     <div class="col-lg-10 col-m-12"> <div id="tartiflette_details_footer"></div> </div>
     <div class="col-lg-1 col-m-0"></div>
-
 </div> 
+<div class="row">
+    <div class="col-lg-12 col-m-12"><div id="tartiflette_mon_title"></div> </div>
+</div>
+<div class="row">
+    <div class="col-lg-12 col-m-12"><div id="tartiflette_mon"></div> </div>
+</div>
 <div class="row">
     <br>
 </div>
@@ -175,7 +171,6 @@ function makeplot_disco(dt, last) {
 
 
 function addPlotly( data, divId, label, ynum , rangeLow, rangeHigh, last){
-    console.log(data);
     var plotDiv = document.getElementById(divId);
     var stream = "AS{{ asn.number }}";
     var traces = [{
@@ -240,25 +235,30 @@ function getKeyByValue(object, value) {
 }
 
 function tartiflettePlotClick(data){
+        // Initialisation
         $("#tartiflette_details_data").html('<span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span> Loading...')
+        $("#tartiflette_details_title").html("");
+        $("#tartiflette_details_footer").html("");
+        $("#tartiflette_mon_title").html("");
+        $("#tartiflette_mon").html("");
+        var msmCount = {};
+        var msmProbes = {};
 
         pt = data.points[0]
         date = JSON.stringify(pt.x).replace('"','').replace('"','');
-        console.log(date);
         date = date.replace(" ", "+")
         date = date.replace(":", "%3A")
 
 
         if(data.points[0].yaxis._id == 'y'){
             title = "<h3>Delay anomalies on "+pt.x+"</h3>";
+            montitle = "";
             url =  "{% url "ihr:delayAlarmsListView" %}?asn={{ asn.number }}&format=json&timebin="+date+"&ordering=-deviation"; 
             montitle = "";
         $.getJSON(url, function(data){
             var body = '<table class="table"> <thead> <tr> <th> Link </th> <th> Deviation </th> <th> Delay change  </th> <th> #Probes </th> </tr></thead>'; //JSON.stringify(data.results, null, 2);
             body += '<tbody>';
             var prevLink = '';
-            var msmCount = {};
-            var msmProbes = {};
 
             for( i=0; i<data.results.length; i++){
                 var alarm = data.results[i];
@@ -297,43 +297,42 @@ function tartiflettePlotClick(data){
                 prevLink = alarm.link;
             }
 
-            // Get the 5 most prominent msm 
-            var msmid = [];
-            var arr = Object.values(msmCount);
-            for( i=0; i<Math.min(5,arr.length); i++){
-                var varr = Object.values(msmCount);
-                var max = Math.max(...varr);
-                var key = getKeyByValue(msmCount, max);
-                msmid.push(key);
-                delete msmCount[key]; 
-            }
-
             // LatencyMON
-            if( msmid.length!=0 ){
+            if( msmCount.length!=0 ){
+                var lm_grp = [];
+                var lm_msmid = [];
                 montitle = "<h3>RTT of traceroutes crossing reported links</h3><br>";
                 var timebin = new Date(data.results[0].timebin);
-                var grp = [];
-                for(i=0; i<msmid.length; i++){
-                    grp.push({ 
-                        id: msmid[i].toString(),
-                        measurementId: msmid[i],
-                        probes: msmProbes[msmid[i]],
+                // Get the 5 most prominent msm 
+                var arr = Object.values(msmCount);
+                for( i=0; i<Math.min(5,arr.length); i++){
+                    var varr = Object.values(msmCount);
+                    var max = Math.max(...varr);
+                    var key = getKeyByValue(msmCount, max);
+                    lm_msmid.push(key);
+                    delete msmCount[key]; 
+                }
+                // Make latencymon groups
+                for(i=0; i<lm_msmid.length; i++){
+                    lm_grp.push({ 
+                        id: lm_msmid[i].toString(),
+                        measurementId: lm_msmid[i],
+                        probes: msmProbes[lm_msmid[i]],
                         type: 'multi-probes',
                     });
                 }
-
-                var lm =initLatencymon(
-                    '#tartiflette_latencymon',
+                initLatencymon(
+                    '#tartiflette_mon',
                     {
                         autoStartGrouping: false,
                         <!--showMinimumByDefault: false,-->
                     }, // Tool options, see table below for more info
                     { 
-                    // mergedMeasurements: [msmid],
-                        measurements: msmid,
+                    // mergedMeasurements: [lm_msmid],
+                        measurements: lm_msmid,
                         startTimestamp:  timebin.getTime()/1000-(5*3600),
                         stopTimestamp: timebin.getTime()/1000+(5*3600),
-                        groups: grp,
+                        groups: lm_grp,
                     } // Query options, see table below for more info
                 );
             }
@@ -345,18 +344,9 @@ function tartiflettePlotClick(data){
                 footer = "";
                 body = "";
             }
-            else if (data.count > data.results.length){
+            else{
                 txt = '';
                 footer = "See the "+data.count+" reported alarms here: <a href='"+url.replace("format=json", "format=api")+"'>ihr.iijlab.net/"+url.replace("format=json", "format=api")+"</a>";
-            }
-            else {
-                alarm = " alarms";
-                if ( data.count == 1){
-                    alarm = " alarm";
-                }
-                    
-                txt = '';
-                footer = "";
             }
             $("#tartiflette_details_title").html(title);
             $("#tartiflette_details_data").html(txt+body);
@@ -366,6 +356,7 @@ function tartiflettePlotClick(data){
         }
         else{
             title = "<h3>Forwarding anomalies on "+pt.x+"</h3><br>";
+            montitle = "";
             url =  "{% url "ihr:forwardingAlarmsListView" %}?asn={{ asn.number }}&format=json&timebin="+date+"&ordering=correlation"; 
             $.getJSON(url, function(data){
                 var body = '<table class="table"> <thead> <tr> <th> IP </th> <th>Usual preceding IP</th> <th> Correlation </th> <th> Responsibility </th> </tr></thead>'; //JSON.stringify(data.results, null, 2);
@@ -387,6 +378,21 @@ function tartiflettePlotClick(data){
                 body += '<td>'+alarm.correlation.toFixed(2)+'</td>';
                 body += '<td>'+alarm.responsibility.toFixed(2)+'</td>';
                 body += '</tr>';
+
+                // Count prominent msm and probe IDs
+                for( j=0; j<alarm.msmid.length; j++){
+                    var ids = alarm.msmid[j].split(" ");
+                    ids[0] = parseInt(ids[0]);
+                    ids[1] = parseInt(ids[1]);
+                    if( ids[0] in msmCount ){
+                        msmCount[ids[0]] += alarm.correlation;
+                        msmProbes[ids[0]].push(ids[1]);
+                    }
+                    else{
+                        msmCount[ids[0]] = alarm.correlation;
+                        msmProbes[ids[0]] = [ids[1]];
+                    }
+                }
             }
             body += '</tbody>';
             body += '</table>';
@@ -395,22 +401,45 @@ function tartiflettePlotClick(data){
                 footer = "";
                 body = "";
             }
-            else if (data.count > data.results.length){
+            else{
                 txt = '';
                 footer = "See the "+data.count+" reported alarms here: <a href='"+url.replace("format=json", "format=api")+"'>ihr.iijlab.net/"+url.replace("format=json", "format=api")+"</a>";
             }
-            else {
-                alarm = " alarms";
-                if ( data.count == 1){
-                    alarm = " alarm";
+
+            // Tracemon
+            if( data.results.length!=0 ){
+                montitle = "<h3>Visualisation of traceroutes crossing reported IPs</h3><br>";
+                var msmid = [];
+                var probeid = [];
+                var timebin = new Date(data.results[0].timebin);
+                // Get the most prominent msm 
+                var arr = Object.values(msmCount);
+                for( i=0; i<Math.min(1,arr.length); i++){
+                    var varr = Object.values(msmCount);
+                    var min = Math.min(...varr);
+                    var key = getKeyByValue(msmCount, min);
+                    msmid.push(key);
+                    probeid = probeid.concat(msmProbes[key]);
+                    delete msmCount[key]; 
                 }
-                    
-                txt = '<span class="meta nocode"><b>'+data.results.length+alarm+' reported:</b></span>\n';
-                footer = "";
+                initTracemon(
+                    '#tartiflette_mon',
+                    {
+                    }, // Tool options, see table below for more info
+                    { 
+                    // mergedMeasurements: [lm_msmid],
+                        measurements: msmid,
+                        sources: probeid,
+                        startTimestamp:  timebin.getTime()/1000-1800,
+                        stopTimestamp: timebin.getTime()/1000+1800,
+                    } // Query options, see table below for more info
+                );
+            
             }
             $("#tartiflette_details_title").html(title);
             $("#tartiflette_details_data").html(txt+body);
             $("#tartiflette_details_footer").html(footer);
+            $("#tartiflette_mon_title").html(montitle);
             });
         }
 
@@ -420,13 +449,105 @@ function discoPlotClick(data){
         $("#disco_details_data").html('<span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span> Loading...')
         pt = data.points[0]
         date = JSON.stringify(pt.x).replace('"','').replace('"','');
-        console.log(date);
         date = date.substring(0,10)
 
         title = "<h3>Disconnected probes on "+date+"</h3><br>";
         url =  "{% url "ihr:discoProbesListView" %}?event="+pt.data.z[pt.pointNumber]+"&format=json&starttime^"+date+"&ordering=-level"; 
 
         $.getJSON(url, function(data){
+            title = "<h3>Disconnections on "+pt.x+"</h3><br>";
+            montitle = "";
+            url =  "{% url "ihr:discoProbesListView" %}?asn={{ asn.number }}&format=json&timebin="+date+"&ordering=correlation"; 
+            $.getJSON(url, function(data){
+                var body = '<table class="table"> <thead> <tr> <th> IP </th> <th>Usual preceding IP</th> <th> Correlation </th> <th> Responsibility </th> </tr></thead>'; //JSON.stringify(data.results, null, 2);
+                body += '<tbody>';
+                var prevLink = '';
+            for( i=0; i<data.results.length; i++){
+                var alarm = data.results[i];
+                if(alarm.correlation<=-0.5){
+                    body += '<tr class="danger">';
+                }
+                else if(alarm.correlation <= -0.33){
+                    body += '<tr class="warning">';
+                }
+                else{
+                    body += '<tr>';
+                }
+                body += '<td>'+alarm.ip+'</td>';
+                body += '<td>'+alarm.previoushop+'</td>';
+                body += '<td>'+alarm.correlation.toFixed(2)+'</td>';
+                body += '<td>'+alarm.responsibility.toFixed(2)+'</td>';
+                body += '</tr>';
+
+                // Count prominent msm and probe IDs
+                for( j=0; j<alarm.msmid.length; j++){
+                    var ids = alarm.msmid[j].split(" ");
+                    ids[0] = parseInt(ids[0]);
+                    ids[1] = parseInt(ids[1]);
+                    if( ids[0] in msmCount ){
+                        msmCount[ids[0]] += alarm.correlation;
+                        msmProbes[ids[0]].push(ids[1]);
+                    }
+                    else{
+                        msmCount[ids[0]] = alarm.correlation;
+                        msmProbes[ids[0]] = [ids[1]];
+                    }
+                }
+            }
+            body += '</tbody>';
+            body += '</table>';
+            if (data.count == 0){
+                txt = "No alarm reported."
+                footer = "";
+                body = "";
+            }
+            else{
+                txt = '';
+                footer = "See the "+data.count+" reported alarms here: <a href='"+url.replace("format=json", "format=api")+"'>ihr.iijlab.net/"+url.replace("format=json", "format=api")+"</a>";
+            }
+
+            // Tracemon
+            if( data.results.length!=0 ){
+                montitle = "<h3>Visualisation of traceroutes crossing reported IPs</h3><br>";
+                var msmid = [];
+                var probeid = [];
+                var timebin = new Date(data.results[0].timebin);
+                // Get the most prominent msm 
+                var arr = Object.values(msmCount);
+                for( i=0; i<Math.min(1,arr.length); i++){
+                    var varr = Object.values(msmCount);
+                    var min = Math.min(...varr);
+                    var key = getKeyByValue(msmCount, min);
+                    msmid.push(key);
+                    probeid = probeid.concat(msmProbes[key]);
+                    delete msmCount[key]; 
+                }
+                initTracemon(
+                    '#tartiflette_mon',
+                    {
+                    }, // Tool options, see table below for more info
+                    { 
+                    // mergedMeasurements: [lm_msmid],
+                        measurements: msmid,
+                        sources: probeid,
+                        startTimestamp:  timebin.getTime()/1000-1800,
+                        stopTimestamp: timebin.getTime()/1000+1800,
+                    } // Query options, see table below for more info
+                );
+            
+            }
+            $("#tartiflette_details_title").html(title);
+            $("#tartiflette_details_data").html(txt+body);
+            $("#tartiflette_details_footer").html(footer);
+            $("#tartiflette_mon_title").html(montitle);
+            });
+        }
+
+
+
+
+
+
             body = JSON.stringify(data.results, null, 2);
             if (data.count == 0){
                 txt = "No significant probe disconnetions."
