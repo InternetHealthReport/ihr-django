@@ -40,12 +40,8 @@
 
         for(i=0; i<data.results.length; i++){
             probeid.push(data.results[i].probe_id);
-            console.log(data.results[i].starttime);
-            console.log(data.results[i].endtime);
             start = new Date(data.results[i].starttime);
             end = new Date(data.results[i].endtime);
-            console.log(start);
-            console.log(end);
             if( startts>start && start>ihrstart){
                 startts = start;
             }
@@ -53,16 +49,19 @@
                 endts = end;
             }
         }
-console.log(startts);
-console.log(endts);
+        if(endts < startts){
+            endts = startts;
+        }
+        console.log(startts);
+        console.log(endts);
         tracemon = initTracemon(
             '#tracemon',
             {}, // Tool options
             {
                 measurements:[5030],
                 sources: probeid,
-                startTimestamp:  (startts.getTime()/1000)-1800,
-                stopTimestamp: (endts.getTime()/1000)+1800,
+                startTimestamp:  (startts.getTime()/1000)-3600,
+                stopTimestamp: (endts.getTime()/1000)+3600,
             } // Query options
             );
 

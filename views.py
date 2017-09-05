@@ -353,7 +353,7 @@ def discoData(request):
         streamname = stream["streamname"]
 
         data = Disco_events.objects.filter(streamtype=streamtype, streamname=streamname, 
-                endtime__gte=dtStart,  starttime__lte=dtEnd,avglevel__gte=12).order_by("starttime") 
+                endtime__gte=dtStart,  starttime__lte=dtEnd,avglevel__gte=10).order_by("starttime") 
         stime = list(data.values_list("starttime", flat=True))
         etime = list(data.values_list("endtime", flat=True))
         lvl =   list(data.values_list("avglevel", flat=True))

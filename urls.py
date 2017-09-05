@@ -8,7 +8,6 @@ urlpatterns = [
     # url(r'^disco/$', views.index_disco, name='disco'),
     url(r'^search/$', views.search, name='search'),
     url(r'^(?P<pk>[0-9]+)/asn/$', views.ASNDetail.as_view(), name='asnDetail'),
-    url(r'^(?P<pk>[0-9]+)/asn2/$', views.ASNDetail.as_view(), name='asnDetail'),
     url(r'^(?P<pk>[A-Z]+)/country/$', views.CountryDetail.as_view(), name='countryDetail'),
     url(r'^(?P<pk>[0-9]+)/disco/$', views.DiscoDetail.as_view(), name='discoDetail'),
     url(r'^monitoredAsn/$', views.ASNList.as_view(), name='asnList'),
