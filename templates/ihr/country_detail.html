@@ -41,31 +41,31 @@
     </div>
 </div>
 
+
 <div class="row">
-    <div class="col-lg-2 col-m-2"></div>
-    <div class="col-lg-8 col-m-8"><div id="disco_details_title"></div> </div>
-    <div class="col-lg-2 col-m-2"></div>
+    <div class="col-lg-12 col-m-12"><div id="disco_details_title"></div> </div>
 </div>
 <div class="row">
-    <div class="col-lg-3 col-m-3"></div>
-    <div class="col-lg-6 col-m-6">  <pre class="prettyprint"> <div id="disco_details_data" > <i>Click on the graph for more details.</i> </div> </pre>  </div>
-    <div class="col-lg-3 col-m-3"></div>
+    <div class="col-lg-1 col-m-0"></div>
+    <div class="col-lg-10 col-m-12"> <div id="disco_details_data" > <i>Click on the graph for more details.</i> </div>  </div>
+    <div class="col-lg-1 col-m-0"></div>
 </div>
 <div class="row">
-    <div class="col-lg-2 col-m-3"></div>
-    <div class="col-lg-8 col-m-6"> <div id="disco_details_footer"></div> </div>
-    <div class="col-lg-2 col-m-3"></div>
+    <div class="col-lg-1 col-m-0"></div>
+    <div class="col-lg-10 col-m-12"> <div id="disco_details_footer"></div> </div>
+    <div class="col-lg-1 col-m-0"></div>
 </div>
+<div class="row">
+    <div class="col-lg-12 col-m-12"><div id="disco_mon_title"></div> </div>
+</div>
+<div class="row">
+    <div class="col-lg-12 col-m-12"><div id="disco_mon"></div> </div>
+</div>
+
 {% endif %}
 
-<div class="row">
-    <div class="col-lg-2 col-m-2"></div>
-    <div class="col-lg-8 col-m-8">
-        <div id="details_footer"></div>
-    </div>
-    <div class="col-lg-2 col-m-2"></div>
-</div>
-
+<script src="https://atlas.ripe.net/resource/latencymon/latencymon-widget-main.js"></script>
+<script src="https://atlas.ripe.net/resource/tracemon/tracemon-widget-main.js"></script>
 <script>
 function updateArg(search, arg, val){
 
@@ -125,12 +125,11 @@ function addPlotly( data, divId, label, ynum , rangeLow, rangeHigh, last){
     }
 
     Plotly.addTraces(divId, traces);
-
+    // Update query string
     lastDate = data[stream]["x"][data[stream]["x"].length - 1]
-    var search = location.search;
-    search = updateArg(search, "date", lastDate.slice(0,10));
-    search = updateArg(search, "last", last);
-    history.replaceState(last,"", location.origin + location.pathname + search);
+    $.QueryString.date = lastDate.slice(0,10);
+    $.QueryString.last = last;
+    history.replaceState({}, '', "?" + $.param($.QueryString)); 
 
     <!--Correct yaxis range-->
     var min = Math.min.apply(null, data[stream]["y"]),
@@ -165,36 +164,129 @@ if( '{{ country.disco }}' == 'True'){
     makeplot_disco('{{ date }}', '{{ last }}');
 }
 
+// Get params from the query string
+(function($) {
+    $.QueryString = (function(paramsArray) {
+        let params = {};
+
+        for (let i = 0; i < paramsArray.length; ++i)
+        {
+            let param = paramsArray[i]
+                .split('=', 2);
+
+            if (param.length !== 2)
+                continue;
+
+            params[param[0]] = decodeURIComponent(param[1].replace(/\+/g, " "));
+        }
+
+        return params;
+    })(window.location.search.substr(1).split('&'))
+})(jQuery);
+// Display given events
+if($.QueryString["discodate"] && $.QueryString["discoid"]){
+    discoPlotClick({points:[
+            {
+            x:$.QueryString["discodate"],
+            pointNumber:0,
+            data:{
+                z:[$.QueryString["discoid"]],
+                }
+            }
+    ]});
+}
+
 function discoPlotClick(data){
         $("#disco_details_data").html('<span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span> Loading...')
+        $("#disco_details_title").html("");
+        $("#disco_details_footer").html("");
+        $("#disco_mon_title").html("");
+        $("#disco_mon").html("");
+
         pt = data.points[0]
         date = JSON.stringify(pt.x).replace('"','').replace('"','');
-        date = date.substring(0,10)
+        date = date.replace(" ", "+")
+        date = date.replace(":", "%3A")
 
-        title = "<h3>Disconnected probes on "+date+"</h3><br>";
-        url =  "{% url "ihr:discoProbesListView" %}?event="+pt.data.z[pt.pointNumber]+"&format=json&starttime^"+date+"&ordering=-level"; 
+        // Update query string
+        $.QueryString.discodate = pt.x;
+        $.QueryString.discoid = pt.data.z[pt.pointNumber];
+        history.replaceState({}, '', "?" + $.param($.QueryString)); 
 
+        title = "<h3>Disconnected probes on "+pt.x+"</h3><br>";
+        montitle = "";
+        console.log(pt.data.z[pt.pointNumber]);
+        url =  '{% url "ihr:discoProbesListView" %}?event='+pt.data.z[pt.pointNumber]+'&format=json&ordering=-level'; 
         $.getJSON(url, function(data){
-            body = JSON.stringify(data.results, null, 2);
-            if (data.count == 0){
-                txt = "No significant probe disconnetions."
-                footer = "";
-                body = "";
+                var body = '<table class="table"> <thead> <tr> <th> Disconnection time </th> <th> Reconnection time </th> <th> Probe ID </th> <th> IP prefix </th>  <th> Burst level </th> </tr></thead>'; //JSON.stringify(data.results, null, 2);
+            body += '<tbody>';
+            var prevLink = '';
+        for( i=0; i<data.results.length; i++){
+            var alarm = data.results[i];
+            if(alarm.level>=15){
+                body += '<tr class="danger">';
             }
-            else if (data.count > data.results.length){
-                txt = ''; 
-                footer = "See the "+data.count+" reported probes here: <a href='"+data.next.replace("format=json", "format=api")+"'>"+data.next.replace("format=json", "format=api")+"</a>";
+            else if(alarm.level >= 12){
+                body += '<tr class="warning">';
             }
-            else {
-                    
-                txt = '';
-                footer = "";
+            else{
+                body += '<tr>';
             }
-            $("#disco_details_title").html(title);
-            $("#disco_details_data").html(txt+body);
-            $("#disco_details_footer").html(footer);
-            prettyPrint();
+            body += '<td>'+alarm.starttime+'</td>';
+            body += '<td>'+alarm.endtime+'</td>';
+            body += '<td>'+alarm.probe_id+'</td>';
+            body += '<td>'+alarm.prefixv4+'</td>';
+            body += '<td>'+alarm.level+'</td>';
+            body += '</tr>';
+
+        }
+        body += '</tbody>';
+        body += '</table>';
+        if (data.count == 0){
+            txt = "No alarm reported."
+        }
+        else{
+            txt = '';
+            footer = "See the "+data.count+" reported alarms here: <a href='"+url.replace("format=json", "format=api")+"'>ihr.iijlab.net/"+url.replace("format=json", "format=api")+"</a>";
+        }
+
+        // Tracemon
+        if( data.results.length!=0 ){
+            var probeid = [];
+            var startts = new Date(pt.x+' GMT'), endts = new Date('1970-01-01');
+            //var startts = new Date('2999-12-31'), endts = new Date('1970-01-01');
+            var ihrstart = new Date('2017-01-01');
+            montitle = "<h3>Visualisation of traceroutes from disconnected probes</h3><br>";
+            for(i=0; i<data.results.length; i++){
+                probeid.push(data.results[i].probe_id);
+                start = new Date(data.results[i].starttime);
+                end = new Date(data.results[i].endtime);
+                if( startts>start && start>ihrstart){
+                    startts = start;
+                }
+                if( endts<end){
+                    endts = end;
+                }
+            }
+            initTracemon(
+                '#disco_mon',
+                {
+                }, // Tool options, see table below for more info
+                {
+                measurements:[5030],
+                sources: probeid,
+                startTimestamp:  (startts.getTime()/1000)-1800,
+                stopTimestamp: (endts.getTime()/1000)+1800,
+                } 
+            );
+        
+        }
+        $("#disco_details_title").html(title);
+        $("#disco_details_data").html(txt+body);
+        $("#disco_details_footer").html(footer);
+        $("#disco_mon_title").html(montitle);
         });
+
 };
 
 
