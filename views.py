@@ -4,30 +4,142 @@ from django.core.urlresolvers import reverse
 from django.views import generic
 from django.core import serializers
 from django.db.models import Avg, When, Sum, Case, FloatField
+from django.db import models as django_models
 
 from datetime import datetime, date, timedelta
 import pytz
 import json
 import pandas as pd
 
-from .models import ASN, Country, Delay, Forwarding, Delay_alarms, Forwarding_alarms, Disco_events, Disco_probes
+from .models import ASN, Country, Delay, Forwarding, Delay_alarms, Forwarding_alarms, Disco_events, Disco_probes, Hegemony
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework import filters, generics
-from .serializers import DelaySerializer, ForwardingSerializer, DelayAlarmsSerializer, ForwardingAlarmsSerializer, DiscoEventsSerializer, DiscoProbesSerializer
+from .serializers import DelaySerializer, ForwardingSerializer, DelayAlarmsSerializer, ForwardingAlarmsSerializer, DiscoEventsSerializer, DiscoProbesSerializer, HegemonySerializer
+import django_filters 
 
+############ API ##########
+### Filters:
+class DelayFilter(filters.FilterSet):
+    class Meta:
+        model = Delay
+        fields = {
+            'asn': ['exact'],
+            'timebin': ['exact', 'lte', 'gte'],
+            'magnitude': ['exact'],
+        }
+        ordering_fields = ('timebin', 'magnitude')
 
+    filter_overrides = {
+        django_models.DateTimeField: {
+            'filter_class': django_filters.IsoDateTimeFilter
+        },
+    }
+
+class ForwardingFilter(filters.FilterSet):
+    class Meta:
+        model = Forwarding
+        fields = {
+            'asn': ['exact'],
+            'timebin': ['exact', 'lte', 'gte'],
+            'magnitude': ['exact'],
+        }
+        ordering_fields = ('timebin', 'magnitude')
+
+    filter_overrides = {
+        django_models.DateTimeField: {
+            'filter_class': django_filters.IsoDateTimeFilter
+        },
+    }
+class DelayAlarmsFilter(filters.FilterSet):
+    class Meta:
+        model = Delay_alarms
+        fields = {
+            'asn': ['exact'],
+            'timebin': ['exact', 'lte', 'gte'],
+            'deviation': ['exact', 'lte', 'gte'],
+            'diffmedian': ['exact', 'lte', 'gte'],
+            'medianrtt': ['exact', 'lte', 'gte'],
+            'nbprobes': ['exact', 'lte', 'gte'],
+            'link': ['exact', 'contains'],
+        }
+        ordering_fields = ('timebin', 'deviation', 'nbprobes', 'diffmedian', 'medianrtt')
+
+    filter_overrides = {
+        django_models.DateTimeField: {
+            'filter_class': django_filters.IsoDateTimeFilter
+        },
+    }
+
+class ForwardingAlarmsFilter(filters.FilterSet):
+    class Meta:
+        model = Forwarding_alarms
+        fields = {
+            'asn': ['exact'],
+            'timebin': ['exact', 'lte', 'gte'],
+            'correlation': ['exact', 'lte', 'gte'],
+            'responsibility': ['exact', 'lte', 'gte'],
+            'ip': ['exact', 'contains'],
+            'previoushop': ['exact', 'contains'],
+        }
+        ordering_fields = ('timebin', 'responsibility', 'correlation', 'ip', 'previoushop')
+
+    filter_overrides = {
+        django_models.DateTimeField: {
+            'filter_class': django_filters.IsoDateTimeFilter
+        },
+    }
+
+class DiscoEventsFilter(filters.FilterSet):
+    class Meta:
+        model = Disco_events
+        fields = {
+            'streamname': ['exact'],
+            'streamtype': ['exact'],
+            'starttime': ['exact', 'lte', 'gte'],
+            'endtime': ['exact', 'lte', 'gte'],
+            'avglevel': ['exact', 'lte', 'gte'],
+            'nbdiscoprobes': ['exact', 'lte', 'gte'],
+            'totalprobes': ['exact', 'lte', 'gte'],
+            'ongoing': ['exact'],
+        }
+        ordering_fields = ('starttime', 'endtime', 'avglevel', 'nbdiscoprobes')
+
+    filter_overrides = {
+        django_models.DateTimeField: {
+            'filter_class': django_filters.IsoDateTimeFilter
+        },
+    }
+
+class HegemonyFilter(filters.FilterSet):
+    class Meta:
+        model = Hegemony
+        fields = {
+            'originasn': ['exact'],
+            'asn': ['exact'],
+            'timebin': ['exact', 'lte', 'gte'],
+            'hege': ['exact', 'lte', 'gte'],
+            'af': ['exact'],
+        }
+        ordering_fields = ('timebin', 'originasn', 'hege', 'af')
+
+    filter_overrides = {
+        django_models.DateTimeField: {
+            'filter_class': django_filters.IsoDateTimeFilter
+        },
+    }
+
+### Views:
 class DelayView(generics.ListAPIView): #viewsets.ModelViewSet):
     """
     API endpoint that allows to view the level of congestion.
     """
-    queryset = Delay.objects.all() #.order_by('-asn')
+    queryset = Delay.objects.all()
     serializer_class = DelaySerializer
     filter_backends = (filters.DjangoFilterBackend,filters.OrderingFilter,)
-    filter_fields = ('asn', 'timebin',  'magnitude', 'deviation', 'label' ) 
-    ordering_fields = ('timebin', 'magnitude', 'deviation')
+    filter_class = DelayFilter
 
 
 class ForwardingView(generics.ListAPIView):
@@ -37,8 +149,7 @@ class ForwardingView(generics.ListAPIView):
     queryset = Forwarding.objects.all()
     serializer_class = ForwardingSerializer
     filter_backends = (filters.DjangoFilterBackend,filters.OrderingFilter,)
-    filter_fields = ('asn', 'timebin', 'magnitude', 'resp', 'label')
-    ordering_fields = ('timebin', 'magnitude', 'deviation')
+    filter_class = ForwardingFilter
 
 
 class DelayAlarmsView(generics.ListAPIView): 
@@ -48,8 +159,7 @@ class DelayAlarmsView(generics.ListAPIView):
     queryset = Delay_alarms.objects.all() #.order_by('-asn')
     serializer_class = DelayAlarmsSerializer
     filter_backends = (filters.DjangoFilterBackend,filters.OrderingFilter,)
-    filter_fields = ('asn', 'timebin',  'link', 'deviation', 'nbprobes' ) 
-    ordering_fields = ('timebin', 'deviation', 'nbprobes', 'diffmedian', 'medianrtt')
+    filter_class = DelayAlarmsFilter
 
 
 class ForwardingAlarmsView(generics.ListAPIView):
@@ -59,8 +169,7 @@ class ForwardingAlarmsView(generics.ListAPIView):
     queryset = Forwarding_alarms.objects.all()
     serializer_class = ForwardingAlarmsSerializer
     filter_backends = (filters.DjangoFilterBackend,filters.OrderingFilter,)
-    filter_fields = ('asn', 'timebin', 'ip', 'previoushop', 'correlation', 'responsibility')
-    ordering_fields = ('timebin', 'correlation', 'responsibility')
+    filter_class = ForwardingAlarmsFilter
 
 class DiscoEventsView(generics.ListAPIView):
     """
@@ -69,9 +178,7 @@ class DiscoEventsView(generics.ListAPIView):
     queryset = Disco_events.objects.all()
     serializer_class = DiscoEventsSerializer
     filter_backends = (filters.DjangoFilterBackend,filters.OrderingFilter,)
-    filter_fields = ('streamtype', 'streamname', 'starttime', 'endtime', 'avglevel', 'nbdiscoprobes', 'totalprobes', 'ongoing')
-    ordering_fields = ('starttime', 'endtime', 'avglevel', 'nbdiscoprobes')
-
+    filter_class = DiscoEventsFilter
 
 class DiscoProbesView(generics.ListAPIView): 
     """
@@ -79,9 +186,20 @@ class DiscoProbesView(generics.ListAPIView):
     """
     queryset = Disco_probes.objects.all() #.order_by('-asn')
     serializer_class = DiscoProbesSerializer
+    # filter_backends = (filters.SearchFilter,filters.OrderingFilter,)
     filter_backends = (filters.DjangoFilterBackend,filters.OrderingFilter,)
-    filter_fields = ('probe_id', 'event',  'starttime', 'endtime', 'level' ) 
+    filter_fields = ('probe_id', 'event' ) 
     ordering_fields = ('starttime', 'endtime', 'level')
+
+
+class HegemonyView(generics.ListAPIView):
+    """
+    API endpoint that allows to view AS hegemony scores.
+    """
+    queryset = Hegemony.objects.all()
+    serializer_class = HegemonySerializer
+    filter_backends = (filters.DjangoFilterBackend,filters.OrderingFilter,)
+    filter_class = HegemonyFilter
 
 
 
@@ -97,7 +215,11 @@ def restful_API(request, format=None):
         'delay_alarms': reverse('ihr:delayAlarmsListView', request=request, format=format),
         'disco_events': reverse('ihr:discoEventsListView', request=request, format=format),
         'disco_probes': reverse('ihr:discoProbesListView', request=request, format=format),
+        'hegemony': reverse('ihr:hegemonyListView', request=request, format=format),
     })
+
+
+###### Other pages :
 
 class DateTimeEncoder(json.JSONEncoder):
     def default(self, o):
@@ -183,7 +305,7 @@ def index(request):
     monitoredCountry = Country.objects.filter(code__in = ["NL","FR","US","IR",
         "ES","DE","JP", "CH", "GB", "IT", "BE", "UA", "PL", "CZ", "CA", "RU", 
         "BG","SE","AT","DK","AU","FI","GR","IE","NO","NZ","ZA"])
-    nbAsn = ASN.objects.count()
+    nbAsn = (ASN.objects.filter(tartiflette=True)|ASN.objects.filter(disco=True)).count()
     nbCountry = Country.objects.count()
 
     ulLen = monitoredAsn.count()/2
@@ -478,7 +600,8 @@ class CountryDetail(generic.DetailView):
 
 
 class ASNList(generic.ListView):
-    model = ASN
+    # model = ASN
+    queryset = ASN.objects.filter(tartiflette=True) | ASN.objects.filter(disco=True)
     ordering = ["number"]
 
 

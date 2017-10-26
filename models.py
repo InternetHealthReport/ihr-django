@@ -1,10 +1,11 @@
 from django.db import models
 
 class ASN(models.Model):
-    number = models.IntegerField(primary_key=True)
+    number = models.BigIntegerField(primary_key=True)
     name   = models.CharField(max_length=255)
     tartiflette = models.BooleanField(default=False)
     disco = models.BooleanField(default=False)
+    ashash = models.BooleanField(default=False)
 
     def __str__(self):
         return "ASN%s %s" % (self.number, self.name)
@@ -49,7 +50,7 @@ class Delay_alarms(models.Model):
 class Delay_alarms_msms(models.Model):
     alarm = models.ForeignKey(Delay_alarms, related_name="msmid", 
             on_delete=models.CASCADE)
-    msmid = models.IntegerField(default=0)
+    msmid = models.BigIntegerField(default=0)
     probeid = models.IntegerField(default=0)
 
     def __str__(self):
@@ -72,7 +73,7 @@ class Forwarding_alarms(models.Model):
 class Forwarding_alarms_msms(models.Model):
     alarm = models.ForeignKey(Forwarding_alarms, related_name="msmid", 
             on_delete=models.CASCADE)
-    msmid = models.IntegerField(default=0)
+    msmid = models.BigIntegerField(default=0)
     probeid = models.IntegerField(default=0)
 
     def __str__(self):
@@ -116,6 +117,17 @@ class Disco_probes(models.Model):
     ipv4 = models.CharField(max_length=64, default="None") 
     prefixv4 = models.CharField(max_length=70, default="None")
 
+
+
+class Hegemony(models.Model):
+    timebin = models.DateTimeField(db_index=True)
+    originasn = models.ForeignKey(ASN, on_delete=models.CASCADE, related_name="local_graph", db_index=True)
+    asn = models.ForeignKey(ASN, on_delete=models.CASCADE, db_index=True)
+    hege = models.FloatField(default=0.0)
+    af = models.IntegerField(default=0)
+
+    def __str__(self):
+        return "%s originAS%s AS%s %s" % (self.timebin, self.originasn.number, self.asn.number, self.hege)
 
 
 # TODO remove the rest:

@@ -307,13 +307,15 @@ function tartiflettePlotClick(data){
                     var ids = alarm.msmid[j].split(" ");
                     ids[0] = parseInt(ids[0]);
                     ids[1] = parseInt(ids[1]);
-                    if( ids[0] in msmCount ){
-                        msmCount[ids[0]] += alarm.deviation;
-                        msmProbes[ids[0]].push(ids[1]);
-                    }
-                    else{
-                        msmCount[ids[0]] = alarm.deviation;
-                        msmProbes[ids[0]] = [ids[1]];
+                    if( alarm.deviation > 10){
+                        if( ids[0] in msmCount ){
+                            msmCount[ids[0]] += alarm.deviation;
+                            msmProbes[ids[0]].push(ids[1]);
+                        }
+                        else{
+                            msmCount[ids[0]] = alarm.deviation;
+                            msmProbes[ids[0]] = [ids[1]];
+                        }
                     }
                 }
                 prevLink = alarm.link;
@@ -406,13 +408,15 @@ function tartiflettePlotClick(data){
                     var ids = alarm.msmid[j].split(" ");
                     ids[0] = parseInt(ids[0]);
                     ids[1] = parseInt(ids[1]);
-                    if( ids[0] in msmCount ){
-                        msmCount[ids[0]] += alarm.correlation;
-                        msmProbes[ids[0]].push(ids[1]);
-                    }
-                    else{
-                        msmCount[ids[0]] = alarm.correlation;
-                        msmProbes[ids[0]] = [ids[1]];
+                    if( alarm.correlation <= -0.33){
+                        if( ids[0] in msmCount ){
+                            msmCount[ids[0]] += alarm.correlation;
+                            msmProbes[ids[0]].push(ids[1]);
+                        }
+                        else{
+                            msmCount[ids[0]] = alarm.correlation;
+                            msmProbes[ids[0]] = [ids[1]];
+                        }
                     }
                 }
             }
@@ -429,7 +433,7 @@ function tartiflettePlotClick(data){
             }
 
             // Tracemon
-            if( data.results.length!=0 ){
+            if( msmCount.length!=0 ){
                 montitle = "<h3>Visualisation of traceroutes crossing reported IPs</h3><br>";
                 var msmid = [];
                 var probeid = [];
@@ -538,8 +542,6 @@ function discoPlotClick(data){
                     endts = end;
                 }
             }
-            console.log(startts);
-            console.log(endts);
             initTracemon(
                 '#disco_mon',
                 {

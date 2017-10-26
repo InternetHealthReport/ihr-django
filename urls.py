@@ -22,4 +22,5 @@ urlpatterns = [
     url(r'^api/forwarding_alarms/$', views.ForwardingAlarmsView.as_view(), name='forwardingAlarmsListView'),
     url(r'^api/disco_events/$', views.DiscoEventsView.as_view(), name='discoEventsListView'),
     url(r'^api/disco_probes/$', views.DiscoProbesView.as_view(), name='discoProbesListView'),
+    url(r'^api/hegemony/$', views.HegemonyView.as_view(), name='hegemonyListView'),
 ]
