@@ -39,7 +39,7 @@ class DiscoProbesSerializer(serializers.ModelSerializer):
         fields = ('probe_id', 'ipv4', 'prefixv4', 'event', 'starttime', 'endtime', 'level')
 
 class HegemonySerializer(serializers.ModelSerializer):
-    # queryset = Hegemony.objects.all().prefetch_related("asn","originasn")
+    queryset = Hegemony.objects.all().prefetch_related("asn","originasn")
     class Meta:
         model = Hegemony
         fields = ('timebin', 'originasn', 'asn', 'hege', 'af')
