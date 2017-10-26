@@ -16,11 +16,12 @@ from .models import ASN, Country, Delay, Forwarding, Delay_alarms, Forwarding_al
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
-from rest_framework import filters, generics
+from rest_framework import generics
 from .serializers import DelaySerializer, ForwardingSerializer, DelayAlarmsSerializer, ForwardingAlarmsSerializer, DiscoEventsSerializer, DiscoProbesSerializer, HegemonySerializer
-import django_filters 
+from django_filters import rest_framework as filters 
 
 ############ API ##########
+
 ### Filters:
 class DelayFilter(filters.FilterSet):
     class Meta:
@@ -34,7 +35,7 @@ class DelayFilter(filters.FilterSet):
 
     filter_overrides = {
         django_models.DateTimeField: {
-            'filter_class': django_filters.IsoDateTimeFilter
+            'filter_class': filters.IsoDateTimeFilter
         },
     }
 
@@ -50,7 +51,7 @@ class ForwardingFilter(filters.FilterSet):
 
     filter_overrides = {
         django_models.DateTimeField: {
-            'filter_class': django_filters.IsoDateTimeFilter
+            'filter_class': filters.IsoDateTimeFilter
         },
     }
 class DelayAlarmsFilter(filters.FilterSet):
@@ -69,7 +70,7 @@ class DelayAlarmsFilter(filters.FilterSet):
 
     filter_overrides = {
         django_models.DateTimeField: {
-            'filter_class': django_filters.IsoDateTimeFilter
+            'filter_class': filters.IsoDateTimeFilter
         },
     }
 
@@ -88,7 +89,7 @@ class ForwardingAlarmsFilter(filters.FilterSet):
 
     filter_overrides = {
         django_models.DateTimeField: {
-            'filter_class': django_filters.IsoDateTimeFilter
+            'filter_class': filters.IsoDateTimeFilter
         },
     }
 
@@ -109,7 +110,7 @@ class DiscoEventsFilter(filters.FilterSet):
 
     filter_overrides = {
         django_models.DateTimeField: {
-            'filter_class': django_filters.IsoDateTimeFilter
+            'filter_class': filters.IsoDateTimeFilter
         },
     }
 
@@ -127,7 +128,7 @@ class HegemonyFilter(filters.FilterSet):
 
     filter_overrides = {
         django_models.DateTimeField: {
-            'filter_class': django_filters.IsoDateTimeFilter
+            'filter_class': filters.IsoDateTimeFilter
         },
     }
 
@@ -138,7 +139,6 @@ class DelayView(generics.ListAPIView): #viewsets.ModelViewSet):
     """
     queryset = Delay.objects.all()
     serializer_class = DelaySerializer
-    filter_backends = (filters.DjangoFilterBackend,filters.OrderingFilter,)
     filter_class = DelayFilter
 
 
@@ -148,7 +148,6 @@ class ForwardingView(generics.ListAPIView):
     """
     queryset = Forwarding.objects.all()
     serializer_class = ForwardingSerializer
-    filter_backends = (filters.DjangoFilterBackend,filters.OrderingFilter,)
     filter_class = ForwardingFilter
 
 
@@ -158,7 +157,6 @@ class DelayAlarmsView(generics.ListAPIView):
     """
     queryset = Delay_alarms.objects.all() #.order_by('-asn')
     serializer_class = DelayAlarmsSerializer
-    filter_backends = (filters.DjangoFilterBackend,filters.OrderingFilter,)
     filter_class = DelayAlarmsFilter
 
 
@@ -168,7 +166,6 @@ class ForwardingAlarmsView(generics.ListAPIView):
     """
     queryset = Forwarding_alarms.objects.all()
     serializer_class = ForwardingAlarmsSerializer
-    filter_backends = (filters.DjangoFilterBackend,filters.OrderingFilter,)
     filter_class = ForwardingAlarmsFilter
 
 class DiscoEventsView(generics.ListAPIView):
@@ -177,7 +174,6 @@ class DiscoEventsView(generics.ListAPIView):
     """
     queryset = Disco_events.objects.all()
     serializer_class = DiscoEventsSerializer
-    filter_backends = (filters.DjangoFilterBackend,filters.OrderingFilter,)
     filter_class = DiscoEventsFilter
 
 class DiscoProbesView(generics.ListAPIView): 
@@ -186,8 +182,6 @@ class DiscoProbesView(generics.ListAPIView):
     """
     queryset = Disco_probes.objects.all() #.order_by('-asn')
     serializer_class = DiscoProbesSerializer
-    # filter_backends = (filters.SearchFilter,filters.OrderingFilter,)
-    filter_backends = (filters.DjangoFilterBackend,filters.OrderingFilter,)
     filter_fields = ('probe_id', 'event' ) 
     ordering_fields = ('starttime', 'endtime', 'level')
 
@@ -196,9 +190,8 @@ class HegemonyView(generics.ListAPIView):
     """
     API endpoint that allows to view AS hegemony scores.
     """
-    queryset = Hegemony.objects.all()
+    queryset = Hegemony.objects.all().order_by("timebin")
     serializer_class = HegemonySerializer
-    filter_backends = (filters.DjangoFilterBackend,filters.OrderingFilter,)
     filter_class = HegemonyFilter
 
 
