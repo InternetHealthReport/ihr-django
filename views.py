@@ -460,7 +460,7 @@ def discoData(request):
         streams= [{"streamtype":"country", "streamname": country.code}]
     else:
         streams = Disco_events.objects.filter(endtime__gte=dtStart,
-            starttime__lte=dtEnd,avglevel__gte=12).exclude(streamtype="geo").distinct("streamname").values("streamname", "streamtype")
+            starttime__lte=dtEnd,avglevel__gte=10).exclude(streamtype="geo").exclude(streamname="All").distinct("streamname").values("streamname", "streamtype")
         
     formatedData = {}
     for stream in streams:

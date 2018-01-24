@@ -1,4 +1,5 @@
 from django.db import models
+import architect
 
 class ASN(models.Model):
     number = models.BigIntegerField(primary_key=True)
@@ -21,6 +22,7 @@ class Country(models.Model):
 
 
 # Tartiflette
+# @architect.install('partition', type='range', subtype='date', constraint='day', column='timebin')
 class Delay(models.Model):
     timebin = models.DateTimeField(db_index=True)
     asn = models.ForeignKey(ASN, on_delete=models.CASCADE)
@@ -33,6 +35,7 @@ class Delay(models.Model):
         return "%s AS%s" % (self.timebin, self.asn.number)
 
 
+# @architect.install('partition', type='range', subtype='date', constraint='day', column='timebin')
 class Delay_alarms(models.Model):
     asn = models.ForeignKey(ASN, on_delete=models.CASCADE, db_index=True)
     timebin = models.DateTimeField(db_index=True)
@@ -57,6 +60,7 @@ class Delay_alarms_msms(models.Model):
         return "%s %s" % (self.msmid, self.probeid)
 
     
+# @architect.install('partition', type='range', subtype='date', constraint='day', column='timebin')
 class Forwarding_alarms(models.Model):
     asn = models.ForeignKey(ASN, on_delete=models.CASCADE, db_index=True)
     timebin = models.DateTimeField(db_index=True)
@@ -80,6 +84,7 @@ class Forwarding_alarms_msms(models.Model):
         return "%s %s" % (self.msmid, self.probeid)
     
 
+# @architect.install('partition', type='range', subtype='date', constraint='day', column='timebin')
 class Forwarding(models.Model):
     timebin = models.DateTimeField(db_index=True)
     asn = models.ForeignKey(ASN, on_delete=models.CASCADE)
@@ -118,7 +123,7 @@ class Disco_probes(models.Model):
     prefixv4 = models.CharField(max_length=70, default="None")
 
 
-
+@architect.install('partition', type='range', subtype='date', constraint='day', column='timebin')
 class Hegemony(models.Model):
     timebin = models.DateTimeField(db_index=True)
     originasn = models.ForeignKey(ASN, on_delete=models.CASCADE, related_name="local_graph", db_index=True)
