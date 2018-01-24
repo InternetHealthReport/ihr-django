@@ -63,6 +63,31 @@
 <div class="row">
     <br>
 </div>
+
+<div id="link-details-modal" class="modal" role="dialog">
+    <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+            <h4 class="linkHeader">Link details</h4>
+        </div>
+
+        <div class="modal-body">
+            <div class="container col-md-12">
+                <div class="row">
+                    <div class="col-md-6 ip1">
+                        info for 1st IP
+                    </div>
+
+                     <div class="col-md-6 ip2">
+                        info for 2nd IP
+                    </div>
+                 </div>
+             </div>
+         </div>
+    </div>
+    </div>
+</div>
 {% endif %}
 
 {% if asn.disco  %}
@@ -240,7 +265,7 @@ if($.QueryString["discodate"] && $.QueryString["discoid"]){
     ]});
 }
 if($.QueryString["tartiflettedate"] && $.QueryString["tartiflettey"]){
-    discoPlotClick({points:[
+    tartiflettePlotClick({points:[
             {
             x: $.QueryString["tartiflettedate"],
             yaxis:{_id:$.QueryString["tartiflettey"]},
@@ -250,6 +275,16 @@ if($.QueryString["tartiflettedate"] && $.QueryString["tartiflettey"]){
 
 function getKeyByValue(object, value) {
       return Object.keys(object).find(key => object[key] === value);
+}
+
+function reverseDNS(ip){
+    var widget = '<div class="statwdgtauto"><script>ripestat.init("reverse-dns-ip",{"resource":"queryIP"},null,{"size":"small","disable":["controls","footer-buttons","logo","maximize"]})<\/script></div>';
+    return widget.replace("queryIP", ip);
+}
+
+function prefixMatch(ip){
+    var widget='<div class="statwdgtauto"><script>ripestat.init("prefix-overview",{"max_related":50,"resource":"queryIP"},null,{"size":"small","disable":["controls","footer-buttons","logo","maximize"]})<\/script></div>';
+    return widget.replace("queryIP", ip);
 }
 
 function tartiflettePlotClick(data){
@@ -296,10 +331,7 @@ function tartiflettePlotClick(data){
                 else{
                     body += '<tr>';
                 }
-                var ips = alarm.link.split(",")
-                <!--#TODO add widget for 2nd IP-->
-                var revdns = '<a href="#" data-toggle="popover" data-placement="top" data-content="<div class="statwdgtauto"><script>ripestat.init("reverse-dns-ip",{"resource":"ip1""},null,{"size":"small","disable":["controls","footer-buttons","logo","maximize"]})</script></div> > linkStr </a> '
-                body += '<td>'+revdns.replace("ip1",ips[0].substring(1)).replace("ip2",ips[1].substring(0,len(ips[1])-1).replace("linkStr",alarm.link)+'</td>';
+                body += "<td><a href='#link-details-modal' data-toggle='modal' target='#link-details-modal' id='"+alarm.link+"'>"+alarm.link+"</a></td>";
                 body += '<td>'+alarm.deviation.toFixed(2)+'</td>';
                 body += '<td>'+alarm.diffmedian.toFixed(2)+' ms</td>';
                 body += '<td>'+alarm.nbprobes+'</td>';
@@ -379,6 +411,11 @@ function tartiflettePlotClick(data){
             $("#tartiflette_details_data").html(txt+body);
             $("#tartiflette_details_footer").html(footer);
             $("#tartiflette_mon_title").html(montitle);
+
+            $(document).ready(function(){
+                $('[data-toggle="popover"]').popover(); 
+            });
+
         });
         }
         else{
@@ -575,8 +612,28 @@ $(function(){
                     });
             });
 
+$('#link-details-modal').on('show.bs.modal', function(e) {
+
+        var $modal = $(this),
+            link = e.relatedTarget.id;
+
+        var ips = link.split(",");
+        var ip1 = ips[0].substr(1);
+        var ip2 = ips[1].substr(0,ips[1].length-1);
+        var data = '';
+        data += reverseDNS(ip1); 
+        data += prefixMatch(ip1); 
+        $modal.find('.ip1').html(data);
+        var data = '';
+        data += reverseDNS(ip2); 
+        data += prefixMatch(ip2); 
+        $modal.find('.ip2').html(data);
+
+        $modal.find('.linkHeader').html('Additional information for '+ip1+' and '+ip2)
+    });
 </script>
 
 <script src="/static/rest_framework/js/prettify-min.js"></script>
+<script src="https://stat.ripe.net/widgets/widget_api.js"></script>
 
 {% endblock %}

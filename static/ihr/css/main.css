@@ -46,6 +46,10 @@ body {
     to { transform: scale(1) rotate(360deg);}
 }
 
-
+div.modal-body {
+    overflow-y: auto;
+    max-height: none;
+    padding: 15px;
+}
 
 
