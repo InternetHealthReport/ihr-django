@@ -296,7 +296,10 @@ function tartiflettePlotClick(data){
                 else{
                     body += '<tr>';
                 }
-                body += '<td>'+alarm.link+'</td>';
+                var ips = alarm.link.split(",")
+                <!--#TODO add widget for 2nd IP-->
+                var revdns = '<a href="#" data-toggle="popover" data-placement="top" data-content="<div class="statwdgtauto"><script>ripestat.init("reverse-dns-ip",{"resource":"ip1""},null,{"size":"small","disable":["controls","footer-buttons","logo","maximize"]})</script></div> > linkStr </a> '
+                body += '<td>'+revdns.replace("ip1",ips[0].substring(1)).replace("ip2",ips[1].substring(0,len(ips[1])-1).replace("linkStr",alarm.link)+'</td>';
                 body += '<td>'+alarm.deviation.toFixed(2)+'</td>';
                 body += '<td>'+alarm.diffmedian.toFixed(2)+' ms</td>';
                 body += '<td>'+alarm.nbprobes+'</td>';
@@ -456,8 +459,8 @@ function tartiflettePlotClick(data){
                     // mergedMeasurements: [lm_msmid],
                         measurements: msmid,
                         sources: probeid,
-                        startTimestamp:  timebin.getTime()/1000-1800,
-                        stopTimestamp: timebin.getTime()/1000+1800,
+                        startTimestamp:  timebin.getTime()/1000-3600,
+                        stopTimestamp: timebin.getTime()/1000+3600,
                     } // Query options, see table below for more info
                 );
             
