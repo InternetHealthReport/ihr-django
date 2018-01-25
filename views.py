@@ -21,6 +21,9 @@ from rest_framework import generics
 from .serializers import DelaySerializer, ForwardingSerializer, DelayAlarmsSerializer, ForwardingAlarmsSerializer, DiscoEventsSerializer, DiscoProbesSerializer, HegemonySerializer
 from django_filters import rest_framework as filters 
 
+# by default shows only one week of data
+LAST_DEFAULT = 7
+
 ############ API ##########
 
 ### Filters:
@@ -250,7 +253,7 @@ def index_old(request):
     if "date" in request.GET:
         date = request.GET["date"]
 
-    last = 30
+    last = LAST_DEFAULT
     if "last" in request.GET:
         last = request.GET["last"]
 
@@ -282,7 +285,7 @@ def index(request):
         dtEnd = datetime(int(date[0]), int(date[1]), int(date[2]), tzinfo=pytz.utc) 
 
     # set the data duration
-    last = 30
+    last = LAST_DEFAULT
     if "last" in request.GET:
         last = int(request.GET["last"])
         if last > 356:
@@ -309,7 +312,7 @@ def index(request):
     if "date" in request.GET:
         date = request.GET["date"]
 
-    last = 30
+    last = LAST_DEFAULT
     if "last" in request.GET:
         last = request.GET["last"]
 
@@ -349,7 +352,7 @@ def delayData(request):
         date = request.GET["date"].split("-")
         dtEnd = datetime(int(date[0]), int(date[1]), int(date[2]),23,59, tzinfo=pytz.utc) 
 
-    last = 30 
+    last = LAST_DEFAULT 
     if "last" in request.GET:
         last = int(request.GET["last"])
         if last > 356:
@@ -372,7 +375,7 @@ def forwardingData(request):
         date = request.GET["date"].split("-")
         dtEnd = datetime(int(date[0]), int(date[1]), int(date[2]),23,59, tzinfo=pytz.utc) 
 
-    last = 30
+    last = LAST_DEFAULT
     if "last" in request.GET:
         last = int(request.GET["last"])
         if last > 356:
@@ -444,7 +447,7 @@ def discoData(request):
         dtEnd = datetime(int(date[0]), int(date[1]), int(date[2]), 23, 59, tzinfo=pytz.utc) 
 
     # set the data duration
-    last = 30
+    last = LAST_DEFAULT
     if "last" in request.GET:
         last = int(request.GET["last"])
         if last > 356:
@@ -558,7 +561,7 @@ class ASNDetail(generic.DetailView):
         if "date" in self.request.GET:
             date = self.request.GET["date"]
 
-        last = 30
+        last = LAST_DEFAULT
         if "last" in self.request.GET:
             last = self.request.GET["last"]
 
@@ -582,7 +585,7 @@ class CountryDetail(generic.DetailView):
         if "date" in self.request.GET:
             date = self.request.GET["date"]
 
-        last = 30
+        last = LAST_DEFAULT
         if "last" in self.request.GET:
             last = self.request.GET["last"]
 
