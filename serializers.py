@@ -41,9 +41,10 @@ class DiscoProbesSerializer(serializers.ModelSerializer):
 
 class HegemonySerializer(serializers.ModelSerializer):
     queryset = Hegemony.objects.all().prefetch_related("asn","originasn")
-    # asn = serializers.PrimaryKeyRelatedField( widget=widgets.TextInput)
+    asn_name = serializers.PrimaryKeyRelatedField(queryset=queryset, source='asn.name')
+    originasn_name = serializers.PrimaryKeyRelatedField(queryset=queryset, source='originasn.name')
     # originasn = serializers.PrimaryKeyRelatedField( widget=widgets.TextInput)
     class Meta:
         model = Hegemony
-        fields = ('timebin', 'originasn', 'asn', 'hege', 'af')
+        fields = ('timebin', 'originasn', 'asn', 'hege', 'af', 'asn_name', 'originasn_name')
 

@@ -52,4 +52,24 @@ div.modal-body {
     padding: 15px;
 }
 
+a.help-btn{
+    font-size: 20px;
+    color: black;
+    float: right;
+}
 
+a.help-btn:hover{
+    text-decoration: none;
+}
+
+a.help-btn:visited {
+    text-decoration: none;
+}
+
+a.help-btn:link {
+    text-decoration: none;
+}
+
+a.help-btn:active {
+    text-decoration: none;
+}

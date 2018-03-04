@@ -123,7 +123,7 @@ class Disco_probes(models.Model):
     prefixv4 = models.CharField(max_length=70, default="None")
 
 
-@architect.install('partition', type='range', subtype='date', constraint='day', column='timebin')
+# @architect.install('partition', type='range', subtype='date', constraint='day', column='timebin')
 class Hegemony(models.Model):
     timebin = models.DateTimeField(db_index=True)
     originasn = models.ForeignKey(ASN, on_delete=models.CASCADE, related_name="local_graph", db_index=True)
@@ -133,6 +133,15 @@ class Hegemony(models.Model):
 
     def __str__(self):
         return "%s originAS%s AS%s %s" % (self.timebin, self.originasn.number, self.asn.number, self.hege)
+
+class HegemonyCone(models.Model):
+    timebin = models.DateTimeField(db_index=True)
+    asn = models.ForeignKey(ASN, on_delete=models.CASCADE, db_index=True)
+    conesize = models.IntegerField(default=0)
+    af = models.IntegerField(default=0)
+
+    class Meta:
+        index_together = ("timebin", "asn", "af")
 
 
 # TODO remove the rest:
