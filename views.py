@@ -4,7 +4,7 @@ from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
 from django.urls import reverse
 from django.views import generic
 from django.core import serializers
-from django.db.models import Avg, When, Sum, Case, FloatField
+from django.db.models import Avg, When, Sum, Case, FloatField, Count
 from django.db import models as django_models
 
 from datetime import datetime, date, timedelta
@@ -12,7 +12,7 @@ import pytz
 import json
 import pandas as pd
 
-from .models import ASN, Country, Delay, Forwarding, Delay_alarms, Forwarding_alarms, Disco_events, Disco_probes, Hegemony
+from .models import ASN, Country, Delay, Forwarding, Delay_alarms, Forwarding_alarms, Disco_events, Disco_probes, Hegemony, HegemonyCone
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -500,6 +500,84 @@ def discoData(request):
     return JsonResponse(formatedData, encoder=DateTimeEncoder) 
 
 
+def hegemonyData(request):
+    asn = get_object_or_404(ASN, number=request.GET["originasn"])
+    af=4
+    if "af" in request.GET and request.GET["af"] in ["4","6"]:
+        af=request.GET["af"]
+
+    dtEnd = datetime.now(pytz.utc)
+    if "date" in request.GET and request.GET["date"].count("-") == 2:
+        date = request.GET["date"].split("-")
+        dtEnd = datetime(int(date[0]), int(date[1]), int(date[2]),23,59, tzinfo=pytz.utc) 
+
+    last = LAST_DEFAULT
+    if "last" in request.GET:
+        last = int(request.GET["last"])
+        if last > 356:
+            last = 356
+
+    dtStart = dtEnd - timedelta(last)
+
+    rawData = Hegemony.objects.filter(originasn=asn.number, af=af, timebin__gte=dtStart,  timebin__lte=dtEnd, hege__gte=0.0001).order_by("timebin")
+    cache = list(rawData)
+    formatedData = {}
+    allAsn = set()
+    seenAsn = set()
+    currentTimebin = None
+    for row in cache:
+        a = row.asn_id
+        if a==asn.number:
+            continue
+
+        if currentTimebin is None:
+            currentTimebin = row.timebin
+
+        if currentTimebin != row.timebin:
+            for a0 in allAsn.difference(seenAsn):
+                formatedData["AS"+str(a0)]["x"].append(currentTimebin) 
+                formatedData["AS"+str(a0)]["y"].append(0) 
+            currentTimebin = row.timebin
+            seenAsn = set()
+
+        seenAsn.add(a)
+        if "AS"+str(a) not in formatedData:
+            formatedData["AS"+str(a)] = {"x":[], "y":[]}
+            allAsn.add(a)
+        formatedData["AS"+str(a)]["x"].append(row.timebin) 
+        formatedData["AS"+str(a)]["y"].append(row.hege) 
+
+    return JsonResponse(formatedData, encoder=DateTimeEncoder) 
+
+def coneData(request):
+    asn = get_object_or_404(ASN, number=request.GET["asn"])
+    af=4
+    if "af" in request.GET and request.GET["af"] in ["4","6"]:
+        af=request.GET["af"]
+
+    dtEnd = datetime.now(pytz.utc)
+    if "date" in request.GET and request.GET["date"].count("-") == 2:
+        date = request.GET["date"].split("-")
+        dtEnd = datetime(int(date[0]), int(date[1]), int(date[2]),23,59, tzinfo=pytz.utc) 
+
+    last = LAST_DEFAULT
+    if "last" in request.GET:
+        last = int(request.GET["last"])
+        if last > 356:
+            last = 356
+
+    dtStart = dtEnd - timedelta(last)
+
+    data = HegemonyCone.objects.filter(asn=asn.number, af=af, timebin__gte=dtStart,  timebin__lte=dtEnd).order_by("timebin")
+    # data = Hegemony.objects.filter(asn=asn.number, af=af, timebin__gte=dtStart,  timebin__lte=dtEnd).exclude(originasn=0).exclude(originasn=asn.number).values("timebin").annotate(nb_asn=Count("originasn", distinct=True)).order_by("timebin")
+
+    formatedData ={"AS"+str(asn.number): {
+            "x": list(data.values_list("timebin", flat=True)),
+            "y": list(data.values_list("conesize", flat=True))
+            }}
+
+    return JsonResponse(formatedData, encoder=DateTimeEncoder) 
+
 
 # def discoData(request):
     # if "asn" in request.GET:
@@ -567,6 +645,7 @@ class ASNDetail(generic.DetailView):
 
         context["date"] = date;
         context["last"] = last;
+        context["ashashValidDate"] = (date == "" or datetime.strptime(date,"%Y-%m-%d")>datetime(2018,1,15))
 
         return context;
 
