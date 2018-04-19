@@ -8,7 +8,11 @@
 {% block body %}
 <div class="row">
     <div class="col-12">
+        {% if asn.number < 0 %}
+        <h1>IXP{{ asn.number }} {{ asn.name }}
+        {% else %}
         <h1>AS{{ asn.number }} {{ asn.name }}
+        {% endif %}
             <form class="form-inline" style="float:right">
             <div class="form-group">
                 <select name="show-last" id="show-last" class="form-control" >
@@ -243,7 +247,7 @@ title: 'Number of ASes<br>dependent on AS{{ asn.number}}',
                     }
                 }
                 if(nbAsns==0){
-                    plotlyMessage("plotHegemony", 'This network has no significant AS dependency (^.^)v')
+                    plotlyMessage("plotHegemony", 'This network has no significant AS dependency ¯\\_(ツ)_/¯')
 
                 }
             } );
@@ -527,6 +531,7 @@ function tartiflettePlotClick(data){
                 body += '</tr>';
 
                 // Count prominent msm and probe IDs
+                if(alarm.correlation<=-0.33){
                 for( j=0; j<alarm.msmid.length; j++){
                     var ids = alarm.msmid[j].split(" ");
                     ids[0] = parseInt(ids[0]);
@@ -542,6 +547,7 @@ function tartiflettePlotClick(data){
                         }
                     }
                 }
+                }
             }
             body += '</tbody>';
             body += '</table>';
@@ -554,6 +560,8 @@ function tartiflettePlotClick(data){
                 txt = '';
                 footer = "See the "+dataapi.count+" reported alarms here: <a href='"+url.replace("format=json", "format=api")+"'>ihr.iijlab.net/"+url.replace("format=json", "format=api")+"</a>";
             }
+            console.log(msmCount);
+            console.log(msmProbes);
 
             // Tracemon
             if( msmCount.length!=0 ){
@@ -561,6 +569,12 @@ function tartiflettePlotClick(data){
                 var msmid = [];
                 var probeid = [];
                 var timebin = new Date(dataapi.results[0].timebin);
+                // Normalize counts
+                <!--for (var key in msmCount) {-->
+                    <!--if (msmCount.hasOwnProperty(key)) {-->
+                        <!--msmCount[key] /= msmProbes[key].length;-->
+                    <!--}-->
+                <!--}-->
                 // Get the most prominent msm 
                 var arr = Object.values(msmCount);
                 for( i=0; i<Math.min(1,arr.length); i++){
@@ -571,6 +585,9 @@ function tartiflettePlotClick(data){
                     probeid = probeid.concat(msmProbes[key]);
                     delete msmCount[key]; 
                 }
+                console.log(msmid);
+                console.log(probeid);
+
                 initTracemon(
                     '#tartiflette_mon',
                     {
@@ -579,8 +596,9 @@ function tartiflettePlotClick(data){
                     // mergedMeasurements: [lm_msmid],
                         measurements: msmid,
                         sources: probeid,
-                        startTimestamp:  timebin.getTime()/1000-3600,
-                        stopTimestamp: timebin.getTime()/1000+3600,
+                        maximumTracerouteValiditySeconds:600,
+                        startTimestamp:  (timebin.getTime()/1000)-(2*3600),
+                        stopTimestamp: (timebin.getTime()/1000)+(2*3600),
                     } // Query options, see table below for more info
                 );
             
@@ -672,6 +690,7 @@ function discoPlotClick(data){
                 {
                 measurements:[5030], // 5027],
                 sources: probeid,
+                maximumTracerouteValiditySeconds:600,
                 startTimestamp:  (startts.getTime()/1000)-1800,
                 stopTimestamp: (endts.getTime()/1000)+1800,
                 } 

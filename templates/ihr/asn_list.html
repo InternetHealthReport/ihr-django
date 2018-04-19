@@ -10,7 +10,11 @@
     <div class="col-6">
         <ul>
         {% for asn in object_list %}
-        <li><a href="{% url "ihr:asnDetail" asn.number %}">AS{{ asn.number }} {{ asn.name }}</a></li>
+        {% if asn.number < 0 %}
+            <li><a href="{% url "ihr:asnDetail" asn.number %}">IXP{{ asn.number }} {{ asn.name }}</a></li>
+        {% else %}
+            <li><a href="{% url "ihr:asnDetail" asn.number %}">AS{{ asn.number }} {{ asn.name }}</a></li>
+        {% endif %}
         {% endfor %}
         </ul>
     </div>
