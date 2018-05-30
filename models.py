@@ -121,6 +121,8 @@ class Disco_probes(models.Model):
     level = models.FloatField(default=0.0)
     ipv4 = models.CharField(max_length=64, default="None") 
     prefixv4 = models.CharField(max_length=70, default="None")
+    lat = models.FloatField(default=0.0)
+    lon = models.FloatField(default=0.0)
 
 
 # @architect.install('partition', type='range', subtype='date', constraint='day', column='timebin')
