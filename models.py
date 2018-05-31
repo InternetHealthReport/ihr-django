@@ -1,5 +1,5 @@
 from django.db import models
-import architect
+# import architect
 
 class ASN(models.Model):
     number = models.BigIntegerField(primary_key=True)
@@ -135,16 +135,6 @@ class Hegemony(models.Model):
 
     def __str__(self):
         return "%s originAS%s AS%s %s" % (self.timebin, self.originasn.number, self.asn.number, self.hege)
-
-class HegemonyCone(models.Model):
-    timebin = models.DateTimeField(db_index=True)
-    asn = models.ForeignKey(ASN, on_delete=models.CASCADE, db_index=True)
-    conesize = models.IntegerField(default=0)
-    af = models.IntegerField(default=0)
-
-    class Meta:
-        index_together = ("timebin", "asn", "af")
-
 
 class HegemonyCone(models.Model):
     timebin = models.DateTimeField(db_index=True)
