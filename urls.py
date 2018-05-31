@@ -15,6 +15,7 @@ urlpatterns = [
     url(r'^data/delay/$', views.delayData, name='delayData'),
     url(r'^data/forwarding/$', views.forwardingData, name='forwardingData'),
     url(r'^data/disco/$', views.discoData, name='discoData'),
+    url(r'^data/geodisco/$', views.discoGeoData, name='discoGeoData'),
     url(r'^data/hegemony/$', views.hegemonyData, name='hegemonyData'),
     url(r'^data/hegemonyCone/$', views.coneData, name='coneData'),
     url(r'^api/$', views.restful_API, name="root"),

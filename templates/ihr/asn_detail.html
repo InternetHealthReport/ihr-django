@@ -4,7 +4,6 @@
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 {% endblock %}
 
-
 {% block body %}
 <div class="row">
     <div class="col-12">
@@ -15,11 +14,22 @@
         {% endif %}
             <form class="form-inline" style="float:right">
             <div class="form-group">
+                <select name="show-af" id="show-af" class="form-control" >
+                {% if af == 6 %}
+                    <option value="4"> IPv4 </option>
+                    <option value="6" selected="selected"> IPv6 </option>
+                {% else %}
+                    <option value="4" selected="selected"> IPv4 </option>
+                    <option value="6"> IPv6 </option>
+                {% endif %}
+                </select>
+            </div>
+            <div class="form-group">
                 <select name="show-last" id="show-last" class="form-control" >
-                    <option value="7"> Show last 1 week </option>
-                    <option value="30" selected="selected"> Show last 1 month </option>
-                    <option value="90"> Show last 3 months </option>
-                    <option value="180"> Show last 6 months </option>
+                    <option value="7" selected="selected">last 1 week </option>
+                    <option value="30">last 1 month </option>
+                    <option value="90">last 3 months </option>
+                    <option value="180">last 6 months </option>
                 </select>
             </div>
             </form>
@@ -65,7 +75,7 @@
 
 
 
-{% if asn.tartiflette %}
+{% if asn.tartiflette and af == 4 %}
 <div class="row">
     <div class="col-12">
         <h2>Delay and Forwarding Anomalies <a href="/ihr/about/tartiflette/" target="_blank" class="glyphicon glyphicon-question-sign help-btn"></a></h2>
@@ -126,7 +136,7 @@
 </div>
 {% endif %}
 
-{% if asn.disco  %}
+{% if asn.disco and af == 4 %}
 <div class="row">
     <div class="col-12">
         <h2>Network Disconnections <a href="/ihr/about/disco/" target="_blank" class="glyphicon glyphicon-question-sign help-btn"></a></h2>
@@ -216,7 +226,7 @@ function makeplot_disco(dt, last) {
 
 };
 
-function makeplot_hegemony(dt, last) {
+function makeplot_hegemony(dt, last, af) {
     var layout = {
         yaxis: {
             title: 'AS{{ asn.number }} dependencies',
@@ -236,7 +246,7 @@ title: 'Number of ASes<br>dependent on AS{{ asn.number}}',
     };
 
     Plotly.newPlot("plotHegemony", [], layout);
-    Plotly.d3.json("{% url "ihr:hegemonyData" %}?originasn={{ asn.number }}&date="+dt+"&last="+last, 
+    Plotly.d3.json("{% url "ihr:hegemonyData" %}?originasn={{ asn.number }}&date="+dt+"&last="+last+"&af="+af, 
             function(data){ 
                 var nbAsns=0;
                 for (var asn in data) {
@@ -251,7 +261,7 @@ title: 'Number of ASes<br>dependent on AS{{ asn.number}}',
 
                 }
             } );
-    Plotly.d3.json("{% url "ihr:coneData" %}?asn={{ asn.number }}&date="+dt+"&last="+last, function(data){ addPlotly(data, "plotHegemony", "Number of ASes", 2, 0, 5, last, "AS{{ asn.number }}"); } );
+    Plotly.d3.json("{% url "ihr:coneData" %}?asn={{ asn.number }}&date="+dt+"&last="+last+"&af="+af, function(data){ addPlotly(data, "plotHegemony", "Number of ASes", 2, 0, 5, last, "AS{{ asn.number }}"); } );
 
     var mainPlot = document.getElementById('plotHegemony');
     mainPlot.on('plotly_click', hegemonyPlotClick); 
@@ -321,16 +331,16 @@ function addPlotly( data, divId, label, ynum , rangeLow, rangeHigh, last, stream
 
 };
 
-{% if asn.tartiflette %}
+{% if asn.tartiflette and af == 4 %}
 makeplot_tartiflette('{{ date }}', '{{ last }}');
 {% endif %}
 
-{% if asn.disco %}
+{% if asn.disco and af == 4 %}
 makeplot_disco('{{ date }}', '{{ last }}');
 {% endif %}
 
 {% if asn.ashash and ashashValidDate %}
-makeplot_hegemony('{{ date }}', '{{ last }}');
+makeplot_hegemony('{{ date }}', '{{ last }}', '{{ af }}');
 {% endif %}
 
 // Get params from the query string
@@ -343,7 +353,7 @@ makeplot_hegemony('{{ date }}', '{{ last }}');
             let param = paramsArray[i]
                 .split('=', 2);
 
-            if (param.length !== 2)
+            if (param.length != 2)
                 continue;
 
             params[param[0]] = decodeURIComponent(param[1].replace(/\+/g, " "));
@@ -367,9 +377,8 @@ function prefixMatch(ip){
     return widget.replace("queryIP", ip);
 }
 
+
 function tartiflettePlotClick(data){
-    console.log('In click function');
-    console.log(data);
         // Initialisation
         $("#tartiflette_details_data").html('<span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span> Loading...')
         $("#tartiflette_details_title").html("");
@@ -445,7 +454,6 @@ function tartiflettePlotClick(data){
                 montitle = "<h3>RTT of traceroutes crossing reported links</h3><br>";
                 var sdate = new Date(pt.x);
                 var timebin = new Date(Date.UTC(sdate.getFullYear(), sdate.getMonth(), sdate.getDay(), sdate.getHours(), sdate.getMinutes()));
-                console.log(timebin);
                 // Get the 5 most prominent msm 
                 var arr = Object.values(msmCount);
                 for( i=0; i<Math.min(5,arr.length); i++){
@@ -483,7 +491,6 @@ function tartiflettePlotClick(data){
                     lm_widget.shell().init();
                 }
                 catch(err) {
-                    console.log('set timer');
                 }
             }
 
@@ -560,8 +567,6 @@ function tartiflettePlotClick(data){
                 txt = '';
                 footer = "See the "+dataapi.count+" reported alarms here: <a href='"+url.replace("format=json", "format=api")+"'>ihr.iijlab.net/"+url.replace("format=json", "format=api")+"</a>";
             }
-            console.log(msmCount);
-            console.log(msmProbes);
 
             // Tracemon
             if( msmCount.length!=0 ){
@@ -585,8 +590,6 @@ function tartiflettePlotClick(data){
                     probeid = probeid.concat(msmProbes[key]);
                     delete msmCount[key]; 
                 }
-                console.log(msmid);
-                console.log(probeid);
 
                 initTracemon(
                     '#tartiflette_mon',
@@ -725,7 +728,8 @@ function hegemonyPlotClick(data){
         if(data.points[0].yaxis._id == 'y'){
             title = "<h3>AS{{ asn.number }} dependencies ("+pt.x+")</h3><br>";
             montitle = "";
-            url =  '{% url "ihr:hegemonyListView" %}?originasn={{ asn.number }}&timebin='+date+'&af=4&format=json&ordering=-hege'; 
+            af = $.QueryString.af;
+            url =  '{% url "ihr:hegemonyListView" %}?originasn={{ asn.number }}&timebin='+date+'&af='+af+'&format=json&ordering=-hege'; 
             $.getJSON(url, function(data){
                 var body = '<table class="table"> <thead> <tr> <th> ASN </th> <th> Name </th> <th> AS Hegemony </th> </tr></thead>'; //JSON.stringify(data.results, null, 2);
                 body += '<tbody>';
@@ -796,7 +800,8 @@ function hegemonyPlotClick(data){
 
             title = "<h3>Networks dependent on AS{{ asn.number }} ("+pt.x+")</h3><br>";
             montitle = "";
-            url =  '{% url "ihr:hegemonyListView" %}?asn={{ asn.number }}&timebin='+date+'&af=4&format=json&ordering=-hege'; 
+            af = $.QueryString.af;
+            url =  '{% url "ihr:hegemonyListView" %}?asn={{ asn.number }}&timebin='+date+'&af='+af+'&format=json&ordering=-hege'; 
             $.getJSON(url, function(data){
                 var body = '<table class="table"> <thead> <tr> <th> ASN </th> <th> Name </th> <th> AS Hegemony </th> </tr></thead>'; //JSON.stringify(data.results, null, 2);
                 body += '<tbody>';
@@ -880,16 +885,28 @@ $(document).ready(function(){
 
 <!--Selector for "show last"-->
 $('select[name="show-last"] option[value="{{ last }}"]').prop('selected', true);
+var af = $("#show-af").val();
+$.QueryString.af = af;
+history.replaceState({}, '', "?" + $.param($.QueryString)); 
 $(function(){
+
+            $("#show-af").change(function(){
+                $.QueryString.af = this.value;
+                history.replaceState({}, '', "?" + $.param($.QueryString)); 
+                window.location.href = window.location.href; 
+            });
+
             $("#show-last").change(function(){
-                if( '{{ asn.tartiflette }}' == 'True'){
+                var af = $("#show-af").val();
+                console.log(af);
+                if( '{{ asn.tartiflette }}' == 'True' & af == '4'){
                     makeplot_tartiflette('{{ date }}', this.value);
                 }
-                if( '{{ asn.disco }}' == 'True'){
+                if( '{{ asn.disco }}' == 'True' & af == '4'){
                     makeplot_disco('{{ date }}', this.value);
                 }
                 if( '{{ asn.ashash }}' == 'True'){
-                    makeplot_hegemony('{{ date }}', this.value);
+                    makeplot_hegemony('{{ date }}', this.value, af);
                 }
                     });
             });

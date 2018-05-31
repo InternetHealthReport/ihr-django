@@ -439,6 +439,44 @@ def eventToStepGraph(dtStart, dtEnd, stime, etime, lvl, eventid):
     return x, y, ei
 
 
+def discoGeoData(request):
+    # format the end date
+    dtEnd = datetime.now(pytz.utc)
+    if "date" in request.GET and request.GET["date"].count("-") == 2:
+        date = request.GET["date"].split("-")
+        dtEnd = datetime(int(date[0]), int(date[1]), int(date[2]), 23, 59, tzinfo=pytz.utc) 
+
+    # set the data duration
+    last = LAST_DEFAULT
+    if "last" in request.GET:
+        last = int(request.GET["last"])
+        if last > 356:
+            last = 356
+
+    dtStart = dtEnd - timedelta(last)
+
+    # find corresponding ASN or country
+    streams = Disco_events.objects.filter(endtime__gte=dtStart,
+        starttime__lte=dtEnd,avglevel__gte=10, streamtype="geo").distinct("streamname").values("streamname", "starttime",  "avglevel", "id")
+        
+    formatedData = {}
+    for stream in streams:
+        eventid = stream["id"]
+
+        probeData = Disco_probes.objects.filter(event=eventid, probe_id=int(stream["streamname"].partition("-")[2])).values("lat", "lon")
+        # eventid=list(data.values_list("id", flat=True))
+
+        for probe in probeData:
+            formatedData[stream["streamname"]] = {
+                "lvl": stream["avglevel"],
+                "dtStart": stream["starttime"],
+                "eventid": eventid,
+                "lat": probe["lat"],
+                "lon": probe["lon"],
+                }
+
+    return JsonResponse(formatedData, encoder=DateTimeEncoder) 
+
 def discoData(request):
     # format the end date
     dtEnd = datetime.now(pytz.utc)
@@ -643,8 +681,13 @@ class ASNDetail(generic.DetailView):
         if "last" in self.request.GET:
             last = self.request.GET["last"]
 
+        af = 4
+        if "af" in self.request.GET:
+            af = self.request.GET["af"]
+
         context["date"] = date;
         context["last"] = last;
+        context["af"] = int(af);
         context["ashashValidDate"] = (date == "" or datetime.strptime(date,"%Y-%m-%d")>datetime(2018,1,15))
 
         return context;

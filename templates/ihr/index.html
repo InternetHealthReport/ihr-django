@@ -51,6 +51,7 @@
     <h1>Recent network disconnections</h1>
     <div class="col-lg-12">
         <div id="plotDiscoInfo"></div>
+        <div id="plotGeoDisco"></div>
         <div id="plotDisco"></div>
         <br>
     </div>
@@ -109,6 +110,59 @@
     <div class="row">
     </div>
 <script>
+
+    function addGeoPlot(dt, last){
+        Plotly.d3.json("{% url "ihr:discoGeoData" %}?date="+dt+"&last="+last, function(err, rawdata){
+            var slat = [], slon = [], stext = [], ssize = [], slvl = []; 
+            for (var stream in rawdata){
+                slat.push(rawdata[stream]["lat"]);
+                slon.push(rawdata[stream]["lon"]);
+                stext.push("<b><a href='{% url "ihr:discoDetail" 12345 %}'>".replace(/12345/, rawdata[stream]["eventid"].toString())+rawdata[stream]["dtStart"]+"</a></b>");
+                ssize.push(20);
+                slvl.push(rawdata[stream]["lvl"]);
+            }
+
+            var data = [{ 
+                type: 'scattergeo', 
+                lat: slat, 
+                lon: slon, 
+                text: stext, 
+                mode:'markers+text', 
+                textposition:["top center"], 
+                hoverinfo: 'none',
+                marker: { 
+                    size: ssize,
+                    color: slvl,
+                    cmin: 0, 
+                    cmax: 25, 
+                    colorscale: 'Reds', 
+                }, 
+                textfont:{
+                        color:'#000000',
+                        style:'bold',
+                },
+                name: 'Geographical Disconnections' 
+            }]; 
+
+            var layout = { 
+                geo:{
+                    showframe: false,
+                    showcoastlines: false,
+                    showland: true, 
+                    landcolor: 'rgb(215, 215, 215)',
+                    countrycolor: 'rgb(235, 235, 235)',
+                    showcountries:  true,
+                },
+                margin: {
+                    t: 10,
+                    b: 10,
+                },
+            }; 
+
+            Plotly.newPlot('plotGeoDisco', data, layout); 
+        });
+    }
+
     function updateArg(search, arg, val){
 
         if(search.indexOf(arg) == -1){
@@ -206,6 +260,7 @@
     };
     makeplot('{{ date }}', '{{ last }}');
     makeplot_disco('{{ date }}', '{{ last }}');
+    addGeoPlot('{{ date }}', '{{ last }}');
 
     console.log("{{ monitoredAsn }}");
     console.log("{{ monitoredAsn0 }}");
