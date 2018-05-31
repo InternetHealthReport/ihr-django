@@ -13,17 +13,17 @@
         <h1>AS{{ asn.number }} {{ asn.name }}
         {% endif %}
             <form class="form-inline" style="float:right">
-            <div class="form-group">
-                <select name="show-af" id="show-af" class="form-control" >
-                {% if af == 6 %}
-                    <option value="4"> IPv4 </option>
-                    <option value="6" selected="selected"> IPv6 </option>
-                {% else %}
-                    <option value="4" selected="selected"> IPv4 </option>
-                    <option value="6"> IPv6 </option>
-                {% endif %}
-                </select>
-            </div>
+            <!--<div class="form-group">-->
+                <!--<select name="show-af" id="show-af" class="form-control" >-->
+                <!--{% if af == 6 %}-->
+                    <!--<option value="4"> IPv4 </option>-->
+                    <!--<option value="6" selected="selected"> IPv6 </option>-->
+                <!--{% else %}-->
+                    <!--<option value="4" selected="selected"> IPv4 </option>-->
+                    <!--<option value="6"> IPv6 </option>-->
+                <!--{% endif %}-->
+                <!--</select>-->
+            <!--</div>-->
             <div class="form-group">
                 <select name="show-last" id="show-last" class="form-control" >
                     <option value="7" selected="selected">last 1 week </option>
@@ -885,19 +885,21 @@ $(document).ready(function(){
 
 <!--Selector for "show last"-->
 $('select[name="show-last"] option[value="{{ last }}"]').prop('selected', true);
-var af = $("#show-af").val();
+var af = '4';
+<!--var af = $("#show-af").val();-->
 $.QueryString.af = af;
 history.replaceState({}, '', "?" + $.param($.QueryString)); 
 $(function(){
 
-            $("#show-af").change(function(){
-                $.QueryString.af = this.value;
-                history.replaceState({}, '', "?" + $.param($.QueryString)); 
-                window.location.href = window.location.href; 
-            });
+            <!--$("#show-af").change(function(){-->
+                <!--$.QueryString.af = this.value;-->
+                <!--history.replaceState({}, '', "?" + $.param($.QueryString)); -->
+                <!--window.location.href = window.location.href; -->
+            <!--});-->
 
             $("#show-last").change(function(){
-                var af = $("#show-af").val();
+                <!--var af = $("#show-af").val();-->
+                var af = '4';
                 console.log(af);
                 if( '{{ asn.tartiflette }}' == 'True' & af == '4'){
                     makeplot_tartiflette('{{ date }}', this.value);
