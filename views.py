@@ -441,6 +441,7 @@ def eventToStepGraph(dtStart, dtEnd, stime, etime, lvl, eventid):
 
 def discoGeoData(request):
     # format the end date
+    minLevel=12
     dtEnd = datetime.now(pytz.utc)
     if "date" in request.GET and request.GET["date"].count("-") == 2:
         date = request.GET["date"].split("-")
@@ -457,7 +458,7 @@ def discoGeoData(request):
 
     # find corresponding ASN or country
     streams = Disco_events.objects.filter(endtime__gte=dtStart,
-        starttime__lte=dtEnd,avglevel__gte=10, streamtype="geo").distinct("streamname").values("streamname", "starttime",  "avglevel", "id")
+        starttime__lte=dtEnd,avglevel__gte=minLevel, streamtype="geo").distinct("streamname").values("streamname", "starttime",  "avglevel", "id")
         
     formatedData = {}
     for stream in streams:
@@ -479,6 +480,7 @@ def discoGeoData(request):
 
 def discoData(request):
     # format the end date
+    minLevel = 12
     dtEnd = datetime.now(pytz.utc)
     if "date" in request.GET and request.GET["date"].count("-") == 2:
         date = request.GET["date"].split("-")
@@ -502,7 +504,7 @@ def discoData(request):
         streams= [{"streamtype":"country", "streamname": country.code}]
     else:
         streams = Disco_events.objects.filter(endtime__gte=dtStart,
-            starttime__lte=dtEnd,avglevel__gte=10).exclude(streamtype="geo").exclude(streamname="All").distinct("streamname").values("streamname", "streamtype")
+            starttime__lte=dtEnd,avglevel__gte=minLevel).exclude(streamtype="geo").exclude(streamname="All").distinct("streamname").values("streamname", "streamtype")
         
     formatedData = {}
     for stream in streams:
