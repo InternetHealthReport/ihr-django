@@ -24,6 +24,8 @@ from django_filters import rest_framework as filters
 # by default shows only one week of data
 LAST_DEFAULT = 7
 
+HEGE_GRANULARITY = 15
+
 ############ API ##########
 
 ### Filters:
@@ -574,12 +576,14 @@ def hegemonyData(request):
             currentTimebin = row.timebin
 
         if currentTimebin != row.timebin:
-            for a0 in allAsn.difference(seenAsn):
-                formatedData["AS"+str(a0)]["x"].append(currentTimebin) 
-                formatedData["AS"+str(a0)]["y"].append(0) 
-            currentTimebin = row.timebin
-            seenAsn = set()
-
+            while currentTimebin != row.timebin:
+                for a0 in allAsn.difference(seenAsn):
+                    formatedData["AS"+str(a0)]["x"].append(currentTimebin) 
+                    formatedData["AS"+str(a0)]["y"].append(0) 
+                # currentTimebin = row.timebin
+                currentTimebin += timedelta(minutes=HEGE_GRANULARITY)
+                seenAsn = set()
+        
         seenAsn.add(a)
         if "AS"+str(a) not in formatedData:
             formatedData["AS"+str(a)] = {"x":[], "y":[]}
