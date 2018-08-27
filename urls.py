@@ -26,4 +26,5 @@ urlpatterns = [
     url(r'^api/disco_events/$', views.DiscoEventsView.as_view(), name='discoEventsListView'),
     url(r'^api/disco_probes/$', views.DiscoProbesView.as_view(), name='discoProbesListView'),
     url(r'^api/hegemony/$', views.HegemonyView.as_view(), name='hegemonyListView'),
+    url(r'^api/hegemony_cone/$', views.HegemonyConeView.as_view(), name='hegemonyConeListView'),
 ]

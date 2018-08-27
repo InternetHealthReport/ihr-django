@@ -18,7 +18,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework import generics
-from .serializers import DelaySerializer, ForwardingSerializer, DelayAlarmsSerializer, ForwardingAlarmsSerializer, DiscoEventsSerializer, DiscoProbesSerializer, HegemonySerializer
+from .serializers import DelaySerializer, ForwardingSerializer, DelayAlarmsSerializer, ForwardingAlarmsSerializer, DiscoEventsSerializer, DiscoProbesSerializer, HegemonySerializer, HegemonyConeSerializer
 from django_filters import rest_framework as filters 
 
 # by default shows only one week of data
@@ -138,6 +138,23 @@ class HegemonyFilter(filters.FilterSet):
         },
     }
 
+class HegemonyConeFilter(filters.FilterSet):
+    class Meta:
+        model = HegemonyCone
+        fields = {
+            'asn': ['exact'],
+            'timebin': ['exact', 'lte', 'gte'],
+            'af': ['exact'],
+        }
+        ordering_fields = ('timebin', 'asn', 'af')
+
+    filter_overrides = {
+        django_models.DateTimeField: {
+            'filter_class': filters.IsoDateTimeFilter
+        },
+    }
+
+
 ### Views:
 class DelayView(generics.ListAPIView): #viewsets.ModelViewSet):
     """
@@ -201,6 +218,16 @@ class HegemonyView(generics.ListAPIView):
     filter_class = HegemonyFilter
 
 
+class HegemonyConeView(generics.ListAPIView):
+    """
+    API endpoint that allows to view AS hegemony cones (number of dependent
+    networks).
+    """
+    queryset = HegemonyCone.objects.all().order_by("timebin")
+    serializer_class = HegemonyConeSerializer
+    filter_class = HegemonyConeFilter
+
+
 
 @api_view(['GET'])
 def restful_API(request, format=None):
@@ -215,6 +242,7 @@ def restful_API(request, format=None):
         'disco_events': reverse('ihr:discoEventsListView', request=request, format=format),
         'disco_probes': reverse('ihr:discoProbesListView', request=request, format=format),
         'hegemony': reverse('ihr:hegemonyListView', request=request, format=format),
+        'hegemony_cone': reverse('ihr:hegemonyConeListView', request=request, format=format),
     })
 
 

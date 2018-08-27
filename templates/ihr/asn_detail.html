@@ -1,5 +1,13 @@
 {% extends "base.html" %}
 
+{% block title %}
+    {% if asn.number < 0 %}
+    IXP{{ asn.number }} {{ asn.name }}
+    {% else %}
+    AS{{ asn.number }} {{ asn.name }}
+    {% endif %}
+{% endblock %}
+
 {% block head %}
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 {% endblock %}
