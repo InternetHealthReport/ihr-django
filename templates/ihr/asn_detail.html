@@ -774,17 +774,19 @@ function hegemonyPlotClick(data){
             }
 
             // Widget
-            var ts = new Date(pt.x+' GMT');
+            var ts = new Date(Date.parse(pt.x));
             montitle = "<h3>BGPlay for AS{{ asn.number }}</h3><br>";
             <!--<script src="https://stat.ripe.net/widgets/widget_api.js"></script>-->
+            console.log("ts=");
+            console.log(ts);
             ripestat.init(
                 "bgplay",
                 {
                     "unix_timestamps":"TRUE",
                     "ignoreReannouncements":"true",
                     "resource":"AS{{ asn.number }}",
-                    "starttime":(ts.getTime()/1000)-1800,
-                    "endtime":(ts.getTime()/1000)+1800,
+                    "starttime":(ts.getTime()/1000)-1800-(ts.getTimezoneOffset()*60),
+                    "endtime":(ts.getTime()/1000)+1800-(ts.getTimezoneOffset()*60),
                     "rrcs":"0,13,16",
                     "type":"bgp"
                 },
