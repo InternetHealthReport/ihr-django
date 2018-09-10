@@ -45,7 +45,7 @@
     </div>
 </div>
 
-{% if asn.ashash and ashashValidDate %}
+{% if asn.ashash %}
 <div class="row">
     <div class="col-12">
         <h2>AS Interdependence <a href="/ihr/about/hegemony/" target="_blank" class="glyphicon glyphicon-question-sign help-btn"></a></h2>
@@ -347,7 +347,7 @@ makeplot_tartiflette('{{ date }}', '{{ last }}');
 makeplot_disco('{{ date }}', '{{ last }}');
 {% endif %}
 
-{% if asn.ashash and ashashValidDate %}
+{% if asn.ashash %}
 makeplot_hegemony('{{ date }}', '{{ last }}', '{{ af }}');
 {% endif %}
 
@@ -442,14 +442,14 @@ function tartiflettePlotClick(data){
                     ids[0] = parseInt(ids[0]);
                     ids[1] = parseInt(ids[1]);
                     if( alarm.deviation > 10){
-                        if( ids[0] in msmCount ){
-                            msmCount[ids[0]] += alarm.deviation;
-                            msmProbes[ids[0]].push(ids[1]);
-                        }
-                        else{
-                            msmCount[ids[0]] = alarm.deviation;
-                            msmProbes[ids[0]] = [ids[1]];
-                        }
+                            if( ids[0] in msmCount ){
+                                msmCount[ids[0]] += alarm.deviation;
+                                msmProbes[ids[0]].push(ids[1]);
+                            }
+                            else{
+                                msmCount[ids[0]] = alarm.deviation;
+                                msmProbes[ids[0]] = [ids[1]];
+                            }
                     }
                 }
                 prevLink = alarm.link;
@@ -476,29 +476,33 @@ function tartiflettePlotClick(data){
                     lm_grp.push({ 
                         id: lm_msmid[i].toString(),
                         measurementId: lm_msmid[i],
-                        probes: msmProbes[lm_msmid[i]],
+                        probes: msmProbes[lm_msmid[i]].slice(0,10),
                         type: 'multi-probes',
                     });
                 }
-                lm_widget = initLatencymon(
-                    '#tartiflette_mon',
-                    {
-                        autoStartGrouping: false,
-                        <!--showMinimumByDefault: false,-->
-                    }, // Tool options, see table below for more info
-                    { 
-                    // mergedMeasurements: [lm_msmid],
-                        measurements: lm_msmid,
-                        startTimestamp:  timebin.getTime()/1000-(5*3600),
-                        stopTimestamp: timebin.getTime()/1000+(5*3600),
-                        groups: lm_grp,
-                    } // Query options, see table below for more info
-                );
-                // Workaround to load latencymon from url parameters
+                console.log(lm_msmid);
+                console.log(lm_grp);
                 try{
+                    lm_widget = initLatencymon(
+                        '#tartiflette_mon',
+                        {
+                            autoStartGrouping: false,
+                            <!--showMinimumByDefault: false,-->
+                        }, // Tool options, see table below for more info
+                        { 
+                        // mergedMeasurements: [lm_msmid],
+                            measurements: lm_msmid,
+                            startTimestamp:  timebin.getTime()/1000-(5*3600),
+                            stopTimestamp: timebin.getTime()/1000+(5*3600),
+                            groups: lm_grp,
+                        } // Query options, see table below for more info
+                    );
+                    // Workaround to load latencymon from url parameters
                     lm_widget.shell().init();
                 }
                 catch(err) {
+                    console.log("error: ");
+                    console.log(err);
                 }
             }
 
