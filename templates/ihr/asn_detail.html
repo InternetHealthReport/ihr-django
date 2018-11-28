@@ -416,7 +416,7 @@ function tartiflettePlotClick(data){
             body += '<tbody>';
             var prevLink = '';
 
-            for( i=0; i<dataapi.results.length; i++){
+            for( i=0; i<Math.min(10,dataapi.results.length); i++){
                 var alarm = dataapi.results[i];
                 if(prevLink == alarm.link){
                     continue;         // both IPs are from this AS, display only once
@@ -532,7 +532,7 @@ function tartiflettePlotClick(data){
                 var body = '<table class="table"> <thead> <tr> <th> IP </th> <th>Usual preceding IP</th> <th> Correlation </th> <th> Responsibility </th> </tr></thead>'; //JSON.stringify(data.results, null, 2);
                 body += '<tbody>';
                 var prevLink = '';
-            for( i=0; i<dataapi.results.length; i++){
+            for( i=0; i<Math.min(10,dataapi.results.length); i++){
                 var alarm = dataapi.results[i];
                 if(alarm.correlation<=-0.5){
                     body += '<tr class="danger">';
@@ -651,7 +651,7 @@ function discoPlotClick(data){
                 var body = '<table class="table"> <thead> <tr> <th> Disconnection time </th> <th> Reconnection time </th> <th> Probe ID </th> <th> IP prefix </th>  <th> Disco. level </th> </tr></thead>'; //JSON.stringify(data.results, null, 2);
             body += '<tbody>';
             var prevLink = '';
-        for( i=0; i<data.results.length; i++){
+        for( i=0; i<Math.min(10,data.results.length); i++){
             var alarm = data.results[i];
             if(alarm.level>=15){
                 body += '<tr class="danger">';
@@ -687,7 +687,7 @@ function discoPlotClick(data){
             //var startts = new Date('2999-01-01'), endts = new Date('1970-01-01');
             var ihrstart = new Date('2017-01-01');
             montitle = "<h3>Visualisation of traceroutes from disconnected probes</h3><br>";
-            for(i=0; i<data.results.length; i++){
+            for(i=0; i<Math.min(10,data.results.length); i++){
                 probeid.push(data.results[i].probe_id);
                 start = new Date(data.results[i].starttime);
                 end = new Date(data.results[i].endtime);
@@ -745,7 +745,7 @@ function hegemonyPlotClick(data){
             $.getJSON(url, function(data){
                 var body = '<table class="table"> <thead> <tr> <th> ASN </th> <th> Name </th> <th> AS Hegemony </th> </tr></thead>'; //JSON.stringify(data.results, null, 2);
                 body += '<tbody>';
-            for( i=0; i<data.results.length; i++){
+            for( i=0; i<Math.min(10,data.results.length); i++){
                 var alarm = data.results[i];
                 if (alarm.asn == {{ asn.number }}){
                     continue;
@@ -819,7 +819,7 @@ function hegemonyPlotClick(data){
             $.getJSON(url, function(data){
                 var body = '<table class="table"> <thead> <tr> <th> ASN </th> <th> Name </th> <th> AS Hegemony </th> </tr></thead>'; //JSON.stringify(data.results, null, 2);
                 body += '<tbody>';
-                for( i=0; i<data.results.length; i++){
+                for( i=0; i<Math.min(data.results.length); i++){
                     var alarm = data.results[i];
                     if (alarm.originasn == 0 || alarm.originasn == {{ asn.number }}){
                         continue;

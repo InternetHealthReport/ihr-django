@@ -124,8 +124,8 @@ class HegemonyFilter(filters.FilterSet):
     class Meta:
         model = Hegemony
         fields = {
-            'originasn': ['exact'],
-            'asn': ['exact'],
+            'originasn': ['exact', 'lte', 'gte'],
+            'asn': ['exact', 'lte', 'gte'],
             'timebin': ['exact', 'lte', 'gte'],
             'hege': ['exact', 'lte', 'gte'],
             'af': ['exact'],
