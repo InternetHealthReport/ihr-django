@@ -4,6 +4,8 @@
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 {% endblock %}
 
+{% block title %} Internet Health Report - Homepage {% endblock %}
+
 {% block errorMessage %}{% endblock %}
 
 {% block body %}
@@ -48,7 +50,7 @@
     <!--</div>-->
     <div class="row">
 
-    <h1>Recent network disconnections</h1>
+    <h1>Network disconnections</h1>
     <div class="col-lg-12">
         <div id="plotDiscoInfo"></div>
         <div id="plotGeoDisco"></div>
@@ -113,13 +115,14 @@
 
     function addGeoPlot(dt, last){
         Plotly.d3.json("{% url "ihr:discoGeoData" %}?date="+dt+"&last="+last, function(err, rawdata){
-            var slat = [], slon = [], stext = [], ssize = [], slvl = []; 
+            var slat = [], slon = [], stext = [], ssize = [], slvl = [], spos=[]; 
             for (var stream in rawdata){
                 slat.push(rawdata[stream]["lat"]);
                 slon.push(rawdata[stream]["lon"]);
                 stext.push("<b><a href='{% url "ihr:discoDetail" 12345 %}'>".replace(/12345/, rawdata[stream]["eventid"].toString())+rawdata[stream]["dtStart"]+"</a></b>");
                 ssize.push(20);
                 slvl.push(rawdata[stream]["lvl"]);
+                spos.push("top center")
             }
 
             var data = [{ 
@@ -128,7 +131,7 @@
                 lon: slon, 
                 text: stext, 
                 mode:'markers+text', 
-                textposition:["top center"], 
+                textposition:spos, 
                 hoverinfo: 'none',
                 marker: { 
                     size: ssize,

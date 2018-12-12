@@ -1,5 +1,13 @@
 {% extends "base.html" %}
 
+{% block title %}
+    {% if asn.number < 0 %}
+    IXP{{ asn.number }} {{ asn.name }}
+    {% else %}
+    AS{{ asn.number }} {{ asn.name }}
+    {% endif %}
+{% endblock %}
+
 {% block head %}
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 {% endblock %}
@@ -13,17 +21,17 @@
         <h1>AS{{ asn.number }} {{ asn.name }}
         {% endif %}
             <form class="form-inline" style="float:right">
-            <div class="form-group">
-                <select name="show-af" id="show-af" class="form-control" >
-                {% if af == 6 %}
-                    <option value="4"> IPv4 </option>
-                    <option value="6" selected="selected"> IPv6 </option>
-                {% else %}
-                    <option value="4" selected="selected"> IPv4 </option>
-                    <option value="6"> IPv6 </option>
-                {% endif %}
-                </select>
-            </div>
+            <!--<div class="form-group">-->
+                <!--<select name="show-af" id="show-af" class="form-control" >-->
+                <!--{% if af == 6 %}-->
+                    <!--<option value="4"> IPv4 </option>-->
+                    <!--<option value="6" selected="selected"> IPv6 </option>-->
+                <!--{% else %}-->
+                    <!--<option value="4" selected="selected"> IPv4 </option>-->
+                    <!--<option value="6"> IPv6 </option>-->
+                <!--{% endif %}-->
+                <!--</select>-->
+            <!--</div>-->
             <div class="form-group">
                 <select name="show-last" id="show-last" class="form-control" >
                     <option value="7" selected="selected">last 1 week </option>
@@ -37,7 +45,7 @@
     </div>
 </div>
 
-{% if asn.ashash and ashashValidDate %}
+{% if asn.ashash %}
 <div class="row">
     <div class="col-12">
         <h2>AS Interdependence <a href="/ihr/about/hegemony/" target="_blank" class="glyphicon glyphicon-question-sign help-btn"></a></h2>
@@ -339,7 +347,7 @@ makeplot_tartiflette('{{ date }}', '{{ last }}');
 makeplot_disco('{{ date }}', '{{ last }}');
 {% endif %}
 
-{% if asn.ashash and ashashValidDate %}
+{% if asn.ashash %}
 makeplot_hegemony('{{ date }}', '{{ last }}', '{{ af }}');
 {% endif %}
 
@@ -408,7 +416,7 @@ function tartiflettePlotClick(data){
             body += '<tbody>';
             var prevLink = '';
 
-            for( i=0; i<dataapi.results.length; i++){
+            for( i=0; i<Math.min(10,dataapi.results.length); i++){
                 var alarm = dataapi.results[i];
                 if(prevLink == alarm.link){
                     continue;         // both IPs are from this AS, display only once
@@ -434,14 +442,14 @@ function tartiflettePlotClick(data){
                     ids[0] = parseInt(ids[0]);
                     ids[1] = parseInt(ids[1]);
                     if( alarm.deviation > 10){
-                        if( ids[0] in msmCount ){
-                            msmCount[ids[0]] += alarm.deviation;
-                            msmProbes[ids[0]].push(ids[1]);
-                        }
-                        else{
-                            msmCount[ids[0]] = alarm.deviation;
-                            msmProbes[ids[0]] = [ids[1]];
-                        }
+                            if( ids[0] in msmCount ){
+                                msmCount[ids[0]] += alarm.deviation;
+                                msmProbes[ids[0]].push(ids[1]);
+                            }
+                            else{
+                                msmCount[ids[0]] = alarm.deviation;
+                                msmProbes[ids[0]] = [ids[1]];
+                            }
                     }
                 }
                 prevLink = alarm.link;
@@ -468,29 +476,33 @@ function tartiflettePlotClick(data){
                     lm_grp.push({ 
                         id: lm_msmid[i].toString(),
                         measurementId: lm_msmid[i],
-                        probes: msmProbes[lm_msmid[i]],
+                        probes: msmProbes[lm_msmid[i]].slice(0,10),
                         type: 'multi-probes',
                     });
                 }
-                lm_widget = initLatencymon(
-                    '#tartiflette_mon',
-                    {
-                        autoStartGrouping: false,
-                        <!--showMinimumByDefault: false,-->
-                    }, // Tool options, see table below for more info
-                    { 
-                    // mergedMeasurements: [lm_msmid],
-                        measurements: lm_msmid,
-                        startTimestamp:  timebin.getTime()/1000-(5*3600),
-                        stopTimestamp: timebin.getTime()/1000+(5*3600),
-                        groups: lm_grp,
-                    } // Query options, see table below for more info
-                );
-                // Workaround to load latencymon from url parameters
+                console.log(lm_msmid);
+                console.log(lm_grp);
                 try{
+                    lm_widget = initLatencymon(
+                        '#tartiflette_mon',
+                        {
+                            autoStartGrouping: false,
+                            <!--showMinimumByDefault: false,-->
+                        }, // Tool options, see table below for more info
+                        { 
+                        // mergedMeasurements: [lm_msmid],
+                            measurements: lm_msmid,
+                            startTimestamp:  timebin.getTime()/1000-(5*3600),
+                            stopTimestamp: timebin.getTime()/1000+(5*3600),
+                            groups: lm_grp,
+                        } // Query options, see table below for more info
+                    );
+                    // Workaround to load latencymon from url parameters
                     lm_widget.shell().init();
                 }
                 catch(err) {
+                    console.log("error: ");
+                    console.log(err);
                 }
             }
 
@@ -520,7 +532,7 @@ function tartiflettePlotClick(data){
                 var body = '<table class="table"> <thead> <tr> <th> IP </th> <th>Usual preceding IP</th> <th> Correlation </th> <th> Responsibility </th> </tr></thead>'; //JSON.stringify(data.results, null, 2);
                 body += '<tbody>';
                 var prevLink = '';
-            for( i=0; i<dataapi.results.length; i++){
+            for( i=0; i<Math.min(10,dataapi.results.length); i++){
                 var alarm = dataapi.results[i];
                 if(alarm.correlation<=-0.5){
                     body += '<tr class="danger">';
@@ -639,7 +651,7 @@ function discoPlotClick(data){
                 var body = '<table class="table"> <thead> <tr> <th> Disconnection time </th> <th> Reconnection time </th> <th> Probe ID </th> <th> IP prefix </th>  <th> Disco. level </th> </tr></thead>'; //JSON.stringify(data.results, null, 2);
             body += '<tbody>';
             var prevLink = '';
-        for( i=0; i<data.results.length; i++){
+        for( i=0; i<Math.min(10,data.results.length); i++){
             var alarm = data.results[i];
             if(alarm.level>=15){
                 body += '<tr class="danger">';
@@ -675,7 +687,7 @@ function discoPlotClick(data){
             //var startts = new Date('2999-01-01'), endts = new Date('1970-01-01');
             var ihrstart = new Date('2017-01-01');
             montitle = "<h3>Visualisation of traceroutes from disconnected probes</h3><br>";
-            for(i=0; i<data.results.length; i++){
+            for(i=0; i<Math.min(10,data.results.length); i++){
                 probeid.push(data.results[i].probe_id);
                 start = new Date(data.results[i].starttime);
                 end = new Date(data.results[i].endtime);
@@ -733,7 +745,7 @@ function hegemonyPlotClick(data){
             $.getJSON(url, function(data){
                 var body = '<table class="table"> <thead> <tr> <th> ASN </th> <th> Name </th> <th> AS Hegemony </th> </tr></thead>'; //JSON.stringify(data.results, null, 2);
                 body += '<tbody>';
-            for( i=0; i<data.results.length; i++){
+            for( i=0; i<Math.min(10,data.results.length); i++){
                 var alarm = data.results[i];
                 if (alarm.asn == {{ asn.number }}){
                     continue;
@@ -766,17 +778,19 @@ function hegemonyPlotClick(data){
             }
 
             // Widget
-            var ts = new Date(pt.x+' GMT');
+            var ts = new Date(Date.parse(pt.x));
             montitle = "<h3>BGPlay for AS{{ asn.number }}</h3><br>";
             <!--<script src="https://stat.ripe.net/widgets/widget_api.js"></script>-->
+            console.log("ts=");
+            console.log(ts);
             ripestat.init(
                 "bgplay",
                 {
                     "unix_timestamps":"TRUE",
                     "ignoreReannouncements":"true",
                     "resource":"AS{{ asn.number }}",
-                    "starttime":(ts.getTime()/1000)-1800,
-                    "endtime":(ts.getTime()/1000)+1800,
+                    "starttime":(ts.getTime()/1000)-1800-(ts.getTimezoneOffset()*60),
+                    "endtime":(ts.getTime()/1000)+1800-(ts.getTimezoneOffset()*60),
                     "rrcs":"0,13,16",
                     "type":"bgp"
                 },
@@ -805,7 +819,7 @@ function hegemonyPlotClick(data){
             $.getJSON(url, function(data){
                 var body = '<table class="table"> <thead> <tr> <th> ASN </th> <th> Name </th> <th> AS Hegemony </th> </tr></thead>'; //JSON.stringify(data.results, null, 2);
                 body += '<tbody>';
-                for( i=0; i<data.results.length; i++){
+                for( i=0; i<Math.min(data.results.length); i++){
                     var alarm = data.results[i];
                     if (alarm.originasn == 0 || alarm.originasn == {{ asn.number }}){
                         continue;
@@ -885,19 +899,21 @@ $(document).ready(function(){
 
 <!--Selector for "show last"-->
 $('select[name="show-last"] option[value="{{ last }}"]').prop('selected', true);
-var af = $("#show-af").val();
+var af = '4';
+<!--var af = $("#show-af").val();-->
 $.QueryString.af = af;
 history.replaceState({}, '', "?" + $.param($.QueryString)); 
 $(function(){
 
-            $("#show-af").change(function(){
-                $.QueryString.af = this.value;
-                history.replaceState({}, '', "?" + $.param($.QueryString)); 
-                window.location.href = window.location.href; 
-            });
+            <!--$("#show-af").change(function(){-->
+                <!--$.QueryString.af = this.value;-->
+                <!--history.replaceState({}, '', "?" + $.param($.QueryString)); -->
+                <!--window.location.href = window.location.href; -->
+            <!--});-->
 
             $("#show-last").change(function(){
-                var af = $("#show-af").val();
+                <!--var af = $("#show-af").val();-->
+                var af = '4';
                 console.log(af);
                 if( '{{ asn.tartiflette }}' == 'True' & af == '4'){
                     makeplot_tartiflette('{{ date }}', this.value);

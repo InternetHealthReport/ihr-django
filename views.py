@@ -18,13 +18,15 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework import generics
-from .serializers import ASNSerializer, DelaySerializer, ForwardingSerializer, DelayAlarmsSerializer, ForwardingAlarmsSerializer, DiscoEventsSerializer, DiscoProbesSerializer, HegemonySerializer
+from .serializers import ASNSerializer, DelaySerializer, ForwardingSerializer, DelayAlarmsSerializer, ForwardingAlarmsSerializer, DiscoEventsSerializer, DiscoProbesSerializer, HegemonySerializer, HegemonyConeSerializer
 from django_filters import rest_framework as filters 
 import django_filters
 from django.db.models import Q
 
 # by default shows only one week of data
 LAST_DEFAULT = 7
+
+HEGE_GRANULARITY = 15
 
 ############ API ##########
 
@@ -141,8 +143,8 @@ class HegemonyFilter(filters.FilterSet):
     class Meta:
         model = Hegemony
         fields = {
-            'originasn': ['exact'],
-            'asn': ['exact'],
+            'originasn': ['exact', 'lte', 'gte'],
+            'asn': ['exact', 'lte', 'gte'],
             'timebin': ['exact', 'lte', 'gte'],
             'hege': ['exact', 'lte', 'gte'],
             'af': ['exact'],
@@ -154,6 +156,23 @@ class HegemonyFilter(filters.FilterSet):
             'filter_class': filters.IsoDateTimeFilter
         },
     }
+
+class HegemonyConeFilter(filters.FilterSet):
+    class Meta:
+        model = HegemonyCone
+        fields = {
+            'asn': ['exact'],
+            'timebin': ['exact', 'lte', 'gte'],
+            'af': ['exact'],
+        }
+        ordering_fields = ('timebin', 'asn', 'af')
+
+    filter_overrides = {
+        django_models.DateTimeField: {
+            'filter_class': filters.IsoDateTimeFilter
+        },
+    }
+
 
 ### Views:
 class ASNView(generics.ListAPIView): 
@@ -227,6 +246,16 @@ class HegemonyView(generics.ListAPIView):
     filter_class = HegemonyFilter
 
 
+class HegemonyConeView(generics.ListAPIView):
+    """
+    API endpoint that allows to view AS hegemony cones (number of dependent
+    networks).
+    """
+    queryset = HegemonyCone.objects.all().order_by("timebin")
+    serializer_class = HegemonyConeSerializer
+    filter_class = HegemonyConeFilter
+
+
 
 @api_view(['GET'])
 def restful_API(request, format=None):
@@ -241,6 +270,7 @@ def restful_API(request, format=None):
         'disco_events': reverse('ihr:discoEventsListView', request=request, format=format),
         'disco_probes': reverse('ihr:discoProbesListView', request=request, format=format),
         'hegemony': reverse('ihr:hegemonyListView', request=request, format=format),
+        'hegemony_cone': reverse('ihr:hegemonyConeListView', request=request, format=format),
     })
 
 
@@ -469,6 +499,7 @@ def eventToStepGraph(dtStart, dtEnd, stime, etime, lvl, eventid):
 
 def discoGeoData(request):
     # format the end date
+    minLevel=12
     dtEnd = datetime.now(pytz.utc)
     if "date" in request.GET and request.GET["date"].count("-") == 2:
         date = request.GET["date"].split("-")
@@ -485,7 +516,7 @@ def discoGeoData(request):
 
     # find corresponding ASN or country
     streams = Disco_events.objects.filter(endtime__gte=dtStart,
-        starttime__lte=dtEnd,avglevel__gte=10, streamtype="geo").distinct("streamname").values("streamname", "starttime",  "avglevel", "id")
+        starttime__lte=dtEnd,avglevel__gte=minLevel, streamtype="geo").distinct("streamname").values("streamname", "starttime",  "avglevel", "id")
         
     formatedData = {}
     for stream in streams:
@@ -507,6 +538,7 @@ def discoGeoData(request):
 
 def discoData(request):
     # format the end date
+    minLevel = 12
     dtEnd = datetime.now(pytz.utc)
     if "date" in request.GET and request.GET["date"].count("-") == 2:
         date = request.GET["date"].split("-")
@@ -530,7 +562,7 @@ def discoData(request):
         streams= [{"streamtype":"country", "streamname": country.code}]
     else:
         streams = Disco_events.objects.filter(endtime__gte=dtStart,
-            starttime__lte=dtEnd,avglevel__gte=10).exclude(streamtype="geo").exclude(streamname="All").distinct("streamname").values("streamname", "streamtype")
+            starttime__lte=dtEnd,avglevel__gte=minLevel).exclude(streamtype="geo").exclude(streamname="All").distinct("streamname").values("streamname", "streamtype")
         
     formatedData = {}
     for stream in streams:
@@ -600,12 +632,14 @@ def hegemonyData(request):
             currentTimebin = row.timebin
 
         if currentTimebin != row.timebin:
-            for a0 in allAsn.difference(seenAsn):
-                formatedData["AS"+str(a0)]["x"].append(currentTimebin) 
-                formatedData["AS"+str(a0)]["y"].append(0) 
-            currentTimebin = row.timebin
-            seenAsn = set()
-
+            while currentTimebin != row.timebin:
+                for a0 in allAsn.difference(seenAsn):
+                    formatedData["AS"+str(a0)]["x"].append(currentTimebin) 
+                    formatedData["AS"+str(a0)]["y"].append(0) 
+                # currentTimebin = row.timebin
+                currentTimebin += timedelta(minutes=HEGE_GRANULARITY)
+                seenAsn = set()
+        
         seenAsn.add(a)
         if "AS"+str(a) not in formatedData:
             formatedData["AS"+str(a)] = {"x":[], "y":[]}
