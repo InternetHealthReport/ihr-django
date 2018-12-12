@@ -13,109 +13,35 @@
 {% endblock %}
 
 {% block body %}
-<div class="row">
-    <div class="col-12">
-        {% if asn.number < 0 %}
-        <h1>IXP{{ asn.number }} {{ asn.name }}
-        {% else %}
-        <h1>AS{{ asn.number }} {{ asn.name }}
-        {% endif %}
-            <form class="form-inline" style="float:right">
-            <!--<div class="form-group">-->
-                <!--<select name="show-af" id="show-af" class="form-control" >-->
-                <!--{% if af == 6 %}-->
-                    <!--<option value="4"> IPv4 </option>-->
-                    <!--<option value="6" selected="selected"> IPv6 </option>-->
-                <!--{% else %}-->
-                    <!--<option value="4" selected="selected"> IPv4 </option>-->
-                    <!--<option value="6"> IPv6 </option>-->
-                <!--{% endif %}-->
-                <!--</select>-->
-            <!--</div>-->
-            <div class="form-group">
-                <select name="show-last" id="show-last" class="form-control" >
-                    <option value="7" selected="selected">last 1 week </option>
-                    <option value="30">last 1 month </option>
-                    <option value="90">last 3 months </option>
-                    <option value="180">last 6 months </option>
-                </select>
-            </div>
-            </form>
-        </h1> 
-    </div>
-</div>
+{% if asn.number < 0 %}
+<h1 class="ui header centered">IXP{{ asn.number }} {{ asn.name }}
+{% else %}
+<h1 class="ui header centered">AS{{ asn.number }} {{ asn.name }}
+{% endif %}
+</h1> 
 
 {% if asn.ashash %}
-<div class="row">
-    <div class="col-12">
-        <h2>AS Interdependence <a href="/ihr/about/hegemony/" target="_blank" class="glyphicon glyphicon-question-sign help-btn"></a></h2>
-        <hr>
-    </div>
-
+<div class="ui segment">
+    <h2 class="ui dividing header">AS Interdependence <a href="/ihr/about/hegemony/" target="_blank" class="glyphicon glyphicon-question-sign help-btn"></a></h2>
+    <div id="plotHegemony" ></div>
+    <div id="cone_details_title"></div> 
+    <div id="cone_details_data" > <i>Click on the graph for more details.</i> </div>
+    <div id="cone_details_footer"></div>
+    <div id="cone_widget_title"></div>
+    <div id="cone_widget"></div>
 </div>
-<div class="row">
-    <div class="col-12">
-        <div id="plotHegemony" ></div>
-    </div>
-</div>
-
-<div class="row">
-    <div class="col-lg-12 col-m-12"><div id="cone_details_title"></div> </div>
-</div>
-<div class="row">
-    <div class="col-lg-1 col-m-0"></div>
-    <div class="col-lg-10 col-m-12"> <div id="cone_details_data" > <i>Click on the graph for more details.</i> </div>  </div>
-    <div class="col-lg-1 col-m-0"></div>
-</div>
-<div class="row">
-    <div class="col-lg-1 col-m-0"></div>
-    <div class="col-lg-10 col-m-12"> <div id="cone_details_footer"></div> </div>
-    <div class="col-lg-1 col-m-0"></div>
-</div>
-<div class="row">
-    <div class="col-lg-12 col-m-12"><div id="cone_widget_title"></div> </div>
-</div>
-<div class="row">
-    <div class="col-lg-12 col-m-12"><div id="cone_widget"></div> </div>
-</div>
-
 {% endif %}
 
 
-
 {% if asn.tartiflette and af == 4 %}
-<div class="row">
-    <div class="col-12">
-        <h2>Delay and Forwarding Anomalies <a href="/ihr/about/tartiflette/" target="_blank" class="glyphicon glyphicon-question-sign help-btn"></a></h2>
-        <hr>
-    </div>
-</div>
-<div class="row">
-    <div class="col-12">
-        <div id="plotTartiflette" ></div>
-    </div>
-</div>
-<div class="row">
-    <div class="col-lg-12 col-m-12"><div id="tartiflette_details_title"></div> </div>
-</div>
-<div class="row">
-    <div class="col-lg-1 col-m-0"></div>
-    <div class="col-lg-10 col-m-12">  <div id="tartiflette_details_data" > <i>Click on the graphs for more details.</i> </div> </div>
-    <div class="col-lg-1 col-m-1"></div>
-</div>
-<div class="row">
-    <div class="col-lg-1 col-m-0"></div>
-    <div class="col-lg-10 col-m-12"> <div id="tartiflette_details_footer"></div> </div>
-    <div class="col-lg-1 col-m-0"></div>
-</div> 
-<div class="row">
-    <div class="col-lg-12 col-m-12"><div id="tartiflette_mon_title"></div> </div>
-</div>
-<div class="row">
+<div class="ui segment">
+    <h2 class="ui dividing header">Delay and Forwarding Anomalies <a href="/ihr/about/tartiflette/" target="_blank" class="glyphicon glyphicon-question-sign help-btn"></a></h2>
+    <div id="plotTartiflette" ></div>
+    <div id="tartiflette_details_title"></div> 
+    <div id="tartiflette_details_data" > <i>Click on the graphs for more details.</i> </div>
+    <div id="tartiflette_details_footer"></div> 
+    <div id="tartiflette_mon_title"></div>
     <div class="col-lg-12 col-m-12"><div id="tartiflette_mon"></div> </div>
-</div>
-<div class="row">
-    <br>
 </div>
 
 <div id="link-details-modal" class="modal" role="dialog">
@@ -145,36 +71,14 @@
 {% endif %}
 
 {% if asn.disco and af == 4 %}
-<div class="row">
-    <div class="col-12">
-        <h2>Network Disconnections <a href="/ihr/about/disco/" target="_blank" class="glyphicon glyphicon-question-sign help-btn"></a></h2>
-        <hr>
-    </div>
-</div>
-<div class="row">
-    <div class="col-12">
-        <div id="plotDisco" ></div>
-    </div>
-</div>
-
-<div class="row">
-    <div class="col-lg-12 col-m-12"><div id="disco_details_title"></div> </div>
-</div>
-<div class="row">
-    <div class="col-lg-1 col-m-0"></div>
-    <div class="col-lg-10 col-m-12"> <div id="disco_details_data" > <i>Click on the graph for more details.</i> </div>  </div>
-    <div class="col-lg-1 col-m-0"></div>
-</div>
-<div class="row">
-    <div class="col-lg-1 col-m-0"></div>
-    <div class="col-lg-10 col-m-12"> <div id="disco_details_footer"></div> </div>
-    <div class="col-lg-1 col-m-0"></div>
-</div>
-<div class="row">
-    <div class="col-lg-12 col-m-12"><div id="disco_mon_title"></div> </div>
-</div>
-<div class="row">
-    <div class="col-lg-12 col-m-12"><div id="disco_mon"></div> </div>
+<div class="ui segment">
+    <h2 class="ui dividing header">Network Disconnections <a href="/ihr/about/disco/" target="_blank" class="glyphicon glyphicon-question-sign help-btn"></a></h2>
+    <div id="plotDisco" ></div>
+    <div id="disco_details_title"></div>
+    <div id="disco_details_data" > <i>Click on the graph for more details.</i> </div> 
+    <div id="disco_details_footer"></div> 
+    <div id="disco_mon_title"></div>
+    <div id="disco_mon"></div>
 </div>
 {% endif %}
 

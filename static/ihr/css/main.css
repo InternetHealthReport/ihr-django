@@ -10,9 +10,15 @@ html {
   min-height: 100%;
 }
 body {
-  /* Margin bottom by footer height */
-  margin-bottom: 120px;
+  background-color: #FAFAFA;
 }
+.ui.menu .item img.logo{
+    margin-right: 1.5em;
+}
+.main.container {
+    margin-top: 7em;
+}
+
 .footer {
     position: absolute;
     bottom: 0;

@@ -22,7 +22,6 @@
 
         {% block bootstrap %}
         {% endblock %}
-        <link rel="stylesheet" href="{% static "ihr/css/main.css" %}?v=00001">
 
         <script src="{% static "ihr/js/vendor/modernizr-2.8.3-respond-1.4.2.min.js" %}"></script>
         <script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
@@ -31,6 +30,7 @@
         <script>window.jQuery || document.write('<script src="{% static "ihr/js/vendor/jquery-1.11.2.min.js" %}><\/script>')</script>
         <link rel="stylesheet" href="{% static "rest_framework/css/prettify.css" %}">
         <link rel="stylesheet" type="text/css" class="ui" href="{% static "ihr/js/vendor/Semantic-UI-CSS-master/semantic.min.css" %}">
+        <link rel="stylesheet" href="{% static "ihr/css/main.css" %}?v=00001">
         {% block head %}{% endblock %}
     </head>
     <body>
@@ -39,7 +39,9 @@
         <![endif]-->
     <div class="ui fixed inverted menu">
       <div class="ui container">
-          <a href="{% url "ihr:index" %}" class="ui header item">Internet Health Report</a>
+            <a href="{% url "ihr:index" %}" class="header item">
+                <img class="logo" src="/static/ihr/logo_ihr_website.png">
+                Internet Health Report</a>
                     <a class="item" href="{% url "ihr:index" %}">Home</a> - 
                     <a class="item" href="/ihr/about/">Documentation</a> - 
                     <a class="item" href="{% url "ihr:asnList" %}">Networks</a> - 
@@ -61,13 +63,13 @@
     <div class="ui main container">
       {% block body %}
       {% endblock %}
+    </div>
 
-    </div> <!-- /container -->        
     
     <div class="ui inverted vertical footer segment" >
         <div class="ui center aligned container">
             <div class="ui stackable inverted divided grid">
-                <div class="three wide column">
+                <div class="three wide column right">
                 </div>
                 <div class="ten wide column">
                     <a href="{% url "ihr:index" %}">Home</a> - 
@@ -77,7 +79,7 @@
                     <a href="/ihr/api/doc/">API</a> - 
                     <a href="/ihr/contact/">Contact</a>
                 </div>
-                <div class="three wide column">
+                <div class="three wide column right">
                     <div class="ui header">
                     <a href="https://twitter.com/ihr_alerts"><i class="twitter icon"></i></a>
                     <a href="https://github.com/InternetHealthReport"><i class="github icon"></i></a>
