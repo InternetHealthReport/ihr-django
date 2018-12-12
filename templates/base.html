@@ -13,108 +13,91 @@
         <link rel="apple-touch-icon" href="{% static "ihr/apple-touch-icon.png" %}">
 
         {% block bootstrap %}
-            <link rel="stylesheet" href="{% static "ihr/css/bootstrap.min.css" %}">
-            <link rel="stylesheet" href="{% static "ihr/css/bootstrap-theme.min.css" %}">
         {% endblock %}
-        <style>
-            body {
-                padding-top: 50px;
-                padding-bottom: 20px;
-            }
-        </style>
         <link rel="stylesheet" href="{% static "ihr/css/main.css" %}?v=00001">
 
         <script src="{% static "ihr/js/vendor/modernizr-2.8.3-respond-1.4.2.min.js" %}"></script>
-        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+        <script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+                
+        <script src="{% static "ihr/js/vendor/Semantic-UI-CSS-master/semantic.min.js" %}"></script>
         <script>window.jQuery || document.write('<script src="{% static "ihr/js/vendor/jquery-1.11.2.min.js" %}><\/script>')</script>
         <link rel="stylesheet" href="{% static "rest_framework/css/prettify.css" %}">
+        <link rel="stylesheet" type="text/css" class="ui" href="{% static "ihr/js/vendor/Semantic-UI-CSS-master/semantic.min.css" %}">
         {% block head %}{% endblock %}
     </head>
     <body>
         <!--[if lt IE 8]>
             <p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
         <![endif]-->
-    <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
-      <div class="container">
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a class="navbar-brand" href="{% url "ihr:index" %}">Internet Health Report</a>
-        </div>
-        <div id="navbar" class="navbar-collapse collapse">
-            <form class="navbar-form navbar-right" role="form" action="{% url "ihr:search" %}" method="get">
-            <div class="form-group">
-              <input type="text" placeholder="Enter an ASN" class="form-control" name="asn">
+    <div class="ui fixed inverted menu">
+      <div class="ui container">
+          <a href="{% url "ihr:index" %}" class="ui header item">Internet Health Report</a>
+                    <a class="item" href="{% url "ihr:index" %}">Home</a> - 
+                    <a class="item" href="/ihr/about/">Documentation</a> - 
+                    <a class="item" href="{% url "ihr:asnList" %}">Networks</a> - 
+                    <a class="item" href="{% url "ihr:countryList" %}">Countries</a> - 
+                    <a class="item" href="/ihr/api/doc/">API</a> - 
+                    <a class="item" href="/ihr/contact/">Contact</a>
+            <div class="ui item right floated">
+                <div class="ui category search">
+                <div class="ui icon input">
+                    <input class="prompt" placeholder="Search networks..." type="text">
+                    <i class="search icon"></i>
+                </div>
+                <div class="results"></div>
+                </div>
             </div>
-            <button type="submit" class="btn btn-success glyphicon glyphicon-search"></button>
-          </form>
-        </div><!--/.navbar-collapse -->
       </div>
-    </nav>
+    </div>
 
-    <div class="container">
+    <div class="ui main container">
       {% block body %}
       {% endblock %}
 
     </div> <!-- /container -->        
     
-    <footer class="container-fluid footer" >
-    <div class="row">
-        <div class="col-md-2 col-lg-2 col-xs-0">
-            <a href="https://twitter.com/ihr_alerts" class="twitter-follow-button" data-show-screen-name="false" data-show-count="false">Follow @ihr_alerts</a><script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
-        </div>
-        <div class="col-md-8 col-lg-8 col-xs-10" align=center>
-            <a href="{% url "ihr:index" %}">Home</a> - 
-            <a href="/ihr/about/">About</a> - 
-            <a href="{% url "ihr:asnList" %}">Networks</a> - 
-            <a href="{% url "ihr:countryList" %}">Countries</a> - 
-            <a href="/ihr/api/doc/">API</a> - 
-            <a href="/ihr/contact/">Contact</a>
-        </div>
-        <div class="col-md-2 col-lg-2 col-xs-2">
-            <a href="" data-toggle="modal" data-target="#permaModal" id="link-permalink"><i class="glyphicon glyphicon-link"></i>permalink</a>
-        </div>
-    </div>
+    <div class="ui inverted vertical footer segment" >
+        <div class="ui center aligned container">
+            <div class="ui stackable inverted divided grid">
+                <div class="three wide column">
+                </div>
+                <div class="ten wide column">
+                    <a href="{% url "ihr:index" %}">Home</a> - 
+                    <a href="/ihr/about/">Documentation</a> - 
+                    <a href="{% url "ihr:asnList" %}">Networks</a> - 
+                    <a href="{% url "ihr:countryList" %}">Countries</a> - 
+                    <a href="/ihr/api/doc/">API</a> - 
+                    <a href="/ihr/contact/">Contact</a>
+                </div>
+                <div class="three wide column">
+                    <div class="ui header">
+                    <a href="https://twitter.com/ihr_alerts"><i class="twitter icon"></i></a>
+                    <a href="https://github.com/InternetHealthReport"><i class="github icon"></i></a>
+                </div>
 
-    </footer>    
-
-    <!-- Modal -->
-    <div id="permaModal" class="modal" role="dialog">
-    <div class="modal-dialog">
-
-        <!-- Modal content-->
-        <div class="modal-content">
-        <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal">&times;</button>
-            <h4 class="modal-title">Permanent link to this page</h4>
-        </div>
-        <div class="modal-body">
-            <div class="form-horizontal">
-            <input id="permalink" value="" type="text" class="form-control">
+                </div>
             </div>
         </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-        </div>
-        </div>
-
     </div>
+
+
+    <!-- Modal -->
+    <div class="ui basic modal">
+        <!-- Modal content-->
+        <div class="ui icon header">
+            <i class="linkify icon"></i>
+            Permanent link to this page
+        </div>
+        <div class="content">
+            <div class="ui form fluid">
+            <input id="permalink" value="" type="text" class="form control">
+            </div>
+        </div>
     </div>
-    <script type="text/javascript">
-        $(function() {
-            $("#link-permalink").click(function() {
-                $("#permalink").val(document.location.href);
-            });
-        });
-    </script>
 
-        <script src="{% static "ihr/js/vendor/bootstrap.min.js" %}"></script>
+    <script src="{% static "ihr/js/main.js" %}?v00001"></script>
 
-        <script src="{% static "ihr/js/main.js" %}"></script>
+
     {% block script %}
     {% endblock %}
 

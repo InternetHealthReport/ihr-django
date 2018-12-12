@@ -19,6 +19,7 @@ urlpatterns = [
     url(r'^data/hegemony/$', views.hegemonyData, name='hegemonyData'),
     url(r'^data/hegemonyCone/$', views.coneData, name='coneData'),
     url(r'^api/$', views.restful_API, name="root"),
+    url(r'^api/network/$', views.ASNView.as_view(), name='asnListView'),
     url(r'^api/delay/$', views.DelayView.as_view(), name='delayListView'),
     url(r'^api/forwarding/$', views.ForwardingView.as_view(), name='forwardingListView'),
     url(r'^api/delay_alarms/$', views.DelayAlarmsView.as_view(), name='delayAlarmsListView'),
