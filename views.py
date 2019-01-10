@@ -7,6 +7,9 @@ from django.core import serializers
 from django.db.models import Avg, When, Sum, Case, FloatField, Count
 from django.db import models as django_models
 
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+
 from datetime import datetime, date, timedelta
 import pytz
 import json
@@ -25,8 +28,8 @@ from django.db.models import Q
 
 # by default shows only one week of data
 LAST_DEFAULT = 7
-
 HEGE_GRANULARITY = 15
+CACHE_TIMEOUT = 900
 
 ########### Custom Pagination ##########
 from rest_framework.pagination import PageNumberPagination
@@ -52,9 +55,13 @@ class ListFilter(django_filters.CharFilter):
     def filter(self, qs, value):
         multiple_vals = value.split(u",")
         multiple_vals = self.sanitize(multiple_vals)
-        multiple_vals = map(self.customize, multiple_vals)
-        actual_filter = django_filters.fields.Lookup(multiple_vals, 'in')
-        return super(ListFilter, self).filter(qs, actual_filter)
+        nb_args = len(multiple_vals)
+        if nb_args>0:
+            multiple_vals = map(self.customize, multiple_vals)
+            actual_filter = django_filters.fields.Lookup(multiple_vals, 'in')
+            return super(ListFilter, self).filter(qs, actual_filter)
+        else:
+            return qs
 
 class ListIntegerFilter(ListFilter):
 
@@ -224,7 +231,6 @@ class DelayView(generics.ListAPIView): #viewsets.ModelViewSet):
     serializer_class = DelaySerializer
     filter_class = DelayFilter
 
-
 class ForwardingView(generics.ListAPIView):
     """
     API endpoint that allows to view the level of forwarding anomaly.
@@ -233,7 +239,6 @@ class ForwardingView(generics.ListAPIView):
     serializer_class = ForwardingSerializer
     filter_class = ForwardingFilter
 
-
 class DelayAlarmsView(generics.ListAPIView): 
     """
     API endpoint that allows to view the delay alarms.
@@ -241,7 +246,6 @@ class DelayAlarmsView(generics.ListAPIView):
     queryset = Delay_alarms.objects.all() #.order_by('-asn')
     serializer_class = DelayAlarmsSerializer
     filter_class = DelayAlarmsFilter
-
 
 class ForwardingAlarmsView(generics.ListAPIView):
     """
@@ -268,7 +272,6 @@ class DiscoProbesView(generics.ListAPIView):
     filter_fields = ('probe_id', 'event' ) 
     ordering_fields = ('starttime', 'endtime', 'level')
 
-
 class HegemonyView(generics.ListAPIView):
     """
     API endpoint that allows to view AS hegemony scores.
@@ -276,7 +279,6 @@ class HegemonyView(generics.ListAPIView):
     queryset = Hegemony.objects.all().order_by("timebin")
     serializer_class = HegemonySerializer
     filter_class = HegemonyFilter
-
 
 class HegemonyConeView(generics.ListAPIView):
     """
@@ -286,7 +288,6 @@ class HegemonyConeView(generics.ListAPIView):
     queryset = HegemonyCone.objects.all().order_by("timebin")
     serializer_class = HegemonyConeSerializer
     filter_class = HegemonyConeFilter
-
 
 
 @api_view(['GET'])
