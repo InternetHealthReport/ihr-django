@@ -37,6 +37,51 @@ class StandardResultsSetPagination(PageNumberPagination):
 ############ API ##########
 
 ### Filters:
+# Generic filter for a list of values:
+class ListFilter(django_filters.CharFilter):
+
+    def sanitize(self, value_list):
+        """
+        remove empty items in case of ?number=1,,2
+        """
+        return [v for v in value_list if v != u'']
+
+    def customize(self, value):
+        return value
+
+    def filter(self, qs, value):
+        multiple_vals = value.split(u",")
+        multiple_vals = self.sanitize(multiple_vals)
+        multiple_vals = map(self.customize, multiple_vals)
+        actual_filter = django_filters.fields.Lookup(multiple_vals, 'in')
+        return super(ListFilter, self).filter(qs, actual_filter)
+
+class ListIntegerFilter(ListFilter):
+
+    def customize(self, value):
+        return int(value)
+
+class HegemonyFilter(filters.FilterSet):
+    asn = ListIntegerFilter()
+    originasn = ListIntegerFilter()
+
+    class Meta:
+        model = Hegemony
+        fields = {
+            'originasn': ['exact'],
+            'asn': ['exact'],
+            'timebin': ['exact', 'lte', 'gte'],
+            'hege': ['exact', 'lte', 'gte'],
+            'af': ['exact'],
+        }
+        ordering_fields = ('timebin', 'originasn', 'hege', 'af')
+
+    filter_overrides = {
+        django_models.DateTimeField: {
+            'filter_class': filters.IsoDateTimeFilter
+        },
+    }
+
 class ASNFilter(filters.FilterSet):
     name = django_filters.CharFilter(lookup_expr='icontains')
     number = django_filters.NumberFilter()
@@ -144,23 +189,6 @@ class DiscoEventsFilter(filters.FilterSet):
         },
     }
 
-class HegemonyFilter(filters.FilterSet):
-    class Meta:
-        model = Hegemony
-        fields = {
-            'originasn': ['exact', 'lte', 'gte'],
-            'asn': ['exact', 'lte', 'gte'],
-            'timebin': ['exact', 'lte', 'gte'],
-            'hege': ['exact', 'lte', 'gte'],
-            'af': ['exact'],
-        }
-        ordering_fields = ('timebin', 'originasn', 'hege', 'af')
-
-    filter_overrides = {
-        django_models.DateTimeField: {
-            'filter_class': filters.IsoDateTimeFilter
-        },
-    }
 
 class HegemonyConeFilter(filters.FilterSet):
     class Meta:
