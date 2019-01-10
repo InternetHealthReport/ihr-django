@@ -29,7 +29,6 @@ from django.db.models import Q
 # by default shows only one week of data
 LAST_DEFAULT = 7
 HEGE_GRANULARITY = 15
-CACHE_TIMEOUT = 900
 
 ########### Custom Pagination ##########
 from rest_framework.pagination import PageNumberPagination
