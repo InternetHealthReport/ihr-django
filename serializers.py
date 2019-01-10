@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Delay,  Forwarding, Delay_alarms, Forwarding_alarms, Disco_events, Disco_probes, Hegemony, HegemonyCone
+from .models import ASN, Delay,  Forwarding, Delay_alarms, Forwarding_alarms, Disco_events, Disco_probes, Hegemony, HegemonyCone
 from django.forms import widgets
 
 
@@ -88,3 +88,7 @@ class HegemonyConeSerializer(serializers.ModelSerializer):
         model = HegemonyCone
         fields = ('timebin', 'asn', 'conesize', 'af')
 
+class ASNSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ASN
+        fields = ('number', 'name')

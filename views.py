@@ -18,17 +18,41 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework import generics
-from .serializers import DelaySerializer, ForwardingSerializer, DelayAlarmsSerializer, ForwardingAlarmsSerializer, DiscoEventsSerializer, DiscoProbesSerializer, HegemonySerializer, HegemonyConeSerializer
+from .serializers import ASNSerializer, DelaySerializer, ForwardingSerializer, DelayAlarmsSerializer, ForwardingAlarmsSerializer, DiscoEventsSerializer, DiscoProbesSerializer, HegemonySerializer, HegemonyConeSerializer
 from django_filters import rest_framework as filters 
+import django_filters
+from django.db.models import Q
 
 # by default shows only one week of data
 LAST_DEFAULT = 7
 
 HEGE_GRANULARITY = 15
 
+########### Custom Pagination ##########
+from rest_framework.pagination import PageNumberPagination
+
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size_query_param = 'limit'
+
 ############ API ##########
 
 ### Filters:
+class ASNFilter(filters.FilterSet):
+    name = django_filters.CharFilter(lookup_expr='icontains')
+    number = django_filters.NumberFilter()
+    search = django_filters.CharFilter(method='asn_or_number')
+
+    def asn_or_number(self, queryset, name, value):
+        return queryset.filter(
+            Q(number__contains=value) | Q(name__icontains=value)
+            )
+
+    class Meta:
+        model = ASN
+        fields = ["name", "number"]
+        ordering_fields = ('number',)
+
+
 class DelayFilter(filters.FilterSet):
     class Meta:
         model = Delay
@@ -156,6 +180,14 @@ class HegemonyConeFilter(filters.FilterSet):
 
 
 ### Views:
+class ASNView(generics.ListAPIView):
+    """
+    API endpoint that allows to view/search AS and IX
+    """
+    queryset = ASN.objects.all()
+    serializer_class = ASNSerializer
+    filter_class = ASNFilter
+
 class DelayView(generics.ListAPIView): #viewsets.ModelViewSet):
     """
     API endpoint that allows to view the level of congestion.
@@ -603,8 +635,8 @@ def hegemonyData(request):
         if currentTimebin is None:
             currentTimebin = row.timebin
 
-        if currentTimebin != row.timebin:
-            while currentTimebin != row.timebin:
+        if currentTimebin != row.timebin :
+            while currentTimebin+timedelta(minutes=HEGE_GRANULARITY/2) < row.timebin :
                 for a0 in allAsn.difference(seenAsn):
                     formatedData["AS"+str(a0)]["x"].append(currentTimebin) 
                     formatedData["AS"+str(a0)]["y"].append(0) 
