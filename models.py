@@ -1,5 +1,5 @@
 from django.db import models
-# import architect
+from django.contrib.postgres.fields import JSONField
 
 class ASN(models.Model):
     number = models.BigIntegerField(primary_key=True)
@@ -22,7 +22,6 @@ class Country(models.Model):
 
 
 # Tartiflette
-# @architect.install('partition', type='range', subtype='date', constraint='day', column='timebin')
 class Delay(models.Model):
     timebin = models.DateTimeField(db_index=True)
     asn = models.ForeignKey(ASN, on_delete=models.CASCADE)
@@ -35,7 +34,6 @@ class Delay(models.Model):
         return "%s AS%s" % (self.timebin, self.asn.number)
 
 
-# @architect.install('partition', type='range', subtype='date', constraint='day', column='timebin')
 class Delay_alarms(models.Model):
     asn = models.ForeignKey(ASN, on_delete=models.CASCADE, db_index=True)
     timebin = models.DateTimeField(db_index=True)
@@ -45,6 +43,7 @@ class Delay_alarms(models.Model):
     diffmedian = models.FloatField(default=0.0)
     deviation = models.FloatField(default=0.0)
     nbprobes = models.IntegerField(default=0)
+    msm_prb_ids = JSONField(default=None, null=True)
 
     def __str__(self):
         return "%s AS%s" % (self.timebin, self.asn.number)
@@ -69,6 +68,7 @@ class Forwarding_alarms(models.Model):
     responsibility = models.FloatField(default=0.0)
     pktdiff = models.FloatField(default=0.0)
     previoushop   = models.CharField(max_length=64)
+    msm_prb_ids = JSONField(default=None, null=True)
 
     def __str__(self):
         return "%s AS%s %s" % (self.timebin, self.asn.number, self.ip)
