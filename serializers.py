@@ -21,6 +21,7 @@ class DelayAlarmsSerializer(serializers.ModelSerializer):
                 'diffmedian',
                 'deviation',
                 'nbprobes',
+                'msm_prb_ids',
                 'msmid')
 
 class ForwardingSerializer(serializers.ModelSerializer):
@@ -41,6 +42,7 @@ class ForwardingAlarmsSerializer(serializers.ModelSerializer):
                 'pktdiff',
                 'previoushop',
                 'responsibility',
+                'msm_prb_ids',
                 'msmid')
 
 class DiscoEventsSerializer(serializers.ModelSerializer):
