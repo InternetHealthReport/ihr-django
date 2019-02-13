@@ -94,6 +94,13 @@ class ASNFilter(filters.FilterSet):
     search = django_filters.CharFilter(method='asn_or_number')
 
     def asn_or_number(self, queryset, name, value):
+        if value.startswith("AS") or value.startswith("IX"):
+            try:
+                tmp = int(value[2:])
+                value = value[2:]
+            except ValueError:
+                pass
+
         return queryset.filter(
             Q(number__contains=value) | Q(name__icontains=value)
             )
