@@ -4,17 +4,22 @@ from django.forms import widgets
 
 
 class DelaySerializer(serializers.ModelSerializer):
+    queryset = Delay.objects.all().prefetch_related("asn")
+    asn_name = serializers.PrimaryKeyRelatedField(queryset=queryset, source='asn.name')
+
     class Meta:
         model = Delay
-        fields = ('asn', 'timebin',  'magnitude')
+        fields = ('asn', 'timebin',  'magnitude', 'asn_name')
 
 class DelayAlarmsSerializer(serializers.ModelSerializer):
-    queryset = Delay_alarms.objects.all().prefetch_related('msmid')
+    queryset = Delay_alarms.objects.all().prefetch_related('msmid', "asn")
     msmid = serializers.StringRelatedField(many=True)
+    asn_name = serializers.PrimaryKeyRelatedField(queryset=queryset, source='asn.name')
 
     class Meta:
         model = Delay_alarms
         fields = ('asn', 
+                'asn_name',
                 'timebin',
                 'link',
                 'medianrtt',
@@ -25,17 +30,22 @@ class DelayAlarmsSerializer(serializers.ModelSerializer):
                 'msmid')
 
 class ForwardingSerializer(serializers.ModelSerializer):
+    queryset = Forwarding.objects.all().prefetch_related("asn")
+    asn_name = serializers.PrimaryKeyRelatedField(queryset=queryset, source='asn.name')
+
     class Meta:
         model = Forwarding
-        fields = ('asn', 'timebin', 'magnitude')
+        fields = ('asn', 'timebin', 'magnitude', 'asn_name')
 
 class ForwardingAlarmsSerializer(serializers.ModelSerializer):
-    queryset = Forwarding_alarms.objects.all().prefetch_related('msmid')
+    queryset = Forwarding_alarms.objects.all().prefetch_related('msmid', 'asn')
     msmid = serializers.StringRelatedField(many=True)
+    asn_name = serializers.PrimaryKeyRelatedField(queryset=queryset, source='asn.name')
 
     class Meta:
         model = Forwarding_alarms
         fields = ('asn',
+                'asn_name',
                 'timebin',
                 'ip',
                 'correlation',
