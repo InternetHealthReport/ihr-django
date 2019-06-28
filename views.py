@@ -21,7 +21,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework import generics
-from .serializers import ASNSerializer, DelaySerializer, ForwardingSerializer, DelayAlarmsSerializer, ForwardingAlarmsSerializer, DiscoEventsSerializer, DiscoProbesSerializer, HegemonySerializer, HegemonyConeSerializer
+from .serializers import ASNSerializer, CountrySerializer, DelaySerializer, ForwardingSerializer, DelayAlarmsSerializer, ForwardingAlarmsSerializer, DiscoEventsSerializer, DiscoProbesSerializer, HegemonySerializer, HegemonyConeSerializer
 from django_filters import rest_framework as filters 
 import django_filters
 from django.db.models import Q
@@ -109,6 +109,16 @@ class ASNFilter(filters.FilterSet):
         model = ASN
         fields = ["name", "number"]
         ordering_fields = ('number',)
+
+class CountryFilter(filters.FilterSet):
+    name = django_filters.CharFilter(lookup_expr='icontains')
+    code = django_filters.CharFilter()
+
+    class Meta:
+        model = Country
+        fields = ["name", "code"]
+        ordering_fields = ("number",)
+
 
 
 class DelayFilter(filters.FilterSet):
@@ -228,6 +238,14 @@ class ASNView(generics.ListAPIView):
     queryset = ASN.objects.all()
     serializer_class = ASNSerializer
     filter_class = ASNFilter
+
+class CountryView(generics.ListAPIView):
+    """
+    API endpoint for country names and codes
+    """
+    queryset = Country.objects.all()
+    serializer_class = CountrySerializer
+    filter_class = CountryFilter
 
 class DelayView(generics.ListAPIView): #viewsets.ModelViewSet):
     """

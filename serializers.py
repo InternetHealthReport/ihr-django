@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import ASN, Delay,  Forwarding, Delay_alarms, Forwarding_alarms, Disco_events, Disco_probes, Hegemony, HegemonyCone
+from .models import ASN, Country, Delay,  Forwarding, Delay_alarms, Forwarding_alarms, Disco_events, Disco_probes, Hegemony, HegemonyCone
 from django.forms import widgets
 
 
@@ -104,3 +104,8 @@ class ASNSerializer(serializers.ModelSerializer):
     class Meta:
         model = ASN
         fields = ('number', 'name')
+
+class CountrySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Country
+        fields = ('code', 'name')
