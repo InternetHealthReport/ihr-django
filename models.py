@@ -26,7 +26,6 @@ class Delay(models.Model):
     timebin = models.DateTimeField(db_index=True)
     asn = models.ForeignKey(ASN, on_delete=models.CASCADE)
     magnitude = models.FloatField(default=0.0)
-    deviation = models.FloatField(default=0.0)
 
     def __str__(self):
         return "%s AS%s" % (self.timebin, self.asn.number)
@@ -86,7 +85,6 @@ class Forwarding(models.Model):
     timebin = models.DateTimeField(db_index=True)
     asn = models.ForeignKey(ASN, on_delete=models.CASCADE)
     magnitude = models.FloatField(default=0.0)
-    resp = models.FloatField(default=0.0)
 
     def __str__(self):
         return "%s AS%s" % (self.timebin, self.asn.number)
