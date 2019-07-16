@@ -1,5 +1,3 @@
-from architect.commands import partition
-
 from django.apps import AppConfig
 from django.db import ProgrammingError
 from django.db.models.signals import post_migrate

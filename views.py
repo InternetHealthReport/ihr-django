@@ -11,9 +11,9 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 
 from datetime import datetime, date, timedelta
+import pandas as pd
 import pytz
 import json
-import pandas as pd
 
 from .models import ASN, Country, Delay, Forwarding, Delay_alarms, Forwarding_alarms, Disco_events, Disco_probes, Hegemony, HegemonyCone
 
@@ -68,8 +68,8 @@ class ListIntegerFilter(ListFilter):
         return int(value)
 
 class HegemonyFilter(filters.FilterSet):
-    asn = ListIntegerFilter()
-    originasn = ListIntegerFilter()
+    #asn = ListIntegerFilter()
+    #originasn = ListIntegerFilter()
 
     class Meta:
         model = Hegemony
@@ -669,8 +669,8 @@ def hegemonyData(request):
     last = LAST_DEFAULT
     if "last" in request.GET:
         last = int(request.GET["last"])
-        if last > 356:
-            last = 356
+        if last > 365:
+            last = 365
 
     dtStart = dtEnd - timedelta(last)
 
