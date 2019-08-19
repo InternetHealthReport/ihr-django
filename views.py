@@ -44,23 +44,19 @@ class ListFilter(django_filters.CharFilter):
 
     def sanitize(self, value_list):
         """
-        remove empty items in case of ?number=1,,2
+        remove empty items and parse them
         """
-        return [v for v in value_list if v != u'']
+        return [self.customize(v) for v in value_list if v != ""]
 
     def customize(self, value):
         return value
 
     def filter(self, qs, value):
-        multiple_vals = value.split(u",")
-        multiple_vals = self.sanitize(multiple_vals)
-        nb_args = len(multiple_vals)
-        if nb_args>0:
-            multiple_vals = map(self.customize, multiple_vals)
-            actual_filter = django_filters.fields.Lookup(multiple_vals, 'in')
-            return super(ListFilter, self).filter(qs, actual_filter)
-        else:
-            return qs
+        multiple_vals = self.sanitize(value.split(","))
+        if len(multiple_vals) > 0:
+            par = {self.field_name + "__in": multiple_vals}
+            qs = qs.filter(**par)
+        return qs
 
 class ListIntegerFilter(ListFilter):
 
@@ -68,8 +64,8 @@ class ListIntegerFilter(ListFilter):
         return int(value)
 
 class HegemonyFilter(filters.FilterSet):
-    #asn = ListIntegerFilter()
-    #originasn = ListIntegerFilter()
+    asn = ListIntegerFilter()
+    originasn = ListIntegerFilter()
 
     class Meta:
         model = Hegemony
@@ -90,7 +86,7 @@ class HegemonyFilter(filters.FilterSet):
 
 class ASNFilter(filters.FilterSet):
     name = django_filters.CharFilter(lookup_expr='icontains')
-    number = django_filters.NumberFilter()
+    number = ListIntegerFilter()
     search = django_filters.CharFilter(method='asn_or_number')
 
     def asn_or_number(self, queryset, name, value):
@@ -122,10 +118,10 @@ class CountryFilter(filters.FilterSet):
 
 
 class DelayFilter(filters.FilterSet):
+    asn = ListIntegerFilter()
     class Meta:
         model = Delay
         fields = {
-            'asn': ['exact'],
             'timebin': ['exact', 'lte', 'gte'],
             'magnitude': ['exact'],
         }
@@ -138,10 +134,10 @@ class DelayFilter(filters.FilterSet):
     }
 
 class ForwardingFilter(filters.FilterSet):
+    asn = ListIntegerFilter()
     class Meta:
         model = Forwarding
         fields = {
-            'asn': ['exact'],
             'timebin': ['exact', 'lte', 'gte'],
             'magnitude': ['exact'],
         }
@@ -153,10 +149,10 @@ class ForwardingFilter(filters.FilterSet):
         },
     }
 class DelayAlarmsFilter(filters.FilterSet):
+    asn = ListIntegerFilter()
     class Meta:
         model = Delay_alarms
         fields = {
-            'asn': ['exact'],
             'timebin': ['exact', 'lte', 'gte'],
             'deviation': ['exact', 'lte', 'gte'],
             'diffmedian': ['exact', 'lte', 'gte'],
@@ -173,10 +169,10 @@ class DelayAlarmsFilter(filters.FilterSet):
     }
 
 class ForwardingAlarmsFilter(filters.FilterSet):
+    asn = ListIntegerFilter()
     class Meta:
         model = Forwarding_alarms
         fields = {
-            'asn': ['exact'],
             'timebin': ['exact', 'lte', 'gte'],
             'correlation': ['exact', 'lte', 'gte'],
             'responsibility': ['exact', 'lte', 'gte'],
@@ -214,10 +210,10 @@ class DiscoEventsFilter(filters.FilterSet):
 
 
 class HegemonyConeFilter(filters.FilterSet):
+    asn = ListIntegerFilter()
     class Meta:
         model = HegemonyCone
         fields = {
-            'asn': ['exact'],
             'timebin': ['exact', 'lte', 'gte'],
             'af': ['exact'],
         }
