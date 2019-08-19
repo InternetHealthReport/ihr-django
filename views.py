@@ -70,8 +70,6 @@ class HegemonyFilter(filters.FilterSet):
     class Meta:
         model = Hegemony
         fields = {
-            'originasn': ['exact'],
-            'asn': ['exact'],
             'timebin': ['exact', 'lte', 'gte'],
             'hege': ['exact', 'lte', 'gte'],
             'af': ['exact'],
