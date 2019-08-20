@@ -223,14 +223,14 @@ class HegemonyConeFilter(filters.FilterSet):
         },
     }
 
-    class DiscoProbesFilter(filters.FilterSet):
-        probe_id = ListIntegerFilter()
-        class Meta:
-            model = Disco_probes
-            fields = {
-                'event': ['exact'],
-            }
-            ordering_fields = ('starttime', 'endtime', 'level')
+class DiscoProbesFilter(filters.FilterSet):
+    probe_id = ListIntegerFilter()
+    class Meta:
+        model = Disco_probes
+        fields = {
+            'event': ['exact'],
+        }
+        ordering_fields = ('starttime', 'endtime', 'level')
 
 ### Views:
 class ASNView(generics.ListAPIView):
