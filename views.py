@@ -223,6 +223,14 @@ class HegemonyConeFilter(filters.FilterSet):
         },
     }
 
+    class DiscoProbesFilter(filters.FilterSet):
+        probe_id = ListIntegerFilter()
+        class Meta:
+            model = Disco_probes
+            fields = {
+                'event': ['exact'],
+            }
+            ordering_fields = ('starttime', 'endtime', 'level')
 
 ### Views:
 class ASNView(generics.ListAPIView):
@@ -289,8 +297,7 @@ class DiscoProbesView(generics.ListAPIView):
 
     queryset = Disco_probes.objects.all() #.order_by('-asn')
     serializer_class = DiscoProbesSerializer
-    filter_fields = ('event')
-    ordering_fields = ('starttime', 'endtime', 'level')
+    filter_class = DiscoProbesFilter
 
 class HegemonyView(generics.ListAPIView):
     """
