@@ -77,7 +77,9 @@ class DiscoProbesSerializer(serializers.ModelSerializer):
                 'event',
                 'starttime',
                 'endtime',
-                'level')
+                'level',
+                'lat',
+                'lon')
 
 class HegemonySerializer(serializers.ModelSerializer):
     queryset = Hegemony.objects.all().prefetch_related("asn","originasn")

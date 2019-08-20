@@ -281,13 +281,15 @@ class DiscoEventsView(generics.ListAPIView):
     serializer_class = DiscoEventsSerializer
     filter_class = DiscoEventsFilter
 
-class DiscoProbesView(generics.ListAPIView): 
+class DiscoProbesView(generics.ListAPIView):
     """
     API endpoint that allows to view disconnected probes.
     """
+    probe_id = ListIntegerFilter()
+
     queryset = Disco_probes.objects.all() #.order_by('-asn')
     serializer_class = DiscoProbesSerializer
-    filter_fields = ('probe_id', 'event' ) 
+    filter_fields = ('event')
     ordering_fields = ('starttime', 'endtime', 'level')
 
 class HegemonyView(generics.ListAPIView):
