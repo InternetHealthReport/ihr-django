@@ -225,11 +225,10 @@ class HegemonyConeFilter(filters.FilterSet):
 
 class DiscoProbesFilter(filters.FilterSet):
     probe_id = ListIntegerFilter()
+    event = ListIntegerFilter()
     class Meta:
         model = Disco_probes
-        fields = {
-            'event': ['exact'],
-        }
+        fields = {}
         ordering_fields = ('starttime', 'endtime', 'level')
 
 ### Views:
