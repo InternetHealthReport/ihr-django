@@ -100,7 +100,7 @@ class HegemonyConeSerializer(serializers.ModelSerializer):
         fields = ('timebin', 'asn', 'conesize', 'af')
 
 class NetworkDelaySerializer(serializers.ModelSerializer):
-    queryset = Atlas_delay.objects.all().prefetch_related("startpoint","endpoint")
+    queryset = Atlas_delay.objects.all().prefetch_related("startpoint", "endpoint")
     startpoint_type = serializers.PrimaryKeyRelatedField(queryset=queryset, source='startpoint.type')
     startpoint_name = serializers.PrimaryKeyRelatedField(queryset=queryset, source='startpoint.name')
     startpoint_af = serializers.PrimaryKeyRelatedField(queryset=queryset, source='startpoint.af')

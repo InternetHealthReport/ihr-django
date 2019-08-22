@@ -66,15 +66,15 @@ class ListIntegerFilter(ListFilter):
 class NetworkDelayFilter(filters.FilterSet):
     startpoint_name = ListFilter()
     endpoint_name = ListFilter()
+    startpoint_type= django_filters.CharFilter()
+    startpoint_af= django_filters.IntegerFilter()
+    endpoint_type= django_filters.CharFilter()
+    endpoint_af= django_filters.IntegerFilter()
 
     class Meta:
         model = Atlas_delay
         fields = {
             'timebin': ['exact', 'lte', 'gte'],
-            'startpoint_type': ['exact'],
-            'startpoint_af': ['exact'],
-            'endpoint_type': ['exact'],
-            'endpoint_af': ['exact'],
         }
         ordering_fields = ('timebin', 'startpoint_name', 'endpoint_name')
 
