@@ -1,7 +1,5 @@
 from rest_framework import serializers
-from .models import ASN, Country, Delay,  Forwarding, Delay_alarms, Forwarding_alarms, Disco_events, Disco_probes, Hegemony, HegemonyCone
-from django.forms import widgets
-
+from .models import ASN, Country, Delay,  Forwarding, Delay_alarms, Forwarding_alarms, Disco_events, Disco_probes, Hegemony, HegemonyCone, Atlas_location, Atlas_delay
 
 class DelaySerializer(serializers.ModelSerializer):
     queryset = Delay.objects.all().prefetch_related("asn")
@@ -18,7 +16,7 @@ class DelayAlarmsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Delay_alarms
-        fields = ('asn', 
+        fields = ('asn',
                 'asn_name',
                 'timebin',
                 'link',
@@ -85,7 +83,6 @@ class HegemonySerializer(serializers.ModelSerializer):
     queryset = Hegemony.objects.all().prefetch_related("asn","originasn")
     asn_name = serializers.PrimaryKeyRelatedField(queryset=queryset, source='asn.name')
     originasn_name = serializers.PrimaryKeyRelatedField(queryset=queryset, source='originasn.name')
-    # originasn = serializers.PrimaryKeyRelatedField( widget=widgets.TextInput)
 
     class Meta:
         model = Hegemony
@@ -101,6 +98,36 @@ class HegemonyConeSerializer(serializers.ModelSerializer):
     class Meta:
         model = HegemonyCone
         fields = ('timebin', 'asn', 'conesize', 'af')
+
+class NetworkDelaySerializer(serializers.ModelSerializer):
+    queryset = Atlas_delay.objects.all().prefetch_related("startpoint","endpoint")
+    startpoint_type = serializers.PrimaryKeyRelatedField(queryset=queryset, source='startpoint.type')
+    startpoint_name = serializers.PrimaryKeyRelatedField(queryset=queryset, source='startpoint.name')
+    startpoint_af = serializers.PrimaryKeyRelatedField(queryset=queryset, source='startpoint.af')
+    endpoint_type = serializers.PrimaryKeyRelatedField(queryset=queryset, source='endpoint.type')
+    endpoint_name = serializers.PrimaryKeyRelatedField(queryset=queryset, source='endpoint.name')
+    endpoint_af = serializers.PrimaryKeyRelatedField(queryset=queryset, source='endpoint.af')
+
+    class Meta:
+        model = Atlas_delay
+        fields = ('timebin',
+                'startpoint_type',
+                'startpoint_name',
+                'startpoint_af',
+                'endpoint_type',
+                'endpoint_name',
+                'endpoint_af',
+                'median',
+                'nbtracks',
+                'nbprobes',
+                'entropy',
+                'hop',
+                'nbrealrtts')
+
+class NetworkDelayLocationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Atlas_location
+        fields = ('type', 'name', 'af')
 
 class ASNSerializer(serializers.ModelSerializer):
     class Meta:

@@ -47,7 +47,7 @@ class Delay_alarms(models.Model):
 
 
 class Delay_alarms_msms(models.Model):
-    alarm = models.ForeignKey(Delay_alarms, related_name="msmid", 
+    alarm = models.ForeignKey(Delay_alarms, related_name="msmid",
             on_delete=models.CASCADE)
     msmid = models.BigIntegerField(default=0)
     probeid = models.IntegerField(default=0)
@@ -55,7 +55,7 @@ class Delay_alarms_msms(models.Model):
     def __str__(self):
         return "%s %s" % (self.msmid, self.probeid)
 
-    
+
 # @architect.install('partition', type='range', subtype='date', constraint='day', column='timebin')
 class Forwarding_alarms(models.Model):
     asn = models.ForeignKey(ASN, on_delete=models.CASCADE, db_index=True)
@@ -69,17 +69,17 @@ class Forwarding_alarms(models.Model):
 
     def __str__(self):
         return "%s AS%s %s" % (self.timebin, self.asn.number, self.ip)
-    
+
 
 class Forwarding_alarms_msms(models.Model):
-    alarm = models.ForeignKey(Forwarding_alarms, related_name="msmid", 
+    alarm = models.ForeignKey(Forwarding_alarms, related_name="msmid",
             on_delete=models.CASCADE)
     msmid = models.BigIntegerField(default=0)
     probeid = models.IntegerField(default=0)
 
     def __str__(self):
         return "%s %s" % (self.msmid, self.probeid)
-    
+
 
 class Forwarding(models.Model):
     timebin = models.DateTimeField(db_index=True)
@@ -112,7 +112,7 @@ class Disco_probes(models.Model):
     starttime = models.DateTimeField()
     endtime = models.DateTimeField()
     level = models.FloatField(default=0.0)
-    ipv4 = models.CharField(max_length=64, default="None") 
+    ipv4 = models.CharField(max_length=64, default="None")
     prefixv4 = models.CharField(max_length=70, default="None")
     lat = models.FloatField(default=0.0)
     lon = models.FloatField(default=0.0)
@@ -149,9 +149,9 @@ class Atlas_location(models.Model):
 
 class Atlas_delay(models.Model):
     timebin = models.DateTimeField(db_index=True)
-    startpoint = models.ForeignKey(Atlas_location, on_delete=models.CASCADE, 
+    startpoint = models.ForeignKey(Atlas_location, on_delete=models.CASCADE,
             related_name='startpoint', db_index=True)
-    endpoint = models.ForeignKey(Atlas_location, on_delete=models.CASCADE, 
+    endpoint = models.ForeignKey(Atlas_location, on_delete=models.CASCADE,
             related_name='endopint', db_index=True)
     median = models.FloatField(default=0.0)
     nbtracks = models.IntegerField(default=0)
