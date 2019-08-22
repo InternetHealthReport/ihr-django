@@ -150,9 +150,9 @@ class Atlas_location(models.Model):
 class Atlas_delay(models.Model):
     timebin = models.DateTimeField(db_index=True)
     startpoint = models.ForeignKey(Atlas_location, on_delete=models.CASCADE,
-            related_name='startpoint', db_index=True)
+             db_index=True)
     endpoint = models.ForeignKey(Atlas_location, on_delete=models.CASCADE,
-            related_name='endopint', db_index=True)
+             db_index=True)
     median = models.FloatField(default=0.0)
     nbtracks = models.IntegerField(default=0)
     nbprobes = models.IntegerField(default=0)
