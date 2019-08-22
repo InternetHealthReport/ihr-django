@@ -66,15 +66,17 @@ class ListIntegerFilter(ListFilter):
 class NetworkDelayFilter(filters.FilterSet):
     startpoint_name = ListFilter()
     endpoint_name = ListFilter()
-    startpoint_type= django_filters.CharFilter()
-    startpoint_af= django_filters.IntegerFilter()
-    endpoint_type= django_filters.CharFilter()
-    endpoint_af= django_filters.IntegerFilter()
+    #startpoint_type= django_filters.CharFilter()
+    #startpoint_af= django_filters.NumberFilter()
+    #endpoint_type= django_filters.CharFilter()
+    #endpoint_af= django_filters.NumberFilter()
 
     class Meta:
         model = Atlas_delay
         fields = {
             'timebin': ['exact', 'lte', 'gte'],
+            #'startpoint_name': ['exact'],
+            #'endpoint_name': ['exact'],
         }
         ordering_fields = ('timebin', 'startpoint_name', 'endpoint_name')
 
@@ -106,7 +108,7 @@ class HegemonyFilter(filters.FilterSet):
 class NetworkDelayLocationFilter(filters.FilterSet):
     name = django_filters.CharFilter(lookup_expr='icontains')
     type = django_filters.CharFilter()
-    af = django_filters.IntFilter()
+    af = django_filters.NumberFilter()
 
     class Meta:
         model = Atlas_location
@@ -350,7 +352,7 @@ class NetworkDelayView(generics.ListAPIView):
     """
     API endpoint that allows to view network delay between diverse locations.
     """
-    queryset = Atlas_delay.objects.all().order_by("timebin")
+    queryset = Atlas_delay.objects.all()
     serializer_class = NetworkDelaySerializer
     filter_class = NetworkDelayFilter
 
