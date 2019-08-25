@@ -63,13 +63,22 @@ class ListIntegerFilter(ListFilter):
     def customize(self, value):
         return int(value)
 
+class ListStringFilter(ListFilter):
+
+    def filter(self, qs, value):
+        multiple_vals = self.sanitize(value.split("|"))
+        if len(multiple_vals) > 0:
+            par = {self.field_name + "__in": multiple_vals}
+            qs = qs.filter(**par)
+        return qs
+
 class NetworkDelayFilter(filters.FilterSet):
-    startpoint_name = django_filters.CharFilter(name='startpoint__name')
-    endpoint_name = django_filters.CharFilter(name='endpoint__name')
-    startpoint_type= django_filters.CharFilter(name='startpoint__type')
-    endpoint_type= django_filters.CharFilter(name='endpoint__type')
-    startpoint_af= django_filters.NumberFilter(name='startpoint__af')
-    endpoint_af= django_filters.NumberFilter(name='endpoint__af')
+    startpoint_name = ListStringFilter(field_name='startpoint__name')
+    endpoint_name = ListStringFilter(field_name='endpoint__name')
+    startpoint_type= django_filters.CharFilter(field_name='startpoint__type')
+    endpoint_type= django_filters.CharFilter(field_name='endpoint__type')
+    startpoint_af= django_filters.NumberFilter(field_name='startpoint__af')
+    endpoint_af= django_filters.NumberFilter(field_name='endpoint__af')
 
     class Meta:
         model = Atlas_delay
