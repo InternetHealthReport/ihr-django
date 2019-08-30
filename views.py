@@ -72,6 +72,37 @@ class ListStringFilter(ListFilter):
             qs = qs.filter(**par)
         return qs
 
+class ListNetworkKeyFilter(ListFilter):
+
+    def filter(self, qs, value):
+        queries = None
+        multiple_vals = self.sanitize(value.split("|"))
+
+        if len(multiple_vals) > 0:
+
+            first_key = multiple_vals[0]
+            queries = Q(
+                    **{
+                        self.field_name+'__type': first_key[:2], 
+                        self.field_name+'__af': int(first_key[2]),
+                        self.field_name+'__name': first_key[3:]
+                    }) 
+
+            # For each given keys
+            for key in multiple_vals[1:]:
+                queries |= Q(
+                    **{
+                        self.field_name+'__type': key[:2], 
+                        self.field_name+'__af': int(key[2]),
+                        self.field_name+'__name': key[3:]
+                    }) 
+
+            qs = qs.filter(queries)
+
+        return qs
+
+
+
 class NetworkDelayFilter(filters.FilterSet):
     startpoint_name = ListStringFilter(field_name='startpoint__name')
     endpoint_name = ListStringFilter(field_name='endpoint__name')
@@ -79,6 +110,9 @@ class NetworkDelayFilter(filters.FilterSet):
     endpoint_type= django_filters.CharFilter(field_name='endpoint__type')
     startpoint_af= django_filters.NumberFilter(field_name='startpoint__af')
     endpoint_af= django_filters.NumberFilter(field_name='endpoint__af')
+
+    startpoint_key = ListNetworkKeyFilter(field_name='startpoint')
+    endpoint_key = ListNetworkKeyFilter(field_name='endpoint')
 
     class Meta:
         model = Atlas_delay
@@ -90,6 +124,8 @@ class NetworkDelayFilter(filters.FilterSet):
             'endpoint_type': ['exact'],
             'startpoint_af': ['exact'],
             'endpoint_af': ['exact'],
+            'startpoint_key': ['exact'],
+            'endpoint_key': ['exact'],
         }
         ordering_fields = ('timebin', 'startpoint_name', 'endpoint_name')
 
