@@ -1,5 +1,9 @@
 from django.db import models
 from django.contrib.postgres.fields import JSONField
+from model_utils import Choices
+from django.contrib.auth.models import PermissionsMixin
+from django.contrib.auth.base_user import AbstractBaseUser
+from django.contrib.auth.models import BaseUserManager
 
 class ASN(models.Model):
     number = models.BigIntegerField(primary_key=True)
@@ -165,3 +169,74 @@ class Atlas_delay(models.Model):
                 self.startpoint.name, self.endpoint.name, self.median)
 
 
+#user
+class UserManager(BaseUserManager):
+    def _create_user(self, email, password):
+        if not email or not password:
+            raise ValueError('The email and password must be set')
+        email = self.normalize_email(email)
+        user = self.model(email=email)
+        user.set_password(password)
+        user.is_active = False
+        user.save()
+        return user
+
+    def create_user(self, email, password, **extra_fields):
+        """
+        Create a User.
+        """
+        if not email:
+            raise ValueError('The Email must be set')
+
+        extra_fields.setdefault('is_staff', False)
+        extra_fields.setdefault('is_superuser', False)
+        return self._create_user(email, password)
+
+    def create_superuser(self, email, password, **extra_fields):
+        """
+        Create a super User.
+        """
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError('Superuser must have is_staff=True.')
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError('Superuser must have is_superuser=True.')
+
+        return self._create_user(email, password)
+
+
+class IHRUser(AbstractBaseUser, PermissionsMixin):
+    email = models.EmailField(unique=True)
+    is_active = models.BooleanField(default=False)
+    # last time requested for password
+    objects = UserManager()
+    monitoringasn = models.ManyToManyField(
+        'ASN', through='MonitoredASN')
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = []
+
+
+class EmailChangeRequest(models.Model):
+    """
+    This model permit to change the email leaving the IHRUser model DRY.
+    store change requests so can be verified by the change entrypoint
+    """
+    user = models.ForeignKey(IHRUser, on_delete=models.CASCADE)
+    new_email = models.EmailField(unique=True)
+    request_time = models.DateTimeField(auto_now_add=True)
+
+    VALIDITY = 60 * 24 #expressed in minutes
+
+
+class MonitoredASN(models.Model):
+    NOTIFY_LEVEL = Choices((0, 'LOW', 'low'), (5, 'MODERATE', 'moderate'), (10, 'HIGH', 'high'))
+    user = models.ForeignKey(IHRUser, on_delete=models.CASCADE)
+    asn = models.ForeignKey(ASN, on_delete=models.CASCADE)
+
+    notifylevel = models.SmallIntegerField(
+        choices=NOTIFY_LEVEL,
+        default=NOTIFY_LEVEL.HIGH
+    )

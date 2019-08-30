@@ -1,6 +1,7 @@
 from django.conf.urls import url
 
 from . import views
+from user_api import urls as user_urls
 
 app_name = 'ihr'
 urlpatterns = [
@@ -30,4 +31,5 @@ urlpatterns = [
     url(r'^api/hegemony_cone/$', views.HegemonyConeView.as_view(), name='hegemonyConeListView'),
     url(r'^api/network_delay/$', views.NetworkDelayView.as_view(), name='networkDelayListView'),
     url(r'^api/network_delay_location/$', views.NetworkDelayLocationView.as_view(), name='networkDelayLocationListView'),
+    *user_urls.urlpatterns
 ]
