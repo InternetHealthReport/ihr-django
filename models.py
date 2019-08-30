@@ -1,8 +1,9 @@
 from django.db import models
 from django.contrib.postgres.fields import JSONField
 from model_utils import Choices
-from django.contrib.auth.models import PermissionsMixin
-from django.contrib.auth.base_user import AbstractBaseUser
+from django.contrib.auth.models import PermissionsMixin 
+from django.contrib.auth.models import Group, Permission 
+from django.contrib.auth.base_user import AbstractBaseUser 
 from django.contrib.auth.models import BaseUserManager
 
 class ASN(models.Model):
@@ -60,7 +61,6 @@ class Delay_alarms_msms(models.Model):
         return "%s %s" % (self.msmid, self.probeid)
 
 
-# @architect.install('partition', type='range', subtype='date', constraint='day', column='timebin')
 class Forwarding_alarms(models.Model):
     asn = models.ForeignKey(ASN, on_delete=models.CASCADE, db_index=True)
     timebin = models.DateTimeField(db_index=True)
@@ -154,9 +154,9 @@ class Atlas_location(models.Model):
 class Atlas_delay(models.Model):
     timebin = models.DateTimeField(db_index=True)
     startpoint = models.ForeignKey(Atlas_location, on_delete=models.CASCADE,
-             db_index=True)
+             db_index=True, related_name='location_startpoint')
     endpoint = models.ForeignKey(Atlas_location, on_delete=models.CASCADE,
-             db_index=True)
+             db_index=True, related_name='location_endpoint')
     median = models.FloatField(default=0.0)
     nbtracks = models.IntegerField(default=0)
     nbprobes = models.IntegerField(default=0)
@@ -209,6 +209,18 @@ class UserManager(BaseUserManager):
 
 class IHRUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
+    groups = models.ManyToManyField(
+        Group,
+        blank=True,
+        related_name="ihruser_set",
+        related_query_name="ihruser",
+    )
+    user_permissions = models.ManyToManyField(
+        Permission,
+        blank=True,
+        related_name="ihruser_set",
+        related_query_name="ihruser",
+    )
     is_active = models.BooleanField(default=False)
     # last time requested for password
     objects = UserManager()

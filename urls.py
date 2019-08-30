@@ -1,7 +1,7 @@
 from django.conf.urls import url
 
 from . import views
-from user_api import urls as user_urls
+from .user_api import urls as user_urls
 
 app_name = 'ihr'
 urlpatterns = [

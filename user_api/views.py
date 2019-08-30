@@ -1,7 +1,7 @@
 from .const import ConfirmationEmail, ResetPasswordEmail, StrErrors
 from .utility import account_activation_token, google_token_verification, parse_request, std_response, EmailChangeTokenGenerator, IHRException
 from .serializers import IHRUserSerializer
-from .models import IHRUser, MonitoredASN, ASN, UserManager, EmailChangeRequest
+from ..models import IHRUser, MonitoredASN, ASN, UserManager, EmailChangeRequest
 from django.shortcuts import render
 from rest_framework import viewsets
 from rest_framework.decorators import action
