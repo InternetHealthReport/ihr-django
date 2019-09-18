@@ -657,7 +657,7 @@ def eventToStepGraph(dtStart, dtEnd, stime, etime, lvl, eventid):
 
 def discoGeoData(request):
     # format the end date
-    minLevel=12
+    minLevel=9
     dtEnd = datetime.now(pytz.utc)
     if "date" in request.GET and request.GET["date"].count("-") == 2:
         date = request.GET["date"].split("-")
@@ -674,13 +674,13 @@ def discoGeoData(request):
 
     # find corresponding ASN or country
     streams = Disco_events.objects.filter(endtime__gte=dtStart,
-        starttime__lte=dtEnd,avglevel__gte=minLevel, streamtype="geo").distinct("streamname").values("streamname", "starttime",  "avglevel", "id")
+        starttime__lte=dtEnd,avglevel__gte=minLevel).exclude(streamtype='asn').distinct("streamname").values("streamname", "starttime",  "avglevel", "id")
 
     formatedData = {}
     for stream in streams:
         eventid = stream["id"]
 
-        probeData = Disco_probes.objects.filter(event=eventid, probe_id=int(stream["streamname"].partition("-")[2])).values("lat", "lon")
+        probeData = Disco_probes.objects.filter(event=eventid ).values("lat", "lon")
         # eventid=list(data.values_list("id", flat=True))
 
         for probe in probeData:
@@ -691,12 +691,14 @@ def discoGeoData(request):
                 "lat": probe["lat"],
                 "lon": probe["lon"],
                 }
+            # plotting requires only one probe
+            break
 
     return JsonResponse(formatedData, encoder=DateTimeEncoder)
 
 def discoData(request):
     # format the end date
-    minLevel = 12
+    minLevel = 9 
     dtEnd = datetime.now(pytz.utc)
     if "date" in request.GET and request.GET["date"].count("-") == 2:
         date = request.GET["date"].split("-")
@@ -706,8 +708,8 @@ def discoData(request):
     last = LAST_DEFAULT
     if "last" in request.GET:
         last = int(request.GET["last"])
-        if last > 356:
-            last = 356
+        if last > 365:
+            last = 365
 
     dtStart = dtEnd - timedelta(last)
 
@@ -720,7 +722,7 @@ def discoData(request):
         streams= [{"streamtype":"country", "streamname": country.code}]
     else:
         streams = Disco_events.objects.filter(endtime__gte=dtStart,
-            starttime__lte=dtEnd,avglevel__gte=minLevel).exclude(streamtype="geo").exclude(streamname="All").distinct("streamname").values("streamname", "streamtype")
+            starttime__lte=dtEnd,avglevel__gte=minLevel).exclude(streamtype="admin1").exclude(streamtype='admin2').exclude(streamname="All").distinct("streamname").values("streamname", "streamtype")
 
     formatedData = {}
     for stream in streams:
@@ -728,7 +730,7 @@ def discoData(request):
         streamname = stream["streamname"]
 
         data = Disco_events.objects.filter(streamtype=streamtype, streamname=streamname,
-                endtime__gte=dtStart,  starttime__lte=dtEnd,avglevel__gte=10).order_by("starttime")
+                endtime__gte=dtStart,  starttime__lte=dtEnd,avglevel__gte=minLevel).order_by("starttime")
         stime = list(data.values_list("starttime", flat=True))
         etime = list(data.values_list("endtime", flat=True))
         lvl =   list(data.values_list("avglevel", flat=True))

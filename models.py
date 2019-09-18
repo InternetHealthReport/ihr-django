@@ -99,7 +99,7 @@ class Forwarding(models.Model):
 class Disco_events(models.Model):
     mongoid = models.CharField(max_length=24, default="000000000000000000000000", db_index=True)
     streamtype = models.CharField(max_length=10)
-    streamname = models.CharField(max_length=20)
+    streamname = models.CharField(max_length=128)
     starttime = models.DateTimeField()
     endtime = models.DateTimeField()
     avglevel = models.FloatField(default=0.0)
