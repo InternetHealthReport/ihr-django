@@ -46,7 +46,7 @@ class ListFilter(django_filters.CharFilter):
         """
         remove empty items and parse them
         """
-        return [self.customize(v) for v in value_list if v != ""]
+        return [self.customize(v) for v in value_list]
 
     def customize(self, value):
         return value
