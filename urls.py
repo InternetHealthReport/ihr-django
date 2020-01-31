@@ -28,8 +28,10 @@ urlpatterns = [
     url(r'^api/disco_events/$', views.DiscoEventsView.as_view(), name='discoEventsListView'),
     url(r'^api/disco_probes/$', views.DiscoProbesView.as_view(), name='discoProbesListView'),
     url(r'^api/hegemony/$', views.HegemonyView.as_view(), name='hegemonyListView'),
+    url(r'^api/hegemony_alarms/$', views.HegemonyAlarmsView.as_view(), name='hegemonyAlarmsListView'),
     url(r'^api/hegemony_cone/$', views.HegemonyConeView.as_view(), name='hegemonyConeListView'),
     url(r'^api/network_delay/$', views.NetworkDelayView.as_view(), name='networkDelayListView'),
-    url(r'^api/network_delay_location/$', views.NetworkDelayLocationView.as_view(), name='networkDelayLocationListView'),
+    url(r'^api/network_delay_locations/$', views.NetworkDelayLocationsView.as_view(), name='networkDelayLocationsListView'),
+    url(r'^api/network_delay_alarms/$', views.NetworkDelayAlarmsView.as_view(), name='networkDelayAlarmsListView'),
     *user_urls.urlpatterns
 ]

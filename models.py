@@ -168,6 +168,26 @@ class Atlas_delay(models.Model):
         return "%s -> %s: %s" % (
                 self.startpoint.name, self.endpoint.name, self.median)
 
+class Hegemony_alarms(models.Model):
+    timebin = models.DateTimeField(db_index=True)
+    originasn = models.ForeignKey(ASN, on_delete=models.CASCADE, related_name="anomalous_originasn", db_index=True)
+    asn = models.ForeignKey(ASN, on_delete=models.CASCADE, related_name="anomalous_asn", db_index=True)
+    deviation = models.FloatField(default=0.0)
+    af = models.IntegerField()
+
+    def __str__(self):
+        return "(%s, %s, v%s) %s" % (self.originasn, self.asn, self.af, self.deviation)
+
+class Atlas_delay_alarms(models.Model):
+    timebin = models.DateTimeField(db_index=True)
+    startpoint = models.ForeignKey(Atlas_location, on_delete=models.CASCADE,
+             db_index=True, related_name='anomalous_startpoint')
+    endpoint = models.ForeignKey(Atlas_location, on_delete=models.CASCADE,
+             db_index=True, related_name='anomalous_endpoint')
+    deviation = models.FloatField(default=0.0)
+
+    def __str__(self):
+        return "(%s, %s) %s" % (self.startpoint, self.endpoint, self.deviation)
 
 #user
 class UserManager(BaseUserManager):

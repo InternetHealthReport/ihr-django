@@ -15,13 +15,13 @@ import pandas as pd
 import pytz
 import json
 
-from .models import ASN, Country, Delay, Forwarding, Delay_alarms, Forwarding_alarms, Disco_events, Disco_probes, Hegemony, HegemonyCone, Atlas_delay, Atlas_location
+from .models import ASN, Country, Delay, Forwarding, Delay_alarms, Forwarding_alarms, Disco_events, Disco_probes, Hegemony, HegemonyCone, Atlas_delay, Atlas_location, Atlas_delay_alarms, Hegemony_alarms
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework import generics
-from .serializers import ASNSerializer, CountrySerializer, DelaySerializer, ForwardingSerializer, DelayAlarmsSerializer, ForwardingAlarmsSerializer, DiscoEventsSerializer, DiscoProbesSerializer, HegemonySerializer, HegemonyConeSerializer, NetworkDelaySerializer, NetworkDelayLocationSerializer
+from .serializers import ASNSerializer, CountrySerializer, DelaySerializer, ForwardingSerializer, DelayAlarmsSerializer, ForwardingAlarmsSerializer, DiscoEventsSerializer, DiscoProbesSerializer, HegemonySerializer, HegemonyConeSerializer, NetworkDelaySerializer, NetworkDelayLocationsSerializer, NetworkDelayAlarmsSerializer, HegemonyAlarmsSerializer
 from django_filters import rest_framework as filters
 import django_filters
 from django.db.models import Q
@@ -101,8 +101,6 @@ class ListNetworkKeyFilter(ListFilter):
 
         return qs
 
-
-
 class NetworkDelayFilter(filters.FilterSet):
     startpoint_name = ListStringFilter(field_name='startpoint__name')
     endpoint_name = ListStringFilter(field_name='endpoint__name')
@@ -135,6 +133,41 @@ class NetworkDelayFilter(filters.FilterSet):
         },
     }
 
+
+
+class NetworkDelayAlarmsFilter(filters.FilterSet):
+    startpoint_name = ListStringFilter(field_name='startpoint__name')
+    endpoint_name = ListStringFilter(field_name='endpoint__name')
+    startpoint_type= django_filters.CharFilter(field_name='startpoint__type')
+    endpoint_type= django_filters.CharFilter(field_name='endpoint__type')
+    startpoint_af= django_filters.NumberFilter(field_name='startpoint__af')
+    endpoint_af= django_filters.NumberFilter(field_name='endpoint__af')
+
+    startpoint_key = ListNetworkKeyFilter(field_name='startpoint')
+    endpoint_key = ListNetworkKeyFilter(field_name='endpoint')
+
+    class Meta:
+        model = Atlas_delay_alarms
+        fields = {
+            'timebin': ['exact', 'lte', 'gte'],
+            'startpoint_name': ['exact'],
+            'endpoint_name': ['exact'],
+            'startpoint_type': ['exact'],
+            'endpoint_type': ['exact'],
+            'startpoint_af': ['exact'],
+            'endpoint_af': ['exact'],
+            'startpoint_key': ['exact'],
+            'endpoint_key': ['exact'],
+            'deviation': ['lte', 'gte'],
+        }
+        ordering_fields = ('timebin', 'startpoint_name', 'endpoint_name')
+
+    filter_overrides = {
+        django_models.DateTimeField: {
+            'filter_class': filters.IsoDateTimeFilter
+        },
+    }
+
 class HegemonyFilter(filters.FilterSet):
     asn = ListIntegerFilter()
     originasn = ListIntegerFilter()
@@ -154,7 +187,27 @@ class HegemonyFilter(filters.FilterSet):
         },
     }
 
-class NetworkDelayLocationFilter(filters.FilterSet):
+
+class HegemonyAlarmsFilter(filters.FilterSet):
+    asn = ListIntegerFilter()
+    originasn = ListIntegerFilter()
+
+    class Meta:
+        model = Hegemony_alarms
+        fields = {
+            'timebin': ['exact', 'lte', 'gte'],
+            'af': ['exact'],
+            'deviation': ['lte', 'gte'],
+        }
+        ordering_fields = ('timebin', 'originasn', 'deviation', 'af')
+
+    filter_overrides = {
+        django_models.DateTimeField: {
+            'filter_class': filters.IsoDateTimeFilter
+        },
+    }
+
+class NetworkDelayLocationsFilter(filters.FilterSet):
     name = django_filters.CharFilter(lookup_expr='icontains')
     type = django_filters.CharFilter()
     af = django_filters.NumberFilter()
@@ -388,6 +441,14 @@ class HegemonyView(generics.ListAPIView):
     serializer_class = HegemonySerializer
     filter_class = HegemonyFilter
 
+class HegemonyAlarmsView(generics.ListAPIView):
+    """
+    API endpoint that allows to view AS hegemony scores.
+    """
+    queryset = Hegemony_alarms.objects.all().order_by("timebin")
+    serializer_class = HegemonyAlarmsSerializer
+    filter_class = HegemonyAlarmsFilter
+
 class HegemonyConeView(generics.ListAPIView):
     """
     API endpoint that allows to view AS hegemony cones (number of dependent
@@ -405,13 +466,21 @@ class NetworkDelayView(generics.ListAPIView):
     serializer_class = NetworkDelaySerializer
     filter_class = NetworkDelayFilter
 
-class NetworkDelayLocationView(generics.ListAPIView):
+class NetworkDelayAlarmsView(generics.ListAPIView):
+    """
+    API endpoint that allows to view detected network delay alarms.
+    """
+    queryset = Atlas_delay_alarms.objects.all()
+    serializer_class = NetworkDelayAlarmsSerializer
+    filter_class = NetworkDelayAlarmsFilter
+
+class NetworkDelayLocationsView(generics.ListAPIView):
     """
     API endpoint for network locations found in Atlas traceroutes
     """
     queryset = Atlas_location.objects.all()
-    serializer_class = NetworkDelayLocationSerializer
-    filter_class = NetworkDelayLocationFilter
+    serializer_class = NetworkDelayLocationsSerializer
+    filter_class = NetworkDelayLocationsFilter
 
 @api_view(['GET'])
 def restful_API(request, format=None):
@@ -426,9 +495,11 @@ def restful_API(request, format=None):
         'disco_events': reverse('ihr:discoEventsListView', request=request, format=format),
         'disco_probes': reverse('ihr:discoProbesListView', request=request, format=format),
         'hegemony': reverse('ihr:hegemonyListView', request=request, format=format),
+        'hegemony_alarms': reverse('ihr:hegemonyAlarmsListView', request=request, format=format),
         'hegemony_cone': reverse('ihr:hegemonyConeListView', request=request, format=format),
         'network_delay': reverse('ihr:networkDelayListView', request=request, format=format),
-        'network_delay_location': reverse('ihr:networkDelayLocationListView', request=request, format=format),
+        'network_delay_locations': reverse('ihr:networkDelayLocationsListView', request=request, format=format),
+        'network_delay_alarms': reverse('ihr:networkDelayAlarmsListView', request=request, format=format),
     })
 
 
@@ -442,46 +513,6 @@ class DateTimeEncoder(json.JSONEncoder):
 
         return json.JSONEncoder.default(self, o)
 
-def index_old(request):
-
-    # Top congested ASs
-    # today = date.today()
-    # if "today" in request.GET:
-        # part = request.GET["today"].split("-")
-        # today = date(int(part[0]), int(part[1]), int(part[2]))
-    # limitDate = today-timedelta(days=7)
-    # print(limitDate)
-    # # TODO remove the following line (used only with test data)
-    # limitDate = datetime(2015,1,1)
-
-    # topCongestion = ASN.objects.filter(congestion__timebin__gt=limitDate).annotate(score=Sum("congestion__magnitude")).order_by("-score")[:5]
-
-    # tier1 = ASN.objects.filter(number__in = [7018,174,209,3320,3257,286,3356,3549,2914,5511,1239,6453,6762,12956,1299,701,702,703,2828,6461])
-    topTier1 = ASN.objects.filter(number__in = [3356, 174, 3257, 1299, 2914])
-    rootServers = ASN.objects.filter(number__in = [26415, 2149, 27, 297, 3557, 5927, 13, 29216, 26415, 25152, 20144, 7500, 226])
-    monitoredAsn = ASN.objects.order_by("number")
-
-    ulLen = 5
-    if len(monitoredAsn)<15:
-        ulLen = 2 #len(monitoredAsn)/3
-
-    date = ""
-    if "date" in request.GET:
-        date = request.GET["date"]
-
-    last = LAST_DEFAULT
-    if "last" in request.GET:
-        last = request.GET["last"]
-
-    context = {"monitoredAsn0": monitoredAsn[1:ulLen+1], "monitoredAsn1": monitoredAsn[ulLen+1:1+ulLen*2],
-            "monitoredAsn2": monitoredAsn[1+ulLen*2:1+ulLen*3],"monitoredAsn3": monitoredAsn[1+ulLen*3:1+ulLen*4],
-            "nbMonitoredAsn": len(monitoredAsn)-ulLen*4,
-            "topTier1": topTier1 ,
-            "rootServers": rootServers ,
-            "date": date,
-            "last": last,
-            }
-    return render(request, "ihr/index.html", context)
 
 def index(request):
 
@@ -657,7 +688,7 @@ def eventToStepGraph(dtStart, dtEnd, stime, etime, lvl, eventid):
 
 def discoGeoData(request):
     # format the end date
-    minLevel=9
+    minLevel=8
     dtEnd = datetime.now(pytz.utc)
     if "date" in request.GET and request.GET["date"].count("-") == 2:
         date = request.GET["date"].split("-")
@@ -698,7 +729,7 @@ def discoGeoData(request):
 
 def discoData(request):
     # format the end date
-    minLevel = 9 
+    minLevel = 8 
     dtEnd = datetime.now(pytz.utc)
     if "date" in request.GET and request.GET["date"].count("-") == 2:
         date = request.GET["date"].split("-")

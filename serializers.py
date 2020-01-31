@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import ASN, Country, Delay,  Forwarding, Delay_alarms, Forwarding_alarms, Disco_events, Disco_probes, Hegemony, HegemonyCone, Atlas_location, Atlas_delay
+from .models import ASN, Country, Delay,  Forwarding, Delay_alarms, Forwarding_alarms, Disco_events, Disco_probes, Hegemony, HegemonyCone, Atlas_location, Atlas_delay, Atlas_delay_alarms, Hegemony_alarms
 
 class DelaySerializer(serializers.ModelSerializer):
     queryset = Delay.objects.all().prefetch_related("asn")
@@ -94,6 +94,22 @@ class HegemonySerializer(serializers.ModelSerializer):
                 'asn_name',
                 'originasn_name')
 
+class HegemonyAlarmsSerializer(serializers.ModelSerializer):
+    queryset = Hegemony_alarms.objects.all().prefetch_related("asn","originasn")
+    asn_name = serializers.PrimaryKeyRelatedField(queryset=queryset, source='asn.name')
+    originasn_name = serializers.PrimaryKeyRelatedField(queryset=queryset, source='originasn.name')
+
+    class Meta:
+        model = Hegemony_alarms
+        fields = ('timebin',
+                'originasn',
+                'asn',
+                'deviation',
+                'af',
+                'asn_name',
+                'originasn_name')
+
+
 class HegemonyConeSerializer(serializers.ModelSerializer):
     class Meta:
         model = HegemonyCone
@@ -124,7 +140,7 @@ class NetworkDelaySerializer(serializers.ModelSerializer):
                 'hop',
                 'nbrealrtts')
 
-class NetworkDelayLocationSerializer(serializers.ModelSerializer):
+class NetworkDelayLocationsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Atlas_location
         fields = ('type', 'name', 'af')
@@ -138,3 +154,23 @@ class CountrySerializer(serializers.ModelSerializer):
     class Meta:
         model = Country
         fields = ('code', 'name')
+
+class NetworkDelayAlarmsSerializer(serializers.ModelSerializer):
+    queryset = Atlas_delay_alarms.objects.all().prefetch_related('startpoint', 'endpoint')
+    startpoint_type = serializers.CharField(source='startpoint.type')
+    startpoint_name = serializers.CharField(source='startpoint.name')
+    startpoint_af = serializers.IntegerField(source='startpoint.af')
+    endpoint_type = serializers.CharField(source='endpoint.type')
+    endpoint_name = serializers.CharField(source='endpoint.name')
+    endpoint_af = serializers.IntegerField(source='endpoint.af')
+
+    class Meta:
+        model = Atlas_delay_alarms
+        fields = ('timebin',
+                'startpoint_type',
+                'startpoint_name',
+                'startpoint_af',
+                'endpoint_type',
+                'endpoint_name',
+                'endpoint_af',
+                'deviation')
