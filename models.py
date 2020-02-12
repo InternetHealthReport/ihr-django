@@ -112,7 +112,7 @@ class Disco_events(models.Model):
 
 class Disco_probes(models.Model):
     probe_id = models.IntegerField()
-    event = models.ForeignKey(Disco_events, on_delete=models.CASCADE, db_index=True)
+    event = models.ForeignKey(Disco_events, on_delete=models.CASCADE, db_index=True, related_name="discoprobes")
     starttime = models.DateTimeField()
     endtime = models.DateTimeField()
     level = models.FloatField(default=0.0)

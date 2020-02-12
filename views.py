@@ -46,7 +46,7 @@ class ListFilter(django_filters.CharFilter):
         """
         remove empty items and parse them
         """
-        return [self.customize(v) for v in value_list]
+        return [self.customize(v) for v in value_list if v!=""]
 
     def customize(self, value):
         return value
@@ -429,7 +429,7 @@ class DiscoProbesView(generics.ListAPIView):
     """
     probe_id = ListIntegerFilter()
 
-    queryset = Disco_probes.objects.all() #.order_by('-asn')
+    queryset = Disco_probes.objects.all() 
     serializer_class = DiscoProbesSerializer
     filter_class = DiscoProbesFilter
 

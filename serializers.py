@@ -53,19 +53,6 @@ class ForwardingAlarmsSerializer(serializers.ModelSerializer):
                 'msm_prb_ids',
                 'msmid')
 
-class DiscoEventsSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Disco_events
-        fields = ('id',
-                'streamtype',
-                'streamname',
-                'starttime',
-                'endtime',
-                'avglevel',
-                'nbdiscoprobes',
-                'totalprobes',
-                'ongoing')
-
 class DiscoProbesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Disco_probes
@@ -78,6 +65,23 @@ class DiscoProbesSerializer(serializers.ModelSerializer):
                 'level',
                 'lat',
                 'lon')
+
+class DiscoEventsSerializer(serializers.ModelSerializer):
+    discoprobes = DiscoProbesSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Disco_events
+        fields = ('id',
+                'streamtype',
+                'streamname',
+                'starttime',
+                'endtime',
+                'avglevel',
+                'nbdiscoprobes',
+                'totalprobes',
+                'ongoing',
+                'discoprobes')
+
 
 class HegemonySerializer(serializers.ModelSerializer):
     queryset = Hegemony.objects.all().prefetch_related("asn","originasn")
