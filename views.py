@@ -488,6 +488,7 @@ def restful_API(request, format=None):
     API endpoint
     """
     return Response({
+        'network': reverse('ihr:networkListView', request=request, format=format),
         'forwarding': reverse('ihr:forwardingListView', request=request, format=format),
         'delay': reverse('ihr:delayListView', request=request, format=format),
         'forwarding_alarms': reverse('ihr:forwardingAlarmsListView', request=request, format=format),

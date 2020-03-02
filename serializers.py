@@ -150,9 +150,16 @@ class NetworkDelayLocationsSerializer(serializers.ModelSerializer):
         fields = ('type', 'name', 'af')
 
 class ASNSerializer(serializers.ModelSerializer):
+    hegemony = serializers.BooleanField(source='ashash')
+    delay_forwarding = serializers.BooleanField(source='tartiflette')
+
     class Meta:
         model = ASN
-        fields = ('number', 'name')
+        fields = ('number', 
+                'name', 
+                'hegemony',
+                'delay_forwarding',
+                'disco')
 
 class CountrySerializer(serializers.ModelSerializer):
     class Meta:
