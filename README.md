@@ -1,7 +1,7 @@
 # django-ihr
 Internet Health Report Website
 
-This is the implementation for the IHR website: https://ihr.iijlab.net
+This is the implementation for the IHR API: https://ihr.iijlab.net
 
 ## Server installation
 
