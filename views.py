@@ -32,7 +32,7 @@ from django.db.models import Q
 # by default shows only one week of data
 LAST_DEFAULT = 7
 HEGE_GRANULARITY = 15
-MAX_RANGE = 31
+MAX_RANGE = 7
 
 ########### Custom Pagination ##########
 from rest_framework.pagination import PageNumberPagination
@@ -424,33 +424,45 @@ class DelayView(generics.ListAPIView): #viewsets.ModelViewSet):
     """
     API endpoint that allows to view the level of congestion.
     """
-    queryset = Delay.objects.all()
     serializer_class = DelaySerializer
     filter_class = DelayFilter
+
+    def get_queryset(self):
+        check_timebin(self.request.query_params)
+        return Delay.objects.all()
 
 class ForwardingView(generics.ListAPIView):
     """
     API endpoint that allows to view the level of forwarding anomaly.
     """
-    queryset = Forwarding.objects.all()
     serializer_class = ForwardingSerializer
     filter_class = ForwardingFilter
+
+    def get_queryset(self):
+        check_timebin(self.request.query_params)
+        return Forwarding.objects.all()
 
 class DelayAlarmsView(generics.ListAPIView):
     """
     API endpoint that allows to view the delay alarms.
     """
-    queryset = Delay_alarms.objects.all() #.order_by('-asn')
     serializer_class = DelayAlarmsSerializer
     filter_class = DelayAlarmsFilter
+
+    def get_queryset(self):
+        check_timebin(self.request.query_params)
+        return Delay_alarms.objects.all()
 
 class ForwardingAlarmsView(generics.ListAPIView):
     """
     API endpoint that allows to view the forwarding alarms.
     """
-    queryset = Forwarding_alarms.objects.all()
     serializer_class = ForwardingAlarmsSerializer
     filter_class = ForwardingAlarmsFilter
+
+    def get_queryset(self):
+        check_timebin(self.request.query_params)
+        return Forwarding_alarms.objects.all()
 
 class DiscoEventsView(generics.ListAPIView):
     """
@@ -474,10 +486,13 @@ class HegemonyView(generics.ListAPIView):
     """
     API endpoint that allows to view AS hegemony scores.
     """
-    queryset = Hegemony.objects.all()
     serializer_class = HegemonySerializer
     filter_class = HegemonyFilter
     ordering = 'timebin'
+
+    def get_queryset(self):
+        check_timebin(self.request.query_params)
+        return Hegemony.objects.all()
 
 class HegemonyAlarmsView(generics.ListAPIView):
     """
@@ -495,27 +510,36 @@ class HegemonyConeView(generics.ListAPIView):
     API endpoint that allows to view AS hegemony cones (number of dependent
     networks).
     """
-    queryset = HegemonyCone.objects.all()
     serializer_class = HegemonyConeSerializer
     filter_class = HegemonyConeFilter
     ordering = 'timebin'
+
+    def get_queryset(self):
+        check_timebin(self.request.query_params)
+        return HegemonyCone.objects.all()
 
 class NetworkDelayView(generics.ListAPIView):
     """
     API endpoint that allows to view network delay between diverse locations.
     """
-    queryset = Atlas_delay.objects.all()
     serializer_class = NetworkDelaySerializer
     filter_class = NetworkDelayFilter
     ordering = 'timebin'
+
+    def get_queryset(self):
+        check_timebin(self.request.query_params)
+        return Atlas_delay.objects.all()
 
 class NetworkDelayAlarmsView(generics.ListAPIView):
     """
     API endpoint that allows to view detected network delay alarms.
     """
-    queryset = Atlas_delay_alarms.objects.all()
     serializer_class = NetworkDelayAlarmsSerializer
     filter_class = NetworkDelayAlarmsFilter
+
+    def get_queryset(self):
+        check_timebin(self.request.query_params)
+        return Atlas_delay_alarms.objects.all()
 
 class NetworkDelayLocationsView(generics.ListAPIView):
     """
