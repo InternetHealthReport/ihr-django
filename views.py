@@ -502,7 +502,7 @@ class HegemonyView(generics.ListAPIView):
 
     def get_queryset(self):
         check_timebin(self.request.query_params)
-        check_or_fields(self.request.quer_params, ['originasn', 'asn'])
+        check_or_fields(self.request.query_params, ['originasn', 'asn'])
         return Hegemony.objects.all()
 
 class HegemonyAlarmsView(generics.ListAPIView):
