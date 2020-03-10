@@ -14,6 +14,7 @@ from datetime import datetime, date, timedelta
 import pandas as pd
 import pytz
 import json
+import arrow
 
 from .models import ASN, Country, Delay, Forwarding, Delay_alarms, Forwarding_alarms, Disco_events, Disco_probes, Hegemony, HegemonyCone, Atlas_delay, Atlas_location, Atlas_delay_alarms, Hegemony_alarms
 
@@ -21,6 +22,8 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework import generics
+from rest_framework.exceptions import ParseError
+
 from .serializers import ASNSerializer, CountrySerializer, DelaySerializer, ForwardingSerializer, DelayAlarmsSerializer, ForwardingAlarmsSerializer, DiscoEventsSerializer, DiscoProbesSerializer, HegemonySerializer, HegemonyConeSerializer, NetworkDelaySerializer, NetworkDelayLocationsSerializer, NetworkDelayAlarmsSerializer, HegemonyAlarmsSerializer
 from django_filters import rest_framework as filters
 import django_filters
@@ -29,6 +32,7 @@ from django.db.models import Q
 # by default shows only one week of data
 LAST_DEFAULT = 7
 HEGE_GRANULARITY = 15
+MAX_RANGE = 31
 
 ########### Custom Pagination ##########
 from rest_framework.pagination import PageNumberPagination
@@ -37,6 +41,36 @@ class StandardResultsSetPagination(PageNumberPagination):
     page_size_query_param = 'limit'
 
 ############ API ##########
+def check_timebin(query_params):
+    """ Check if the query contain timebin parameters"""
+
+    # check if it contains only the timebin field
+    timebin = query_params.get('timebin', None)
+    if timebin is not None:
+        return True
+
+    timebin_gte = query_params.get('timebin__gte', None)
+    timebin_lte = query_params.get('timebin__lte', None)
+
+    # check if it contains any of the timebin fields
+    if timebin_gte is None and timebin_lte is None:
+        raise ParseError("No timebin parameter. Please provide a timebin value or a range of values with timebin__lte and timebin__gte.")
+
+    # check if the range is complete
+    if timebin_gte is None or timebin_lte is None:
+        raise ParseError("Invalid timebin range. Please provide both timebin__lte and timebin__gte.")
+
+    # check if the range is longer than MAX_RANGE
+    try:
+        start = arrow.get(timebin_gte)
+        end = arrow.get(timebin_lte)
+    except:
+        raise ParseError("Could not parse the timebin parameters.")
+
+    if (end-start).days > MAX_RANGE:
+        raise ParseError("The given timebin range is too large. Should be less than {} days.".format(MAX_RANGE))
+
+    return True
 
 ### Filters:
 # Generic filter for a list of values:
@@ -440,26 +474,31 @@ class HegemonyView(generics.ListAPIView):
     """
     API endpoint that allows to view AS hegemony scores.
     """
-    queryset = Hegemony.objects.all().order_by("timebin")
+    queryset = Hegemony.objects.all()
     serializer_class = HegemonySerializer
     filter_class = HegemonyFilter
+    ordering = 'timebin'
 
 class HegemonyAlarmsView(generics.ListAPIView):
     """
     API endpoint that allows to view AS hegemony scores.
     """
-    queryset = Hegemony_alarms.objects.all().order_by("timebin")
     serializer_class = HegemonyAlarmsSerializer
     filter_class = HegemonyAlarmsFilter
+
+    def get_queryset(self):
+        check_timebin(self.request.query_params)
+        return Hegemony_alarms.objects.all()
 
 class HegemonyConeView(generics.ListAPIView):
     """
     API endpoint that allows to view AS hegemony cones (number of dependent
     networks).
     """
-    queryset = HegemonyCone.objects.all().order_by("timebin")
+    queryset = HegemonyCone.objects.all()
     serializer_class = HegemonyConeSerializer
     filter_class = HegemonyConeFilter
+    ordering = 'timebin'
 
 class NetworkDelayView(generics.ListAPIView):
     """
@@ -468,6 +507,7 @@ class NetworkDelayView(generics.ListAPIView):
     queryset = Atlas_delay.objects.all()
     serializer_class = NetworkDelaySerializer
     filter_class = NetworkDelayFilter
+    ordering = 'timebin'
 
 class NetworkDelayAlarmsView(generics.ListAPIView):
     """
