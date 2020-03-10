@@ -72,6 +72,16 @@ def check_timebin(query_params):
 
     return True
 
+def check_or_fields(query_params, fields):
+    """ Check if the query contain any of the given fields"""
+
+    # check if it contains any of the fields
+    checks = [query_params.get(f, None) is not None for f in fields]
+    if not any(checks):
+        raise ParseError("Required parameter missing. Please provide one of the following parameter: {}".format(fields))
+
+    return True
+
 ### Filters:
 # Generic filter for a list of values:
 class ListFilter(django_filters.CharFilter):
@@ -492,6 +502,7 @@ class HegemonyView(generics.ListAPIView):
 
     def get_queryset(self):
         check_timebin(self.request.query_params)
+        check_or_fields(self.request.quer_params, ['originasn', 'asn'])
         return Hegemony.objects.all()
 
 class HegemonyAlarmsView(generics.ListAPIView):
