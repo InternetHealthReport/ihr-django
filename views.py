@@ -217,7 +217,7 @@ class NetworkDelayLocationsFilter(filters.FilterSet):
         fields = ["type", "name", "af"]
         ordering_fields = ("name",)
 
-class ASNFilter(filters.FilterSet):
+class NetworkFilter(filters.FilterSet):
     name = django_filters.CharFilter(lookup_expr='icontains')
     number = ListIntegerFilter()
     search = django_filters.CharFilter(method='asn_or_number')
@@ -236,7 +236,10 @@ class ASNFilter(filters.FilterSet):
 
     class Meta:
         model = ASN
-        fields = ["name", "number"]
+        fields = {
+                "name": ['exact'],
+                "number": ['exact', 'lte', 'gte'],
+                }
         ordering_fields = ('number',)
 
 class CountryFilter(filters.FilterSet):
@@ -367,13 +370,13 @@ class DiscoProbesFilter(filters.FilterSet):
         ordering_fields = ('starttime', 'endtime', 'level')
 
 ### Views:
-class ASNView(generics.ListAPIView):
+class NetworkView(generics.ListAPIView):
     """
     API endpoint that allows to view/search AS and IX
     """
     queryset = ASN.objects.all()
     serializer_class = ASNSerializer
-    filter_class = ASNFilter
+    filter_class = NetworkFilter
 
 class CountryView(generics.ListAPIView):
     """
