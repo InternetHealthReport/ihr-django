@@ -38,6 +38,15 @@ LAST_DEFAULT = 7
 HEGE_GRANULARITY = 15
 MAX_RANGE = 7
 
+
+########## Get help_text from model ###############
+class HelpfulFilterSet(filters.FilterSet):
+    @classmethod
+    def filter_for_field(cls, f, name, lookup_expr):
+        filter = super(HelpfulFilterSet, cls).filter_for_field(f, name, lookup_expr)
+        filter.extra['help_text'] = f.help_text
+        return filter
+
 ########### Custom Pagination ##########
 from rest_framework.pagination import PageNumberPagination
 
@@ -150,7 +159,7 @@ class ListNetworkKeyFilter(ListFilter):
 
         return qs
 
-class NetworkDelayFilter(filters.FilterSet):
+class NetworkDelayFilter(HelpfulFilterSet):
     startpoint_name = ListStringFilter(field_name='startpoint__name')
     endpoint_name = ListStringFilter(field_name='endpoint__name')
     startpoint_type= django_filters.CharFilter(field_name='startpoint__type')
@@ -184,7 +193,7 @@ class NetworkDelayFilter(filters.FilterSet):
 
 
 
-class NetworkDelayAlarmsFilter(filters.FilterSet):
+class NetworkDelayAlarmsFilter(HelpfulFilterSet):
     startpoint_name = ListStringFilter(field_name='startpoint__name')
     endpoint_name = ListStringFilter(field_name='endpoint__name')
     startpoint_type= django_filters.CharFilter(field_name='startpoint__type')
@@ -217,7 +226,7 @@ class NetworkDelayAlarmsFilter(filters.FilterSet):
         },
     }
 
-class HegemonyFilter(filters.FilterSet):
+class HegemonyFilter(HelpfulFilterSet):
     asn = ListIntegerFilter()
     originasn = ListIntegerFilter()
 
@@ -237,7 +246,7 @@ class HegemonyFilter(filters.FilterSet):
     }
 
 
-class HegemonyAlarmsFilter(filters.FilterSet):
+class HegemonyAlarmsFilter(HelpfulFilterSet):
     asn = ListIntegerFilter()
     originasn = ListIntegerFilter()
 
@@ -256,7 +265,7 @@ class HegemonyAlarmsFilter(filters.FilterSet):
         },
     }
 
-class NetworkDelayLocationsFilter(filters.FilterSet):
+class NetworkDelayLocationsFilter(HelpfulFilterSet):
     name = django_filters.CharFilter(lookup_expr='icontains')
     type = django_filters.CharFilter()
     af = django_filters.NumberFilter()
@@ -266,7 +275,7 @@ class NetworkDelayLocationsFilter(filters.FilterSet):
         fields = ["type", "name", "af"]
         ordering_fields = ("name",)
 
-class NetworkFilter(filters.FilterSet):
+class NetworkFilter(HelpfulFilterSet):
     name = django_filters.CharFilter(lookup_expr='icontains')
     number = ListIntegerFilter()
     search = django_filters.CharFilter(method='asn_or_number')
@@ -291,7 +300,7 @@ class NetworkFilter(filters.FilterSet):
                 }
         ordering_fields = ('number',)
 
-class CountryFilter(filters.FilterSet):
+class CountryFilter(HelpfulFilterSet):
     name = django_filters.CharFilter(lookup_expr='icontains')
     code = django_filters.CharFilter()
 
@@ -302,7 +311,7 @@ class CountryFilter(filters.FilterSet):
 
 
 
-class DelayFilter(filters.FilterSet):
+class DelayFilter(HelpfulFilterSet):
     """ 
     Explain delay filter here
     """
@@ -321,7 +330,7 @@ class DelayFilter(filters.FilterSet):
         },
     }
 
-class ForwardingFilter(filters.FilterSet):
+class ForwardingFilter(HelpfulFilterSet):
     asn = ListIntegerFilter()
     class Meta:
         model = Forwarding
@@ -336,7 +345,7 @@ class ForwardingFilter(filters.FilterSet):
             'filter_class': filters.IsoDateTimeFilter
         },
     }
-class DelayAlarmsFilter(filters.FilterSet):
+class DelayAlarmsFilter(HelpfulFilterSet):
     asn = ListIntegerFilter()
     class Meta:
         model = Delay_alarms
@@ -356,7 +365,7 @@ class DelayAlarmsFilter(filters.FilterSet):
         },
     }
 
-class ForwardingAlarmsFilter(filters.FilterSet):
+class ForwardingAlarmsFilter(HelpfulFilterSet):
     asn = ListIntegerFilter()
     class Meta:
         model = Forwarding_alarms
@@ -375,7 +384,7 @@ class ForwardingAlarmsFilter(filters.FilterSet):
         },
     }
 
-class DiscoEventsFilter(filters.FilterSet):
+class DiscoEventsFilter(HelpfulFilterSet):
     class Meta:
         model = Disco_events
         fields = {
@@ -397,7 +406,7 @@ class DiscoEventsFilter(filters.FilterSet):
     }
 
 
-class HegemonyConeFilter(filters.FilterSet):
+class HegemonyConeFilter(HelpfulFilterSet):
     asn = ListIntegerFilter()
     class Meta:
         model = HegemonyCone
@@ -413,7 +422,7 @@ class HegemonyConeFilter(filters.FilterSet):
         },
     }
 
-class DiscoProbesFilter(filters.FilterSet):
+class DiscoProbesFilter(HelpfulFilterSet):
     probe_id = ListIntegerFilter()
     event = ListIntegerFilter()
     class Meta:
@@ -421,8 +430,6 @@ class DiscoProbesFilter(filters.FilterSet):
         fields = {}
         ordering_fields = ('starttime', 'endtime', 'level')
 
-
-###################### Swagger params
 
 
 ###################### Views:

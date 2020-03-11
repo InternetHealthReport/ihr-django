@@ -7,11 +7,11 @@ from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.models import BaseUserManager
 
 class ASN(models.Model):
-    number = models.BigIntegerField(primary_key=True)
-    name   = models.CharField(max_length=255)
-    tartiflette = models.BooleanField(default=False)
-    disco = models.BooleanField(default=False)
-    ashash = models.BooleanField(default=False)
+    number = models.BigIntegerField(primary_key=True, help_text='Autonomous System Number (ASN) or IXP ID. Note that IXP ID are negative to avoid colision.')
+    name   = models.CharField(max_length=255, help_text='Name registered for the network.')
+    tartiflette = models.BooleanField(default=False, help_text='True if participate in link delay and forwarding anomaly analysis.')
+    disco = models.BooleanField(default=False, help_text='True if participate in network disconnection analysis.')
+    ashash = models.BooleanField(default=False, help_text='True if participate in AS dependency analysis.')
 
     def __str__(self):
         return "ASN%s %s" % (self.number, self.name)
