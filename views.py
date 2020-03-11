@@ -29,6 +29,10 @@ from django_filters import rest_framework as filters
 import django_filters
 from django.db.models import Q
 
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
+
+
 # by default shows only one week of data
 LAST_DEFAULT = 7
 HEGE_GRANULARITY = 15
@@ -39,6 +43,7 @@ from rest_framework.pagination import PageNumberPagination
 
 class StandardResultsSetPagination(PageNumberPagination):
     page_size_query_param = 'limit'
+
 
 ############ API ##########
 def check_timebin(query_params):
@@ -298,7 +303,10 @@ class CountryFilter(filters.FilterSet):
 
 
 class DelayFilter(filters.FilterSet):
-    asn = ListIntegerFilter()
+    """ 
+    Explain delay filter here
+    """
+    asn = ListIntegerFilter(help_text="Filter by ASN")
     class Meta:
         model = Delay
         fields = {
@@ -413,7 +421,11 @@ class DiscoProbesFilter(filters.FilterSet):
         fields = {}
         ordering_fields = ('starttime', 'endtime', 'level')
 
-### Views:
+
+###################### Swagger params
+
+
+###################### Views:
 class NetworkView(generics.ListAPIView):
     """
     API endpoint that allows to view/search AS and IX
@@ -433,10 +445,37 @@ class CountryView(generics.ListAPIView):
 class DelayView(generics.ListAPIView): #viewsets.ModelViewSet):
     """
     API endpoint that allows to view the level of congestion.
+    parameters:
+        - name: timebin
+          description: Foobar long description goes here
+          required: true
+          type: string
+          paramType: query
+        - name: magnitude
+          description: Significance of the delay change. Positive values, higher values represent important congestion or numerous synchronous congestion.
+          paramType: query
+        - name: other_bar
+          paramType: query
+        - name: avatar
+          type: file
+
+    responseMessages:
+        - code: 401
+          message: Not authenticated
+
+    produces:
+        - application/json
     """
     serializer_class = DelaySerializer
     filter_class = DelayFilter
 
+    @swagger_auto_schema(manual_parameters=[
+        openapi.Parameter('timebin', openapi.IN_QUERY, "test manual param timebin", type=openapi.TYPE_STRING, required=True),
+        openapi.Parameter('asn', openapi.IN_QUERY, "test query asn", type=openapi.TYPE_INTEGER, required=True),
+                                  ], 
+        responses={
+                200: openapi.Response('response description link delay', DelaySerializer),
+        })
     def get_queryset(self):
         check_timebin(self.request.query_params)
         return Delay.objects.all()

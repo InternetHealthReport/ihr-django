@@ -4,6 +4,7 @@ from .models import ASN, Country, Delay,  Forwarding, Delay_alarms, Forwarding_a
 class DelaySerializer(serializers.ModelSerializer):
     queryset = Delay.objects.all().prefetch_related("asn")
     asn_name = serializers.PrimaryKeyRelatedField(queryset=queryset, source='asn.name')
+    magnitude = serializers.FloatField(help_text="Amplitude of the delay change")
 
     class Meta:
         model = Delay

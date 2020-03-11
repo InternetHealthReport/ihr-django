@@ -1,10 +1,31 @@
 from django.conf.urls import url
 
+from rest_framework import permissions
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
+
 from . import views
 from .user_api import urls as user_urls
 
+schema_view = get_schema_view(
+       openapi.Info(
+         title="IHR API",
+         default_version='v1',
+         description="Data computed by Internet Health Report",
+         terms_of_service="https://ihr.iijlab.net/ihr/en-us/documentation#Data_policy",
+         contact=openapi.Contact(email="ihr-admin@iij-ii.co.jp"),
+         license=openapi.License(name="Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)",
+             url="https://creativecommons.org/licenses/by-nc-sa/4.0/"),
+      ),
+      public=True,
+      permission_classes=(permissions.AllowAny,),
+ )
+
 app_name = 'ihr'
 urlpatterns = [
+    url(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
+    url(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    url(r'^redoc/$', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
     url(r'^$', views.index, name='index'),
     # url(r'^disco/$', views.index_disco, name='disco'),
     url(r'^search/$', views.search, name='search'),
