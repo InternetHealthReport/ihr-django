@@ -276,9 +276,9 @@ class NetworkDelayLocationsFilter(HelpfulFilterSet):
         ordering_fields = ("name",)
 
 class NetworkFilter(HelpfulFilterSet):
-    name = django_filters.CharFilter(lookup_expr='icontains')
-    number = ListIntegerFilter()
-    search = django_filters.CharFilter(method='asn_or_number')
+    name = django_filters.CharFilter(lookup_expr='icontains', help_text='Search for a substring in networks name.')
+    number = ListIntegerFilter(help_text='Search by ASN or IXP ID. It can be either a single value (e.g. 2497) or a list of values (e.g. 2497,2500,2501)')
+    search = django_filters.CharFilter(method='asn_or_number', help_text='Search for both ASN/IXPID and substring in names.')
 
     def asn_or_number(self, queryset, name, value):
         if value.startswith("AS") or value.startswith("IX"):
@@ -435,7 +435,8 @@ class DiscoProbesFilter(HelpfulFilterSet):
 ###################### Views:
 class NetworkView(generics.ListAPIView):
     """
-    API endpoint that allows to view/search AS and IX
+    List networks referenced on IHR. Can be searched by keyword, ASN, or IXPID. 
+    Range of ASN/IXPID can be obtained with parameters number__lte and number__gte.
     """
     queryset = ASN.objects.all()
     serializer_class = ASNSerializer
@@ -452,37 +453,10 @@ class CountryView(generics.ListAPIView):
 class DelayView(generics.ListAPIView): #viewsets.ModelViewSet):
     """
     API endpoint that allows to view the level of congestion.
-    parameters:
-        - name: timebin
-          description: Foobar long description goes here
-          required: true
-          type: string
-          paramType: query
-        - name: magnitude
-          description: Significance of the delay change. Positive values, higher values represent important congestion or numerous synchronous congestion.
-          paramType: query
-        - name: other_bar
-          paramType: query
-        - name: avatar
-          type: file
-
-    responseMessages:
-        - code: 401
-          message: Not authenticated
-
-    produces:
-        - application/json
     """
     serializer_class = DelaySerializer
     filter_class = DelayFilter
 
-    @swagger_auto_schema(manual_parameters=[
-        openapi.Parameter('timebin', openapi.IN_QUERY, "test manual param timebin", type=openapi.TYPE_STRING, required=True),
-        openapi.Parameter('asn', openapi.IN_QUERY, "test query asn", type=openapi.TYPE_INTEGER, required=True),
-                                  ], 
-        responses={
-                200: openapi.Response('response description link delay', DelaySerializer),
-        })
     def get_queryset(self):
         check_timebin(self.request.query_params)
         return Delay.objects.all()
