@@ -20,7 +20,7 @@ Install django:
 ```
 cd ihr
 . bin/activate
-pip install django django-common arrow pyyaml uritemplate
+pip install django django-common arrow pyyaml uritemplate django-coreapi
 ```
 
 Create/import django project:
