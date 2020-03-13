@@ -13,7 +13,7 @@ from drf_yasg.generators import OpenAPISchemaGenerator
 
 
 exposed_api = [ 
-    url(r'^api/network/$', views.NetworkView.as_view(), name='networkListView'),
+    url(r'^api/networks/$', views.NetworkView.as_view(), name='networkListView'),
     url(r'^api/link/delay/$', views.DelayView.as_view(), name='delayListView'),
     url(r'^api/link/forwarding/$', views.ForwardingView.as_view(), name='forwardingListView'),
     url(r'^api/link/delay/alarms/$', views.DelayAlarmsView.as_view(), name='delayAlarmsListView'),
@@ -21,7 +21,7 @@ exposed_api = [
     url(r'^api/disco/events/$', views.DiscoEventsView.as_view(), name='discoEventsListView'),
     url(r'^api/hegemony/$', views.HegemonyView.as_view(), name='hegemonyListView'),
     url(r'^api/hegemony/alarms/$', views.HegemonyAlarmsView.as_view(), name='hegemonyAlarmsListView'),
-    url(r'^api/hegemony/cone/$', views.HegemonyConeView.as_view(), name='hegemonyConeListView'),
+    url(r'^api/hegemony/cones/$', views.HegemonyConeView.as_view(), name='hegemonyConeListView'),
     url(r'^api/network_delay/$', views.NetworkDelayView.as_view(), name='networkDelayListView'),
     url(r'^api/network_delay/locations/$', views.NetworkDelayLocationsView.as_view(), name='networkDelayLocationsListView'),
     url(r'^api/network_delay/alarms/$', views.NetworkDelayAlarmsView.as_view(), name='networkDelayAlarmsListView'),
