@@ -28,9 +28,9 @@ class Country(models.Model):
 
 # Tartiflette
 class Delay(models.Model):
-    timebin = models.DateTimeField(db_index=True)
-    asn = models.ForeignKey(ASN, on_delete=models.CASCADE)
-    magnitude = models.FloatField(default=0.0)
+    timebin = models.DateTimeField(db_index=True, help_text="Timestamp of the reported value.")
+    asn = models.ForeignKey(ASN, on_delete=models.CASCADE, help_text="ASN or IXP ID of the monitored network (see number in /network/).")
+    magnitude = models.FloatField(default=0.0, help_text="Cumulated link delay deviation. Values close to zero represent usual delays for the network, whereas higher values stand for significant links congestion in the monitored network.  ")
 
     def __str__(self):
         return "%s AS%s" % (self.timebin, self.asn.number)

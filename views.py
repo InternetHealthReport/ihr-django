@@ -433,8 +433,9 @@ class DiscoProbesFilter(HelpfulFilterSet):
 ###################### Views:
 class NetworkView(generics.ListAPIView):
     """
-    List networks referenced on IHR. Can be searched by keyword, ASN, or IXPID. 
-    Range of ASN/IXPID can be obtained with parameters number__lte and number__gte.
+    List networks referenced on IHR (see. /network_delay/locations/ for network 
+    delay locations). Can be searched by keyword, ASN, or IXPID.  Range of 
+    ASN/IXPID can be obtained with parameters number__lte and number__gte.
     """
     #schema = AutoSchema(tags=['entity'])
     queryset = ASN.objects.all()
@@ -448,23 +449,41 @@ class CountryView(generics.ListAPIView):
     queryset = Country.objects.all()
     serializer_class = CountrySerializer
     filter_class = CountryFilter
-    #schema = AutoSchema(tags=['entity'])
 
-class DelayView(generics.ListAPIView): #viewsets.ModelViewSet):
-    """
-    API endpoint that allows to view the level of congestion.
+class DelayView(generics.ListAPIView): 
+    f"""
+    List cumulated link delay changes (magnitude) for each monitored network. 
+    Magnitude values close to zero represent usual delays for the network, 
+    whereas higher values stand for significant links congestion in the 
+    monitored network.
+    The details of each congested link is available in /delay/alarms/.
+    <br>
+    <b>Required parameters:</b> timebin or a range of timebins (using
+    the two parameters timebin__lte and timebin__gte).
+    <b>Limitations:</b> At most {MAX_RANGE} days of data can be fetch per 
+    request.
     """
     serializer_class = DelaySerializer
     filter_class = DelayFilter
-    #schema = AutoSchema(tags=['link'])
 
     def get_queryset(self):
         check_timebin(self.request.query_params)
         return Delay.objects.all()
 
 class ForwardingView(generics.ListAPIView):
-    """
-    API endpoint that allows to view the level of forwarding anomaly.
+    f"""
+    List cumulated forwarding anomaly deviation (magnitude) for each monitored 
+    network.  Magnitude values close to zero represent usual forwarding paths
+    for the network, whereas higher positive (resp. negative) values stand for 
+    an increasing (resp. decreasing) number of paths passing through the 
+    monitored 
+    network.
+    The details of each forwarding anomaly is available in /forwarding/alarms/.
+    <br>
+    <b>Required parameters:</b> timebin or a range of timebins (using
+    the two parameters timebin__lte and timebin__gte).
+    <b>Limitations:</b> At most {MAX_RANGE} days of data can be fetch per 
+    request.
     """
     serializer_class = ForwardingSerializer
     filter_class = ForwardingFilter

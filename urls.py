@@ -33,7 +33,9 @@ schema_view = get_schema_view(
        openapi.Info(
          title="IHR API",
          default_version='',
-         description="Data computed by Internet Health Report",
+         description="""This RESTful API is intended for developpers and 
+         researchers who want to fetch Internet Health Report data and integrate 
+         IHR results to their workflow. """,
          terms_of_service="https://ihr.iijlab.net/ihr/en-us/documentation#Data_policy",
          contact=openapi.Contact(email="ihr-admin@iij-ii.co.jp"),
          license=openapi.License(name="Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)",
@@ -55,6 +57,7 @@ urlpatterns = [
     url(r'^(?P<pk>[0-9]+)/disco/$', views.DiscoDetail.as_view(), name='discoDetail'),
     url(r'^monitoredAsn/$', views.ASNList.as_view(), name='asnList'),
     url(r'^monitoredCountry/$', views.CountryList.as_view(), name='countryList'),
+    # TODO remove /data/ endpoints
     url(r'^data/delay/$', views.delayData, name='delayData'),
     url(r'^data/forwarding/$', views.forwardingData, name='forwardingData'),
     url(r'^data/disco/$', views.discoData, name='discoData'),
