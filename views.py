@@ -433,9 +433,7 @@ class DiscoProbesFilter(HelpfulFilterSet):
 ###################### Views:
 class NetworkView(generics.ListAPIView):
     """
-    List networks referenced on IHR (see. /network_delay/locations/ for network 
-    delay locations). Can be searched by keyword, ASN, or IXPID.  Range of 
-    ASN/IXPID can be obtained with parameters number__lte and number__gte.
+    List networks referenced on IHR (see. /network_delay/locations/ for network delay locations). Can be searched by keyword, ASN, or IXPID.  Range of ASN/IXPID can be obtained with parameters number__lte and number__gte.
     """
 
     #schema = AutoSchema(tags=['entity'])
@@ -454,16 +452,12 @@ class CountryView(generics.ListAPIView):
 
 class DelayView(generics.ListAPIView): 
     """
-    List cumulated link delay changes (magnitude) for each monitored network. 
-    Magnitude values close to zero represent usual delays for the network, 
-    whereas higher values stand for significant links congestion in the 
-    monitored network.
+    List cumulated link delay changes (magnitude) for each monitored network.  Magnitude values close to zero represent usual delays for the network, whereas higher values stand for significant links congestion in the monitored network.
     The details of each congested link is available in /delay/alarms/.
-    <br>
-    <b>Required parameters:</b> timebin or a range of timebins (using
-    the two parameters timebin__lte and timebin__gte).
-    <b>Limitations:</b> At most 7 days of data can be fetch per 
-    request.
+    <ul>
+    <li><b>Required parameters:</b> timebin or a range of timebins (using the two parameters timebin__lte and timebin__gte).</li>
+    <li><b>Limitations:</b> At most 7 days of data can be fetched per request.</li>
+    </ul>
     """
 
     serializer_class = DelaySerializer
@@ -474,23 +468,16 @@ class DelayView(generics.ListAPIView):
         return Delay.objects.all()
 
 class ForwardingView(generics.ListAPIView):
-    f"""
-    List cumulated forwarding anomaly deviation (magnitude) for each monitored 
-    network.  Magnitude values close to zero represent usual forwarding paths
-    for the network, whereas higher positive (resp. negative) values stand for 
-    an increasing (resp. decreasing) number of paths passing through the 
-    monitored 
-    network.
+    """
+    List cumulated forwarding anomaly deviation (magnitude) for each monitored network.  Magnitude values close to zero represent usual forwarding paths for the network, whereas higher positive (resp. negative) values stand for an increasing (resp. decreasing) number of paths passing through the monitored network.
     The details of each forwarding anomaly is available in /forwarding/alarms/.
-    <br>
-    <b>Required parameters:</b> timebin or a range of timebins (using
-    the two parameters timebin__lte and timebin__gte).
-    <b>Limitations:</b> At most {MAX_RANGE} days of data can be fetch per 
-    request.
+    <ul>
+    <li><b>Required parameters:</b> timebin or a range of timebins (using the two parameters timebin__lte and timebin__gte).</li>
+    <li><b>Limitations:</b> At most 7 days of data can be fetched per request.</li>
+    </ul>
     """
     serializer_class = ForwardingSerializer
     filter_class = ForwardingFilter
-    #schema = AutoSchema(tags=['link'])
 
     def get_queryset(self):
         check_timebin(self.request.query_params)
@@ -498,11 +485,14 @@ class ForwardingView(generics.ListAPIView):
 
 class DelayAlarmsView(generics.ListAPIView):
     """
-    API endpoint that allows to view the delay alarms.
+    List detected link delay changes.
+    <ul>
+    <li><b>Required parameters:</b> timebin or a range of timebins (using the two parameters timebin__lte and timebin__gte).</li>
+    <li><b>Limitations:</b> At most 7 days of data can be fetched per request.</li>
+    </ul>
     """
     serializer_class = DelayAlarmsSerializer
     filter_class = DelayAlarmsFilter
-    #schema = AutoSchema(tags=['link'])
 
     def get_queryset(self):
         check_timebin(self.request.query_params)
@@ -510,11 +500,14 @@ class DelayAlarmsView(generics.ListAPIView):
 
 class ForwardingAlarmsView(generics.ListAPIView):
     """
-    API endpoint that allows to view the forwarding alarms.
+    List anomalous forwarding patterns.
+    <ul>
+    <li><b>Required parameters:</b> timebin or a range of timebins (using the two parameters timebin__lte and timebin__gte).</li>
+    <li><b>Limitations:</b> At most 7 days of data can be fetched per request.</li>
+    </ul>
     """
     serializer_class = ForwardingAlarmsSerializer
     filter_class = ForwardingAlarmsFilter
-    #schema = AutoSchema(tags=['link'])
 
     def get_queryset(self):
         check_timebin(self.request.query_params)
@@ -522,16 +515,15 @@ class ForwardingAlarmsView(generics.ListAPIView):
 
 class DiscoEventsView(generics.ListAPIView):
     """
-    API endpoint that allows to view the events reported by disco.
+    List network disconnections detected with RIPE Atlas. These events have different level of granularity, it can be at a network level (AS), city, or country level.
     """
     queryset = Disco_events.objects.all()
     serializer_class = DiscoEventsSerializer
     filter_class = DiscoEventsFilter
-    #schema = AutoSchema(tags=['disco'])
 
 class DiscoProbesView(generics.ListAPIView):
     """
-    API endpoint that allows to view disconnected probes.
+    List details of Atlas probes that triggered network disconnection events.
     """
     probe_id = ListIntegerFilter()
 

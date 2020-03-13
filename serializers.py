@@ -3,7 +3,7 @@ from .models import ASN, Country, Delay,  Forwarding, Delay_alarms, Forwarding_a
 
 class DelaySerializer(serializers.ModelSerializer):
     queryset = Delay.objects.all().prefetch_related("asn")
-    asn_name = serializers.PrimaryKeyRelatedField(queryset=queryset, source='asn.name')
+    asn_name = serializers.PrimaryKeyRelatedField(queryset=queryset, source='asn.name', help_text="Name of the Autonomous System corresponding to the reported IP address.")
     magnitude = serializers.FloatField(help_text="Amplitude of the delay change")
 
     class Meta:
@@ -13,7 +13,7 @@ class DelaySerializer(serializers.ModelSerializer):
 class DelayAlarmsSerializer(serializers.ModelSerializer):
     queryset = Delay_alarms.objects.all().prefetch_related('msmid', "asn")
     msmid = serializers.StringRelatedField(many=True)
-    asn_name = serializers.PrimaryKeyRelatedField(queryset=queryset, source='asn.name')
+    asn_name = serializers.PrimaryKeyRelatedField(queryset=queryset, source='asn.name', help_text="Name of the Autonomous System corresponding to the reported IP address.")
 
     class Meta:
         model = Delay_alarms
@@ -30,7 +30,7 @@ class DelayAlarmsSerializer(serializers.ModelSerializer):
 
 class ForwardingSerializer(serializers.ModelSerializer):
     queryset = Forwarding.objects.all().prefetch_related("asn")
-    asn_name = serializers.PrimaryKeyRelatedField(queryset=queryset, source='asn.name')
+    asn_name = serializers.PrimaryKeyRelatedField(queryset=queryset, source='asn.name', help_text="Name of the Autonomous System corresponding to the reported IP address.")
 
     class Meta:
         model = Forwarding
@@ -39,7 +39,7 @@ class ForwardingSerializer(serializers.ModelSerializer):
 class ForwardingAlarmsSerializer(serializers.ModelSerializer):
     queryset = Forwarding_alarms.objects.all().prefetch_related('msmid', 'asn')
     msmid = serializers.StringRelatedField(many=True)
-    asn_name = serializers.PrimaryKeyRelatedField(queryset=queryset, source='asn.name')
+    asn_name = serializers.PrimaryKeyRelatedField(queryset=queryset, source='asn.name', help_text="Name of the Autonomous System corresponding to the reported IP address.")
 
     class Meta:
         model = Forwarding_alarms
@@ -86,8 +86,8 @@ class DiscoEventsSerializer(serializers.ModelSerializer):
 
 class HegemonySerializer(serializers.ModelSerializer):
     queryset = Hegemony.objects.all().prefetch_related("asn","originasn")
-    asn_name = serializers.PrimaryKeyRelatedField(queryset=queryset, source='asn.name')
-    originasn_name = serializers.PrimaryKeyRelatedField(queryset=queryset, source='originasn.name')
+    asn_name = serializers.PrimaryKeyRelatedField(queryset=queryset, source='asn.name', help_text="Autonomous System name of the dependency.")
+    originasn_name = serializers.PrimaryKeyRelatedField(queryset=queryset, source='originasn.name', help_text="Autonomous System name of the dependent network.")
 
     class Meta:
         model = Hegemony
@@ -101,8 +101,8 @@ class HegemonySerializer(serializers.ModelSerializer):
 
 class HegemonyAlarmsSerializer(serializers.ModelSerializer):
     queryset = Hegemony_alarms.objects.all().prefetch_related("asn","originasn")
-    asn_name = serializers.PrimaryKeyRelatedField(queryset=queryset, source='asn.name')
-    originasn_name = serializers.PrimaryKeyRelatedField(queryset=queryset, source='originasn.name')
+    asn_name = serializers.PrimaryKeyRelatedField(queryset=queryset, source='asn.name', help_text="Autonomous System name of the reported dependency.")
+    originasn_name = serializers.PrimaryKeyRelatedField(queryset=queryset, source='originasn.name', help_text="Autonomous System name of the reported dependent network.")
 
     class Meta:
         model = Hegemony_alarms

@@ -20,7 +20,6 @@ exposed_api = [
     url(r'^api/delay/alarms/$', views.DelayAlarmsView.as_view(), name='delayAlarmsListView'),
     url(r'^api/forwarding/alarms/$', views.ForwardingAlarmsView.as_view(), name='forwardingAlarmsListView'),
     url(r'^api/disco/events/$', views.DiscoEventsView.as_view(), name='discoEventsListView'),
-    url(r'^api/disco/probes/$', views.DiscoProbesView.as_view(), name='discoProbesListView'),
     url(r'^api/hegemony/$', views.HegemonyView.as_view(), name='hegemonyListView'),
     url(r'^api/hegemony/alarms/$', views.HegemonyAlarmsView.as_view(), name='hegemonyAlarmsListView'),
     url(r'^api/hegemony/cone/$', views.HegemonyConeView.as_view(), name='hegemonyConeListView'),

@@ -28,7 +28,7 @@ class Country(models.Model):
 
 # Tartiflette
 class Delay(models.Model):
-    timebin = models.DateTimeField(db_index=True, help_text="Timestamp of the reported value.")
+    timebin = models.DateTimeField(db_index=True, help_text="Timestamp of reported value.")
     asn = models.ForeignKey(ASN, on_delete=models.CASCADE, help_text="ASN or IXP ID of the monitored network (see number in /network/).")
     magnitude = models.FloatField(default=0.0, help_text="Cumulated link delay deviation. Values close to zero represent usual delays for the network, whereas higher values stand for significant links congestion in the monitored network.  ")
 
@@ -37,58 +37,39 @@ class Delay(models.Model):
 
 
 class Delay_alarms(models.Model):
-    asn = models.ForeignKey(ASN, on_delete=models.CASCADE, db_index=True)
-    timebin = models.DateTimeField(db_index=True)
+    asn = models.ForeignKey(ASN, on_delete=models.CASCADE, db_index=True, help_text="ASN or IXPID of the reported network.")
+    timebin = models.DateTimeField(db_index=True, help_text="Timestamp of reported alarm.")
     ip = models.CharField(max_length=64, db_index=True)
-    link = models.CharField(max_length=128, db_index=True)
-    medianrtt = models.FloatField(default=0.0)
-    diffmedian = models.FloatField(default=0.0)
-    deviation = models.FloatField(default=0.0)
-    nbprobes = models.IntegerField(default=0)
-    msm_prb_ids = JSONField(default=None, null=True)
+    link = models.CharField(max_length=128, db_index=True, help_text="Pair of IP addresses corresponding to the reported link.")
+    medianrtt = models.FloatField(default=0.0, help_text="Median differential RTT observed during the alarm.")
+    diffmedian = models.FloatField(default=0.0, help_text="Difference between the link usual median RTT and the median RTT observed during the alarm.")
+    deviation = models.FloatField(default=0.0, help_text="Distance between observed delays and the past usual values normalized by median absolute deviation.")
+    nbprobes = models.IntegerField(default=0, help_text="Number of Atlas probes monitoring this link at the reported time window.")
+    msm_prb_ids = JSONField(default=None, null=True, help_text="List of Atlas measurement IDs and probe IDs used to compute this alarm.")
 
     def __str__(self):
         return "%s AS%s" % (self.timebin, self.asn.number)
 
 
-class Delay_alarms_msms(models.Model):
-    alarm = models.ForeignKey(Delay_alarms, related_name="msmid",
-            on_delete=models.CASCADE)
-    msmid = models.BigIntegerField(default=0)
-    probeid = models.IntegerField(default=0)
-
-    def __str__(self):
-        return "%s %s" % (self.msmid, self.probeid)
-
 
 class Forwarding_alarms(models.Model):
-    asn = models.ForeignKey(ASN, on_delete=models.CASCADE, db_index=True)
-    timebin = models.DateTimeField(db_index=True)
-    ip = models.CharField(max_length=64, db_index=True)
-    correlation = models.FloatField(default=0.0)
-    responsibility = models.FloatField(default=0.0)
-    pktdiff = models.FloatField(default=0.0)
-    previoushop   = models.CharField(max_length=64)
-    msm_prb_ids = JSONField(default=None, null=True)
+    asn = models.ForeignKey(ASN, on_delete=models.CASCADE, db_index=True, help_text="ASN or IXPID of the reported network.")
+    timebin = models.DateTimeField(db_index=True, help_text="Timestamp of reported alarm.")
+    ip = models.CharField(max_length=64, db_index=True, help_text="Reported IP address, this IP address is seen an unusually high or low number of times in Atlas traceroutes.")
+    correlation = models.FloatField(default=0.0, help_text="Correlation coefficient between the usual forwarding pattern and the forwarding pattern observed during the alarm. Values range between 0 and -1. Lowest values represent the most anomalous patterns.")
+    responsibility = models.FloatField(default=0.0, help_text="Responsability score of the reported IP in the forwarding pattern change.")
+    pktdiff = models.FloatField(default=0.0, help_text="The difference between the number of times the reported IP is seen in traceroutes compare to its usual appearance.")
+    previoushop   = models.CharField(max_length=64, help_text="Last observed IP hop on the usual path.")
+    msm_prb_ids = JSONField(default=None, null=True, help_text="List of Atlas measurement IDs and probe IDs used to compute this alarm.")
 
     def __str__(self):
         return "%s AS%s %s" % (self.timebin, self.asn.number, self.ip)
 
 
-class Forwarding_alarms_msms(models.Model):
-    alarm = models.ForeignKey(Forwarding_alarms, related_name="msmid",
-            on_delete=models.CASCADE)
-    msmid = models.BigIntegerField(default=0)
-    probeid = models.IntegerField(default=0)
-
-    def __str__(self):
-        return "%s %s" % (self.msmid, self.probeid)
-
-
 class Forwarding(models.Model):
-    timebin = models.DateTimeField(db_index=True)
-    asn = models.ForeignKey(ASN, on_delete=models.CASCADE)
-    magnitude = models.FloatField(default=0.0)
+    timebin = models.DateTimeField(db_index=True, help_text="Timestamp of reported value.")
+    asn = models.ForeignKey(ASN, on_delete=models.CASCADE, help_text="ASN or IXP ID of the monitored network (see number in /network/).")
+    magnitude = models.FloatField(default=0.0, help_text="Cumulated link delay deviation. Values close to zero represent usual delays for the network, whereas higher values stand for significant links congestion in the monitored network.  ")
 
     def __str__(self):
         return "%s AS%s" % (self.timebin, self.asn.number)
@@ -98,28 +79,28 @@ class Forwarding(models.Model):
 # Disco
 class Disco_events(models.Model):
     mongoid = models.CharField(max_length=24, default="000000000000000000000000", db_index=True)
-    streamtype = models.CharField(max_length=10)
-    streamname = models.CharField(max_length=128)
-    starttime = models.DateTimeField()
-    endtime = models.DateTimeField()
-    avglevel = models.FloatField(default=0.0)
-    nbdiscoprobes = models.IntegerField(default=0)
-    totalprobes = models.IntegerField(default=0)
-    ongoing = models.BooleanField(default=False)
+    streamtype = models.CharField(max_length=10, help_text="Granularity of the detected event. The possible values are asn, country, admin1, and admin2. Admin1 represents a wider area than admin2, the exact definition might change from one country to another. For example 'California, US' is an admin1 stream and 'San Francisco County, California, US' is an admin2 stream.")
+    streamname = models.CharField(max_length=128, help_text="Name of the topological (ASN) or geographical area where the network disconnection happened.")
+    starttime = models.DateTimeField(help_text="Estimated start time of the network disconnection.")
+    endtime = models.DateTimeField(help_text="Estimated end time of the network disconnection. Equal to starttime if the end of the event is unknown.")
+    avglevel = models.FloatField(default=0.0, help_text="Score representing the coordination of disconnected probes. Higher values stand for a large number of Atlas probes that disconnected in a very short time frame. Events with an avglevel lower than 10 are likely to be false positives detection.")
+    nbdiscoprobes = models.IntegerField(default=0, help_text="Number of Atlas probes that disconnected around the reported start time.")
+    totalprobes = models.IntegerField(default=0, help_text="Total number of Atlas probes active in the reported stream (ASN, Country, or geographical area).")
+    ongoing = models.BooleanField(default=False, help_text="Deprecated, this value is unused")
 
     class Meta:
         index_together = ("streamtype", "streamname", "starttime", "endtime")
 
 class Disco_probes(models.Model):
-    probe_id = models.IntegerField()
-    event = models.ForeignKey(Disco_events, on_delete=models.CASCADE, db_index=True, related_name="discoprobes")
-    starttime = models.DateTimeField()
-    endtime = models.DateTimeField()
-    level = models.FloatField(default=0.0)
-    ipv4 = models.CharField(max_length=64, default="None")
-    prefixv4 = models.CharField(max_length=70, default="None")
-    lat = models.FloatField(default=0.0)
-    lon = models.FloatField(default=0.0)
+    probe_id = models.IntegerField(help_text="Atlas probe ID of disconnected probe." )
+    event = models.ForeignKey(Disco_events, on_delete=models.CASCADE, db_index=True, related_name="discoprobes", help_text="ID of the network disconnection event where this probe is reported.")
+    starttime = models.DateTimeField(help_text="Probe disconnection time.")
+    endtime = models.DateTimeField(help_text="Reconnection time of the probe, this may not be reported if other probes have reconnected earlier.")
+    level = models.FloatField(default=0.0, help_text="Disconnection level when the probe disconnected.")
+    ipv4 = models.CharField(max_length=64, default="None", help_text="Public IP address of the Atlas probe.")
+    prefixv4 = models.CharField(max_length=70, default="None", help_text="IP prefix corresponding the probe.")
+    lat = models.FloatField(default=0.0, help_text="Latitude of the probe during the network detection as reported by RIPE Altas.")
+    lon = models.FloatField(default=0.0, help_text="Longitude of the probe during the network detection as reported by RIPE Altas.")
 
 
 class Hegemony(models.Model):
@@ -169,8 +150,8 @@ class Atlas_delay(models.Model):
                 self.startpoint.name, self.endpoint.name, self.median)
 
 class Hegemony_alarms(models.Model):
-    timebin = models.DateTimeField(db_index=True)
-    originasn = models.ForeignKey(ASN, on_delete=models.CASCADE, related_name="anomalous_originasn", db_index=True)
+    timebin = models.DateTimeField(db_index=True, help_text="Timestamp of reported alarm.")
+    originasn = models.ForeignKey(ASN, on_delete=models.CASCADE, related_name="anomalous_originasn", db_index=True, help_text="ASN of the reported network.")
     asn = models.ForeignKey(ASN, on_delete=models.CASCADE, related_name="anomalous_asn", db_index=True)
     deviation = models.FloatField(default=0.0)
     af = models.IntegerField()
@@ -179,7 +160,7 @@ class Hegemony_alarms(models.Model):
         return "(%s, %s, v%s) %s" % (self.originasn, self.asn, self.af, self.deviation)
 
 class Atlas_delay_alarms(models.Model):
-    timebin = models.DateTimeField(db_index=True)
+    timebin = models.DateTimeField(db_index=True, help_text="Timestamp of reported alarm.")
     startpoint = models.ForeignKey(Atlas_location, on_delete=models.CASCADE,
              db_index=True, related_name='anomalous_startpoint')
     endpoint = models.ForeignKey(Atlas_location, on_delete=models.CASCADE,
@@ -272,3 +253,25 @@ class MonitoredASN(models.Model):
         choices=NOTIFY_LEVEL,
         default=NOTIFY_LEVEL.HIGH
     )
+
+# TODO Remove this?
+
+class Delay_alarms_msms(models.Model):
+    alarm = models.ForeignKey(Delay_alarms, related_name="msmid",
+            on_delete=models.CASCADE)
+    msmid = models.BigIntegerField(default=0)
+    probeid = models.IntegerField(default=0)
+
+    def __str__(self):
+        return "%s %s" % (self.msmid, self.probeid)
+
+
+class Forwarding_alarms_msms(models.Model):
+    alarm = models.ForeignKey(Forwarding_alarms, related_name="msmid",
+            on_delete=models.CASCADE)
+    msmid = models.BigIntegerField(default=0)
+    probeid = models.IntegerField(default=0)
+
+    def __str__(self):
+        return "%s %s" % (self.msmid, self.probeid)
+
