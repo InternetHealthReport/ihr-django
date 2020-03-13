@@ -228,7 +228,7 @@ class UserManager(BaseUserManager):
 
 
 class IHRUser(AbstractBaseUser, PermissionsMixin):
-    email = models.EmailField(unique=True)
+    email = models.EmailField(unique=True, help_text='Email of the user, also used a the login ID.')
     groups = models.ManyToManyField(
         Group,
         blank=True,

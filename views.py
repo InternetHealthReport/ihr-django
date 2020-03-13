@@ -29,8 +29,6 @@ from django_filters import rest_framework as filters
 import django_filters
 from django.db.models import Q
 
-from drf_yasg import openapi
-from drf_yasg.utils import swagger_auto_schema
 
 
 # by default shows only one week of data
@@ -438,6 +436,7 @@ class NetworkView(generics.ListAPIView):
     List networks referenced on IHR. Can be searched by keyword, ASN, or IXPID. 
     Range of ASN/IXPID can be obtained with parameters number__lte and number__gte.
     """
+    #schema = AutoSchema(tags=['entity'])
     queryset = ASN.objects.all()
     serializer_class = ASNSerializer
     filter_class = NetworkFilter
@@ -449,6 +448,7 @@ class CountryView(generics.ListAPIView):
     queryset = Country.objects.all()
     serializer_class = CountrySerializer
     filter_class = CountryFilter
+    #schema = AutoSchema(tags=['entity'])
 
 class DelayView(generics.ListAPIView): #viewsets.ModelViewSet):
     """
@@ -456,6 +456,7 @@ class DelayView(generics.ListAPIView): #viewsets.ModelViewSet):
     """
     serializer_class = DelaySerializer
     filter_class = DelayFilter
+    #schema = AutoSchema(tags=['link'])
 
     def get_queryset(self):
         check_timebin(self.request.query_params)
@@ -467,6 +468,7 @@ class ForwardingView(generics.ListAPIView):
     """
     serializer_class = ForwardingSerializer
     filter_class = ForwardingFilter
+    #schema = AutoSchema(tags=['link'])
 
     def get_queryset(self):
         check_timebin(self.request.query_params)
@@ -478,6 +480,7 @@ class DelayAlarmsView(generics.ListAPIView):
     """
     serializer_class = DelayAlarmsSerializer
     filter_class = DelayAlarmsFilter
+    #schema = AutoSchema(tags=['link'])
 
     def get_queryset(self):
         check_timebin(self.request.query_params)
@@ -489,6 +492,7 @@ class ForwardingAlarmsView(generics.ListAPIView):
     """
     serializer_class = ForwardingAlarmsSerializer
     filter_class = ForwardingAlarmsFilter
+    #schema = AutoSchema(tags=['link'])
 
     def get_queryset(self):
         check_timebin(self.request.query_params)
@@ -501,6 +505,7 @@ class DiscoEventsView(generics.ListAPIView):
     queryset = Disco_events.objects.all()
     serializer_class = DiscoEventsSerializer
     filter_class = DiscoEventsFilter
+    #schema = AutoSchema(tags=['disco'])
 
 class DiscoProbesView(generics.ListAPIView):
     """
@@ -511,6 +516,7 @@ class DiscoProbesView(generics.ListAPIView):
     queryset = Disco_probes.objects.all() 
     serializer_class = DiscoProbesSerializer
     filter_class = DiscoProbesFilter
+    #schema = AutoSchema(tags=['disco'])
 
 class HegemonyView(generics.ListAPIView):
     """
@@ -579,28 +585,6 @@ class NetworkDelayLocationsView(generics.ListAPIView):
     queryset = Atlas_location.objects.all()
     serializer_class = NetworkDelayLocationsSerializer
     filter_class = NetworkDelayLocationsFilter
-
-@api_view(['GET'])
-def restful_API(request, format=None):
-    """
-    API endpoint
-    """
-    return Response({
-        'network': reverse('ihr:networkListView', request=request, format=format),
-        'forwarding': reverse('ihr:forwardingListView', request=request, format=format),
-        'delay': reverse('ihr:delayListView', request=request, format=format),
-        'forwarding_alarms': reverse('ihr:forwardingAlarmsListView', request=request, format=format),
-        'delay_alarms': reverse('ihr:delayAlarmsListView', request=request, format=format),
-        'disco_events': reverse('ihr:discoEventsListView', request=request, format=format),
-        'disco_probes': reverse('ihr:discoProbesListView', request=request, format=format),
-        'hegemony': reverse('ihr:hegemonyListView', request=request, format=format),
-        'hegemony_alarms': reverse('ihr:hegemonyAlarmsListView', request=request, format=format),
-        'hegemony_cone': reverse('ihr:hegemonyConeListView', request=request, format=format),
-        'network_delay': reverse('ihr:networkDelayListView', request=request, format=format),
-        'network_delay_locations': reverse('ihr:networkDelayLocationsListView', request=request, format=format),
-        'network_delay_alarms': reverse('ihr:networkDelayAlarmsListView', request=request, format=format),
-    })
-
 
 ###### Other pages :
 
