@@ -14,11 +14,10 @@ from drf_yasg.generators import OpenAPISchemaGenerator
 
 exposed_api = [ 
     url(r'^api/network/$', views.NetworkView.as_view(), name='networkListView'),
-    url(r'^api/delay/$', views.DelayView.as_view(), name='delayListView'),
-    url(r'^api/forwarding/$', views.ForwardingView.as_view(), name='forwardingListView'),
-    url(r'^api/hegemony/$', views.HegemonyView.as_view(), name='hegemonyListView'),
-    url(r'^api/delay/alarms/$', views.DelayAlarmsView.as_view(), name='delayAlarmsListView'),
-    url(r'^api/forwarding/alarms/$', views.ForwardingAlarmsView.as_view(), name='forwardingAlarmsListView'),
+    url(r'^api/link/delay/$', views.DelayView.as_view(), name='delayListView'),
+    url(r'^api/link/forwarding/$', views.ForwardingView.as_view(), name='forwardingListView'),
+    url(r'^api/link/delay/alarms/$', views.DelayAlarmsView.as_view(), name='delayAlarmsListView'),
+    url(r'^api/link/forwarding/alarms/$', views.ForwardingAlarmsView.as_view(), name='forwardingAlarmsListView'),
     url(r'^api/disco/events/$', views.DiscoEventsView.as_view(), name='discoEventsListView'),
     url(r'^api/hegemony/$', views.HegemonyView.as_view(), name='hegemonyListView'),
     url(r'^api/hegemony/alarms/$', views.HegemonyAlarmsView.as_view(), name='hegemonyAlarmsListView'),
@@ -33,7 +32,7 @@ schema_view = get_schema_view(
          title="IHR API",
          default_version='',
          description="""This RESTful API is intended for developpers and researchers who want to fetch Internet Health Report data and integrate IHR results to their workflow. IHR data is also available via our <a href='/ihr/en-us/documentation#Python_Library'>Python library</a>. 
-         Parameters ending with __lte and __gte (i.e. less than or equal to, and, greater than or equal to) are used for selecting a range of values.""",
+         <br>Parameters ending with __lte and __gte (acronyms for 'less than or equal to', and, 'greater than or equal to') are used for selecting a range of values.""",
          # terms_of_service="https://ihr.iijlab.net/ihr/en-us/documentation#Data_policy",
          contact=openapi.Contact(email="ihr-admin@iij-ii.co.jp"),
          license=openapi.License(name="Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)",
