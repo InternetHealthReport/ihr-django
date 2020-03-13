@@ -115,7 +115,7 @@ class Hegemony(models.Model):
 
 class HegemonyCone(models.Model):
     timebin = models.DateTimeField(db_index=True, help_text="Timestamp of reported value.")
-    asn = models.ForeignKey(ASN, on_delete=models.CASCADE, db_index=True, help_text="ASN")
+    asn = models.ForeignKey(ASN, on_delete=models.CASCADE, db_index=True, help_text="Autonomous System Number (ASN).")
     conesize = models.IntegerField(default=0, help_text="Number of dependent networks, namely, networks that are reached through the asn, this is similar to CAIDA's customer cone size. The detailed list of all dependent networks is obtained by querying /hegemony/ with parameter asn (e.g /hegemony/?asn=2497&timebin=2020-03-01 gives IIJ's customer networks).")
     af = models.IntegerField(default=0, help_text="Address Family (IP version), values are either 4 or 6.")
 
