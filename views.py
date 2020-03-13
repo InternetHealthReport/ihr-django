@@ -299,8 +299,8 @@ class NetworkFilter(HelpfulFilterSet):
         ordering_fields = ('number',)
 
 class CountryFilter(HelpfulFilterSet):
-    name = django_filters.CharFilter(lookup_expr='icontains')
-    code = django_filters.CharFilter()
+    name = django_filters.CharFilter(lookup_expr='icontains', help_text='Search for a substring in countries name.')
+    code = django_filters.CharFilter(help_text='Search by country code.')
 
     class Meta:
         model = Country
@@ -443,7 +443,7 @@ class NetworkView(generics.ListAPIView):
 
 class CountryView(generics.ListAPIView):
     """
-    API endpoint for country names and codes
+    List countries referenced on IHR. Can be searched by keyword, ASN, or IXPID. 
     """
     queryset = Country.objects.all()
     serializer_class = CountrySerializer
