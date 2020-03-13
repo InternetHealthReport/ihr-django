@@ -534,7 +534,11 @@ class DiscoProbesView(generics.ListAPIView):
 
 class HegemonyView(generics.ListAPIView):
     """
-    API endpoint that allows to view AS hegemony scores.
+    List AS dependencies for all ASes visible in monitored BGP data. This endpoint also provides the AS dependency to the entire IP space (a.k.a. global graph) which is available by setting the originasn parameter to 0.
+    <ul>
+    <li><b>Required parameters:</b> timebin or a range of timebins (using the two parameters timebin__lte and timebin__gte).</li>
+    <li><b>Limitations:</b> At most 7 days of data can be fetched per request.</li>
+    </ul>
     """
     serializer_class = HegemonySerializer
     filter_class = HegemonyFilter
@@ -547,7 +551,11 @@ class HegemonyView(generics.ListAPIView):
 
 class HegemonyAlarmsView(generics.ListAPIView):
     """
-    API endpoint that allows to view AS hegemony scores.
+    List significant AS dependency changes detected by IHR anomaly detector.
+    <ul>
+    <li><b>Required parameters:</b> timebin or a range of timebins (using the two parameters timebin__lte and timebin__gte).</li>
+    <li><b>Limitations:</b> At most 7 days of data can be fetched per request.</li>
+    </ul>
     """
     serializer_class = HegemonyAlarmsSerializer
     filter_class = HegemonyAlarmsFilter
@@ -558,7 +566,11 @@ class HegemonyAlarmsView(generics.ListAPIView):
 
 class HegemonyConeView(generics.ListAPIView):
     """
-    API endpoint that allows to view AS hegemony cones (number of dependent
+    The number of networks that depend on a given network. This is similar to CAIDA's customer cone size.
+    <ul>
+    <li><b>Required parameters:</b> timebin or a range of timebins (using the two parameters timebin__lte and timebin__gte).</li>
+    <li><b>Limitations:</b> At most 7 days of data can be fetched per request.</li>
+    </ul>
     networks).
     """
     serializer_class = HegemonyConeSerializer
@@ -571,7 +583,11 @@ class HegemonyConeView(generics.ListAPIView):
 
 class NetworkDelayView(generics.ListAPIView):
     """
-    API endpoint that allows to view network delay between diverse locations.
+    List estimated network delays between two potentially remote locations. A location can be, for example, an AS, city, Atlas probe.
+    <ul>
+    <li><b>Required parameters:</b> timebin or a range of timebins (using the two parameters timebin__lte and timebin__gte).</li>
+    <li><b>Limitations:</b> At most 7 days of data can be fetched per request.</li>
+    </ul>
     """
     serializer_class = NetworkDelaySerializer
     filter_class = NetworkDelayFilter
@@ -583,7 +599,11 @@ class NetworkDelayView(generics.ListAPIView):
 
 class NetworkDelayAlarmsView(generics.ListAPIView):
     """
-    API endpoint that allows to view detected network delay alarms.
+    List significant network delay changes detected by IHR anomaly detector.
+    <ul>
+    <li><b>Required parameters:</b> timebin or a range of timebins (using the two parameters timebin__lte and timebin__gte).</li>
+    <li><b>Limitations:</b> At most 7 days of data can be fetched per request.</li>
+    </ul>
     """
     serializer_class = NetworkDelayAlarmsSerializer
     filter_class = NetworkDelayAlarmsFilter
@@ -594,7 +614,7 @@ class NetworkDelayAlarmsView(generics.ListAPIView):
 
 class NetworkDelayLocationsView(generics.ListAPIView):
     """
-    API endpoint for network locations found in Atlas traceroutes
+    List locations monitored for network delay measurements.  A location can be, for example, an AS, city, Atlas probe.
     """
     queryset = Atlas_location.objects.all()
     serializer_class = NetworkDelayLocationsSerializer

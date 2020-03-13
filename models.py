@@ -104,46 +104,46 @@ class Disco_probes(models.Model):
 
 
 class Hegemony(models.Model):
-    timebin = models.DateTimeField(db_index=True)
-    originasn = models.ForeignKey(ASN, on_delete=models.CASCADE, related_name="local_graph", db_index=True)
-    asn = models.ForeignKey(ASN, on_delete=models.CASCADE, db_index=True)
-    hege = models.FloatField(default=0.0)
-    af = models.IntegerField(default=0)
+    timebin = models.DateTimeField(db_index=True, help_text="Timestamp of reported value.")
+    originasn = models.ForeignKey(ASN, on_delete=models.CASCADE, related_name="local_graph", db_index=True, help_text="Dependent network, it can be any public ASN. Retrieve all dependencies of a network by setting only this parameter and a timebin.")
+    asn = models.ForeignKey(ASN, on_delete=models.CASCADE, db_index=True, help_text="Dependency. Transit network commonly seen in BGP paths towards originasn.")
+    hege = models.FloatField(default=0.0, help_text="AS Hegemony is the estimated fraction of paths towards the originasn. The values range between 0 and 1, low values represent a small number of path (low dependency) and values close to 1 represent strong dependencies.")
+    af = models.IntegerField(default=0, help_text="Address Family (IP version), values are either 4 or 6.")
 
     def __str__(self):
         return "%s originAS%s AS%s %s" % (self.timebin, self.originasn.number, self.asn.number, self.hege)
 
 class HegemonyCone(models.Model):
-    timebin = models.DateTimeField(db_index=True)
-    asn = models.ForeignKey(ASN, on_delete=models.CASCADE, db_index=True)
-    conesize = models.IntegerField(default=0)
-    af = models.IntegerField(default=0)
+    timebin = models.DateTimeField(db_index=True, help_text="Timestamp of reported value.")
+    asn = models.ForeignKey(ASN, on_delete=models.CASCADE, db_index=True, help_text="ASN")
+    conesize = models.IntegerField(default=0, help_text="Number of dependent networks, namely, networks that are reached through the asn, this is similar to CAIDA's customer cone size. The detailed list of all dependent networks is obtained by querying /hegemony/ with parameter asn (e.g /hegemony/?asn=2497&timebin=2020-03-01 gives IIJ's customer networks).")
+    af = models.IntegerField(default=0, help_text="Address Family (IP version), values are either 4 or 6.")
 
     class Meta:
         index_together = ("timebin", "asn", "af")
 
 
 class Atlas_location(models.Model):
-    name = models.CharField(max_length=255)
-    type = models.CharField(max_length=4)
-    af = models.IntegerField()
+    name = models.CharField(max_length=255, help_text="Location identifier. The meaning of values dependend on the location type: <ul><li>type=AS: ASN</li><li>type=CT: city name, region name, country code</li><li>type=PB: Atlas Probe ID</li><li>type=IP: IP version (4 or 6)</li></ul> ")
+    type = models.CharField(max_length=4, help_text="Type of location. Possible values are: <ul><li>AS: Autonomous System</li><li>CT: City</li><li>PB: Atlas Probe</li><li>IP: Whole IP space</li></ul>")
+    af = models.IntegerField(help_text="Address Family (IP version), values are either 4 or 6.")
 
     def __str__(self):
         return "(%s) %s %s" % (self.type, self.name, self.af)
 
 
 class Atlas_delay(models.Model):
-    timebin = models.DateTimeField(db_index=True)
+    timebin = models.DateTimeField(db_index=True, help_text="Timestamp of reported value.")
     startpoint = models.ForeignKey(Atlas_location, on_delete=models.CASCADE,
-             db_index=True, related_name='location_startpoint')
+             db_index=True, related_name='location_startpoint', help_text="Starting location for the delay estimation.")
     endpoint = models.ForeignKey(Atlas_location, on_delete=models.CASCADE,
-             db_index=True, related_name='location_endpoint')
-    median = models.FloatField(default=0.0)
-    nbtracks = models.IntegerField(default=0)
-    nbprobes = models.IntegerField(default=0)
-    entropy = models.FloatField(default=0.0)
-    hop = models.IntegerField(default=0)
-    nbrealrtts = models.IntegerField(default=0)
+             db_index=True, related_name='location_endpoint', help_text="Ending location for the delay estimation.")
+    median = models.FloatField(default=0.0, help_text="Estimated median RTT. RTT values are directly extracted from traceroute (a.k.a. realrtts) and estimated via differential RTTs.")
+    nbtracks = models.IntegerField(default=0, help_text="Number of RTT samples used to compute median RTT (either real or differential RTT).")
+    nbprobes = models.IntegerField(default=0, help_text="Number of Atlas probes used to compute median RTT.")
+    entropy = models.FloatField(default=0.0, help_text="Entropy of RTT samples with regards to probes' ASN. Values close to zero mean that Atlas probes used for these measures are located in the same AS, values close to one means that preobes are equally spread out accross multiple ASes.")
+    hop = models.IntegerField(default=0, help_text="Median number of AS hops between the start and end locations.")
+    nbrealrtts = models.IntegerField(default=0, help_text="Number of RTT samples directly obtained from traceroutes (as opposed to differential RTTs).")
 
     def __str__(self):
         return "%s -> %s: %s" % (
@@ -151,10 +151,10 @@ class Atlas_delay(models.Model):
 
 class Hegemony_alarms(models.Model):
     timebin = models.DateTimeField(db_index=True, help_text="Timestamp of reported alarm.")
-    originasn = models.ForeignKey(ASN, on_delete=models.CASCADE, related_name="anomalous_originasn", db_index=True, help_text="ASN of the reported network.")
-    asn = models.ForeignKey(ASN, on_delete=models.CASCADE, related_name="anomalous_asn", db_index=True)
-    deviation = models.FloatField(default=0.0)
-    af = models.IntegerField()
+    originasn = models.ForeignKey(ASN, on_delete=models.CASCADE, related_name="anomalous_originasn", db_index=True, help_text="ASN of the reported dependent network.")
+    asn = models.ForeignKey(ASN, on_delete=models.CASCADE, related_name="anomalous_asn", db_index=True, help_text="ASN of the anomalous dependency (transit network).")
+    deviation = models.FloatField(default=0.0, help_text="Significance of the AS Hegemony change.")
+    af = models.IntegerField(help_text="Address Family (IP version), values are either 4 or 6.")
 
     def __str__(self):
         return "(%s, %s, v%s) %s" % (self.originasn, self.asn, self.af, self.deviation)
@@ -162,10 +162,10 @@ class Hegemony_alarms(models.Model):
 class Atlas_delay_alarms(models.Model):
     timebin = models.DateTimeField(db_index=True, help_text="Timestamp of reported alarm.")
     startpoint = models.ForeignKey(Atlas_location, on_delete=models.CASCADE,
-             db_index=True, related_name='anomalous_startpoint')
+             db_index=True, related_name='anomalous_startpoint', help_text="Starting location reported as anomalous.")
     endpoint = models.ForeignKey(Atlas_location, on_delete=models.CASCADE,
-             db_index=True, related_name='anomalous_endpoint')
-    deviation = models.FloatField(default=0.0)
+             db_index=True, related_name='anomalous_endpoint', help_text="Ending location reported as anomalous.")
+    deviation = models.FloatField(default=0.0, help_text="Significance of the AS Hegemony change.")
 
     def __str__(self):
         return "(%s, %s) %s" % (self.startpoint, self.endpoint, self.deviation)
