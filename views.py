@@ -437,6 +437,7 @@ class NetworkView(generics.ListAPIView):
     delay locations). Can be searched by keyword, ASN, or IXPID.  Range of 
     ASN/IXPID can be obtained with parameters number__lte and number__gte.
     """
+
     #schema = AutoSchema(tags=['entity'])
     queryset = ASN.objects.all()
     serializer_class = ASNSerializer
@@ -446,12 +447,13 @@ class CountryView(generics.ListAPIView):
     """
     List countries referenced on IHR. Can be searched by keyword, ASN, or IXPID. 
     """
+    
     queryset = Country.objects.all()
     serializer_class = CountrySerializer
     filter_class = CountryFilter
 
 class DelayView(generics.ListAPIView): 
-    f"""
+    """
     List cumulated link delay changes (magnitude) for each monitored network. 
     Magnitude values close to zero represent usual delays for the network, 
     whereas higher values stand for significant links congestion in the 
@@ -460,9 +462,10 @@ class DelayView(generics.ListAPIView):
     <br>
     <b>Required parameters:</b> timebin or a range of timebins (using
     the two parameters timebin__lte and timebin__gte).
-    <b>Limitations:</b> At most {MAX_RANGE} days of data can be fetch per 
+    <b>Limitations:</b> At most {} days of data can be fetch per 
     request.
-    """
+    """.format(MAX_RANGE)
+
     serializer_class = DelaySerializer
     filter_class = DelayFilter
 

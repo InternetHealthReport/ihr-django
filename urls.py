@@ -33,10 +33,10 @@ schema_view = get_schema_view(
        openapi.Info(
          title="IHR API",
          default_version='',
-         description="""This RESTful API is intended for developpers and 
-         researchers who want to fetch Internet Health Report data and integrate 
-         IHR results to their workflow. """,
-         terms_of_service="https://ihr.iijlab.net/ihr/en-us/documentation#Data_policy",
+         description="""This RESTful API is intended for developpers and researchers who want to fetch Internet Health Report data and integrate IHR results to their workflow. IHR data is also available via our <a href='/ihr/en-us/documentation#Python_Library'>Python library</a>. 
+         <br>
+         Parameters ending with __lte and __gte (i.e. less than or equal to, and, greater than or equal to) are used for selecting a range of values.""",
+         # terms_of_service="https://ihr.iijlab.net/ihr/en-us/documentation#Data_policy",
          contact=openapi.Contact(email="ihr-admin@iij-ii.co.jp"),
          license=openapi.License(name="Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)",
          url="https://creativecommons.org/licenses/by-nc-sa/4.0/"),
