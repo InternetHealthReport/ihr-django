@@ -158,15 +158,15 @@ class ListNetworkKeyFilter(ListFilter):
         return qs
 
 class NetworkDelayFilter(HelpfulFilterSet):
-    startpoint_name = ListStringFilter(field_name='startpoint__name')
-    endpoint_name = ListStringFilter(field_name='endpoint__name')
-    startpoint_type= django_filters.CharFilter(field_name='startpoint__type')
-    endpoint_type= django_filters.CharFilter(field_name='endpoint__type')
-    startpoint_af= django_filters.NumberFilter(field_name='startpoint__af')
-    endpoint_af= django_filters.NumberFilter(field_name='endpoint__af')
+    startpoint_name = ListStringFilter(field_name='startpoint__name', help_text="Starting location name. It can be a single value or a list of values separated by the pipe character (i.e. | ). The meaning of values dependend on the location type: <ul><li>type=AS: ASN</li><li>type=CT: city name, region name, country code</li><li>type=PB: Atlas Probe ID</li><li>type=IP: IP version (4 or 6)</li></ul> ")
+    endpoint_name = ListStringFilter(field_name='endpoint__name', help_text="Ending location name. It can be a single value or a list of values separated by the pipe character (i.e. | ). The meaning of values dependend on the location type: <ul><li>type=AS: ASN</li><li>type=CT: city name, region name, country code</li><li>type=PB: Atlas Probe ID</li><li>type=IP: IP version (4 or 6)</li></ul> ")
+    startpoint_type= django_filters.CharFilter(field_name='startpoint__type', help_text="Type of starting location. Possible values are: <ul><li>AS: Autonomous System</li><li>CT: City</li><li>PB: Atlas Probe</li><li>IP: Whole IP space</li></ul>")
+    endpoint_type= django_filters.CharFilter(field_name='endpoint__type', help_text="Type of ending location. Possible values are: <ul><li>AS: Autonomous System</li><li>CT: City</li><li>PB: Atlas Probe</li><li>IP: Whole IP space</li></ul>")
+    startpoint_af= django_filters.NumberFilter(field_name='startpoint__af', help_text="Address Family (IP version), values are either 4 or 6.")
+    endpoint_af= django_filters.NumberFilter(field_name='endpoint__af', help_text="Address Family (IP version), values are either 4 or 6.")
 
-    startpoint_key = ListNetworkKeyFilter(field_name='startpoint')
-    endpoint_key = ListNetworkKeyFilter(field_name='endpoint')
+    startpoint_key = ListNetworkKeyFilter(field_name='startpoint', help_text="List of starting location key, separated by the pip character (i.e. | ). A location key is a concatenation of a type, af, and name. For example, CT4New York City, New York, US|AS4174 (yes, the last key corresponds to AS174!).")
+    endpoint_key = ListNetworkKeyFilter(field_name='endpoint', help_text="List of ending location key, separated by the pip character (i.e. | ). A location key is a concatenation of a type, af, and name. For example, CT4New York City, New York, US|AS4174 (yes, the last key corresponds to AS174!).")
 
     class Meta:
         model = Atlas_delay
@@ -192,15 +192,15 @@ class NetworkDelayFilter(HelpfulFilterSet):
 
 
 class NetworkDelayAlarmsFilter(HelpfulFilterSet):
-    startpoint_name = ListStringFilter(field_name='startpoint__name')
-    endpoint_name = ListStringFilter(field_name='endpoint__name')
-    startpoint_type= django_filters.CharFilter(field_name='startpoint__type')
-    endpoint_type= django_filters.CharFilter(field_name='endpoint__type')
-    startpoint_af= django_filters.NumberFilter(field_name='startpoint__af')
-    endpoint_af= django_filters.NumberFilter(field_name='endpoint__af')
+    startpoint_name = ListStringFilter(field_name='startpoint__name', help_text="Starting location name. It can be a single value or a list of values separated by the pipe character (i.e. | ). The meaning of values dependend on the location type: <ul><li>type=AS: ASN</li><li>type=CT: city name, region name, country code</li><li>type=PB: Atlas Probe ID</li><li>type=IP: IP version (4 or 6)</li></ul> ")
+    endpoint_name = ListStringFilter(field_name='endpoint__name', help_text="Ending location name. It can be a single value or a list of values separated by the pipe character (i.e. | ). The meaning of values dependend on the location type: <ul><li>type=AS: ASN</li><li>type=CT: city name, region name, country code</li><li>type=PB: Atlas Probe ID</li><li>type=IP: IP version (4 or 6)</li></ul> ")
+    startpoint_type= django_filters.CharFilter(field_name='startpoint__type', help_text="Type of starting location. Possible values are: <ul><li>AS: Autonomous System</li><li>CT: City</li><li>PB: Atlas Probe</li><li>IP: Whole IP space</li></ul>")
+    endpoint_type= django_filters.CharFilter(field_name='endpoint__type', help_text="Type of ending location. Possible values are: <ul><li>AS: Autonomous System</li><li>CT: City</li><li>PB: Atlas Probe</li><li>IP: Whole IP space</li></ul>")
+    startpoint_af= django_filters.NumberFilter(field_name='startpoint__af', help_text="Address Family (IP version), values are either 4 or 6.")
+    endpoint_af= django_filters.NumberFilter(field_name='endpoint__af', help_text="Address Family (IP version), values are either 4 or 6.")
 
-    startpoint_key = ListNetworkKeyFilter(field_name='startpoint')
-    endpoint_key = ListNetworkKeyFilter(field_name='endpoint')
+    startpoint_key = ListNetworkKeyFilter(field_name='startpoint', help_text="List of starting location key, separated by the pip character (i.e. | ). A location key is a concatenation of a type, af, and name. For example, CT4New York City, New York, US|AS4174 (yes, the last key corresponds to AS174!).")
+    endpoint_key = ListNetworkKeyFilter(field_name='endpoint', help_text="List of ending location key, separated by the pip character (i.e. | ). A location key is a concatenation of a type, af, and name. For example, CT4New York City, New York, US|AS4174 (yes, the last key corresponds to AS174!).")
 
     class Meta:
         model = Atlas_delay_alarms
@@ -225,8 +225,8 @@ class NetworkDelayAlarmsFilter(HelpfulFilterSet):
     }
 
 class HegemonyFilter(HelpfulFilterSet):
-    asn = ListIntegerFilter()
-    originasn = ListIntegerFilter()
+    asn = ListIntegerFilter(help_text="Dependency. Transit network commonly seen in BGP paths towards originasn. Can be a single value or a list of comma separated values. ")
+    originasn = ListIntegerFilter(help_text="Dependent network, it can be any public ASN. Can be a single value or a list of comma separated values. Retrieve all dependencies of a network by setting a single value and a timebin.")
 
     class Meta:
         model = Hegemony
@@ -245,8 +245,8 @@ class HegemonyFilter(HelpfulFilterSet):
 
 
 class HegemonyAlarmsFilter(HelpfulFilterSet):
-    asn = ListIntegerFilter()
-    originasn = ListIntegerFilter()
+    asn = ListIntegerFilter(help_text="ASN of the anomalous dependency (transit network). Can be a single value or a list of comma separated values.")
+    originasn = ListIntegerFilter(help_text="ASN of the reported dependent network. Can be a single value or a list of comma separated values.")
 
     class Meta:
         model = Hegemony_alarms
@@ -264,9 +264,9 @@ class HegemonyAlarmsFilter(HelpfulFilterSet):
     }
 
 class NetworkDelayLocationsFilter(HelpfulFilterSet):
-    name = django_filters.CharFilter(lookup_expr='icontains')
-    type = django_filters.CharFilter()
-    af = django_filters.NumberFilter()
+    name = django_filters.CharFilter(lookup_expr='icontains', help_text="Location identifier, can be searched by substring. The meaning of these values dependend on the location type: <ul><li>type=AS: ASN</li><li>type=CT: city name, region name, country code</li><li>type=PB: Atlas Probe ID</li><li>type=IP: IP version (4 or 6)</li></ul>")
+    type = django_filters.CharFilter(help_text="Type of location. Possible values are: <ul><li>AS: Autonomous System</li><li>CT: City</li><li>PB: Atlas Probe</li><li>IP: Whole IP space</li></ul>")
+    af = django_filters.NumberFilter(help_text="Address Family (IP version), values are either 4 or 6.")
 
     class Meta:
         model = Atlas_location
@@ -275,7 +275,7 @@ class NetworkDelayLocationsFilter(HelpfulFilterSet):
 
 class NetworkFilter(HelpfulFilterSet):
     name = django_filters.CharFilter(lookup_expr='icontains', help_text='Search for a substring in networks name.')
-    number = ListIntegerFilter(help_text='Search by ASN or IXP ID. It can be either a single value (e.g. 2497) or a list of values (e.g. 2497,2500,2501)')
+    number = ListIntegerFilter(help_text='Search by ASN or IXP ID. It can be either a single value (e.g. 2497) or a list of comma separated values (e.g. 2497,2500,2501)')
     search = django_filters.CharFilter(method='asn_or_number', help_text='Search for both ASN/IXPID and substring in names.')
 
     def asn_or_number(self, queryset, name, value):
@@ -313,7 +313,7 @@ class DelayFilter(HelpfulFilterSet):
     """ 
     Explain delay filter here
     """
-    asn = ListIntegerFilter(help_text="Filter by ASN")
+    asn = ListIntegerFilter(help_text="ASN or IXP ID of the monitored network (see number in /network/). Can be a single value or a list of comma separated values.")
     class Meta:
         model = Delay
         fields = {
@@ -329,7 +329,7 @@ class DelayFilter(HelpfulFilterSet):
     }
 
 class ForwardingFilter(HelpfulFilterSet):
-    asn = ListIntegerFilter()
+    asn = ListIntegerFilter(help_text="ASN or IXP ID of the monitored network (see number in /network/). Can be a single value or a list of comma separated values.")
     class Meta:
         model = Forwarding
         fields = {
@@ -344,7 +344,7 @@ class ForwardingFilter(HelpfulFilterSet):
         },
     }
 class DelayAlarmsFilter(HelpfulFilterSet):
-    asn = ListIntegerFilter()
+    asn = ListIntegerFilter(help_text="ASN or IXP ID of the monitored network (see number in /network/). Can be a single value or a list of comma separated values.")
     class Meta:
         model = Delay_alarms
         fields = {
@@ -364,7 +364,7 @@ class DelayAlarmsFilter(HelpfulFilterSet):
     }
 
 class ForwardingAlarmsFilter(HelpfulFilterSet):
-    asn = ListIntegerFilter()
+    asn = ListIntegerFilter(help_text="ASN or IXP ID of the monitored network (see number in /network/). Can be a single value or a list of comma separated values.")
     class Meta:
         model = Forwarding_alarms
         fields = {
@@ -405,7 +405,7 @@ class DiscoEventsFilter(HelpfulFilterSet):
 
 
 class HegemonyConeFilter(HelpfulFilterSet):
-    asn = ListIntegerFilter()
+    asn = ListIntegerFilter(help_text="Autonomous System Number (ASN). Can be a single value or a list of comma separated values.")
     class Meta:
         model = HegemonyCone
         fields = {
@@ -421,8 +421,8 @@ class HegemonyConeFilter(HelpfulFilterSet):
     }
 
 class DiscoProbesFilter(HelpfulFilterSet):
-    probe_id = ListIntegerFilter()
-    event = ListIntegerFilter()
+    probe_id = ListIntegerFilter(help_text="List of probe ids separated by commas.")
+    event = ListIntegerFilter(help_text="List of event ids separated by commas.")
     class Meta:
         model = Disco_probes
         fields = {}
@@ -525,8 +525,6 @@ class DiscoProbesView(generics.ListAPIView):
     """
     List details of Atlas probes that triggered network disconnection events.
     """
-    probe_id = ListIntegerFilter()
-
     queryset = Disco_probes.objects.all() 
     serializer_class = DiscoProbesSerializer
     filter_class = DiscoProbesFilter
