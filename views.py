@@ -589,7 +589,6 @@ class NetworkDelayView(generics.ListAPIView):
     """
     serializer_class = NetworkDelaySerializer
     filter_class = NetworkDelayFilter
-    ordering = 'timebin'
 
     def get_queryset(self):
         check_timebin(self.request.query_params)
