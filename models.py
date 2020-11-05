@@ -170,6 +170,24 @@ class HegemonyCone(CachingMixin, models.Model):
         index_together = ("timebin", "asn", "af")
         base_manager_name = 'objects'  # Attribute name of CachingManager(), above
 
+class Hegemony_country(CachingMixin, models.Model):
+    timebin = models.DateTimeField(db_index=True, help_text="Timestamp of reported value.")
+    country = models.ForeignKey(Country, on_delete=models.CASCADE, db_index=True, help_text="Monitored country. Retrieve all dependencies of a country by setting only this parameter and a timebin.")
+    asn = models.ForeignKey(ASN, on_delete=models.CASCADE, db_index=True, help_text="Dependency. Network commonly seen in BGP paths towards monitored country.")
+    hege = models.FloatField(default=0.0, help_text="AS Hegemony is the estimated fraction of paths towards the originasn. The values range between 0 and 1, low values represent a small number of path (low dependency) and values close to 1 represent strong dependencies.")
+    af = models.IntegerField(default=0, help_text="Address Family (IP version), values are either 4 or 6.")
+    weight = models.FloatField(default=0.0, help_text="Absolute weight given to the ASN for the AS Hegemony calculation.")
+    weightScheme = models.CharField(max_length=16, default="None", help_text="Weighting scheme used for the AS Hegemony calculation.")
+    transit_only = models.BooleanField(default=False, help_text="If True, then origin ASNs of BGP path are ignored (focus only on transit networks).")
+
+    objects = CachingManager()
+
+    class Meta:
+        base_manager_name = 'objects'  # Attribute name of CachingManager(), above
+
+    def __str__(self):
+        return "%s %s AS%s %s" % (self.timebin, self.country.name, self.asn.number, self.hege)
+
 
 class Atlas_location(CachingMixin, models.Model):
     name = models.CharField(max_length=255, help_text="Location identifier. The meaning of values dependend on the location type: <ul><li>type=AS: ASN</li><li>type=CT: city name, region name, country code</li><li>type=PB: Atlas Probe ID</li><li>type=IP: IP version (4 or 6)</li></ul> ")
