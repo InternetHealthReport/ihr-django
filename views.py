@@ -16,7 +16,7 @@ import pytz
 import json
 import arrow
 
-from .models import ASN, Country, Delay, Forwarding, Delay_alarms, Forwarding_alarms, Disco_events, Disco_probes, Hegemony, HegemonyCone, Atlas_delay, Atlas_location, Atlas_delay_alarms, Hegemony_alarms
+from .models import ASN, Country, Delay, Forwarding, Delay_alarms, Forwarding_alarms, Disco_events, Disco_probes, Hegemony, HegemonyCone, Atlas_delay, Atlas_location, Atlas_delay_alarms, Hegemony_alarms, Hegemony_country
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -24,7 +24,7 @@ from rest_framework.reverse import reverse
 from rest_framework import generics
 from rest_framework.exceptions import ParseError
 
-from .serializers import ASNSerializer, CountrySerializer, DelaySerializer, ForwardingSerializer, DelayAlarmsSerializer, ForwardingAlarmsSerializer, DiscoEventsSerializer, DiscoProbesSerializer, HegemonySerializer, HegemonyConeSerializer, NetworkDelaySerializer, NetworkDelayLocationsSerializer, NetworkDelayAlarmsSerializer, HegemonyAlarmsSerializer
+from .serializers import ASNSerializer, CountrySerializer, DelaySerializer, ForwardingSerializer, DelayAlarmsSerializer, ForwardingAlarmsSerializer, DiscoEventsSerializer, DiscoProbesSerializer, HegemonySerializer, HegemonyConeSerializer, NetworkDelaySerializer, NetworkDelayLocationsSerializer, NetworkDelayAlarmsSerializer, HegemonyAlarmsSerializer, HegemonyCountrySerializer
 from django_filters import rest_framework as filters
 import django_filters
 from django.db.models import Q
@@ -34,7 +34,7 @@ from django.db.models import Q
 # by default shows only one week of data
 LAST_DEFAULT = 7
 HEGE_GRANULARITY = 15
-MAX_RANGE = 7
+DEFAULT_MAX_RANGE = 7
 
 
 ########## Get help_text from model ###############
@@ -53,7 +53,7 @@ class StandardResultsSetPagination(PageNumberPagination):
 
 
 ############ API ##########
-def check_timebin(query_params):
+def check_timebin(query_params, max_range=DEFAULT_MAX_RANGE):
     """ Check if the query contain timebin parameters"""
 
     # check if it contains only the timebin field
@@ -72,15 +72,15 @@ def check_timebin(query_params):
     if timebin_gte is None or timebin_lte is None:
         raise ParseError("Invalid timebin range. Please provide both timebin__lte and timebin__gte.")
 
-    # check if the range is longer than MAX_RANGE
+    # check if the range is longer than max_range
     try:
         start = arrow.get(timebin_gte)
         end = arrow.get(timebin_lte)
     except:
         raise ParseError("Could not parse the timebin parameters.")
 
-    if (end-start).days > MAX_RANGE:
-        raise ParseError("The given timebin range is too large. Should be less than {} days.".format(MAX_RANGE))
+    if (end-start).days > max_range:
+        raise ParseError("The given timebin range is too large. Should be less than {} days.".format(max_range))
 
     return True
 
@@ -263,6 +263,26 @@ class HegemonyAlarmsFilter(HelpfulFilterSet):
         },
     }
 
+class HegemonyCountryFilter(HelpfulFilterSet):
+    asn = ListIntegerFilter(help_text="Dependency. Network commonly seen in BGP paths towards monitored country. Can be a single value or a list of comma separated values. ")
+    country = ListIntegerFilter(help_text="Monitored country. Can be a single value or a list of comma separated values. Retrieve all dependencies of a country by setting a single value and a timebin.")
+
+    class Meta:
+        model = Hegemony_country
+        fields = {
+            'timebin': ['exact', 'lte', 'gte'],
+            'hege': ['exact', 'lte', 'gte'],
+            'af': ['exact'],
+        }
+        ordering_fields = ('timebin', 'country', 'hege', 'af')
+
+    filter_overrides = {
+        django_models.DateTimeField: {
+            'filter_class': filters.IsoDateTimeFilter
+        },
+    }
+
+
 class NetworkDelayLocationsFilter(HelpfulFilterSet):
     name = django_filters.CharFilter(lookup_expr='icontains', help_text="Location identifier, can be searched by substring. The meaning of these values dependend on the location type: <ul><li>type=AS: ASN</li><li>type=CT: city name, region name, country code</li><li>type=PB: Atlas Probe ID</li><li>type=IP: IP version (4 or 6)</li></ul>")
     type = django_filters.CharFilter(help_text="Type of location. Possible values are: <ul><li>AS: Autonomous System</li><li>CT: City</li><li>PB: Atlas Probe</li><li>IP: Whole IP space</li></ul>")
@@ -443,7 +463,7 @@ class NetworkView(generics.ListAPIView):
 
 class CountryView(generics.ListAPIView):
     """
-    List countries referenced on IHR. Can be searched by keyword, ASN, or IXPID. 
+    List countries referenced on IHR. 
     """
     
     queryset = Country.objects.all()
@@ -578,6 +598,24 @@ class HegemonyConeView(generics.ListAPIView):
     def get_queryset(self):
         check_timebin(self.request.query_params)
         return HegemonyCone.objects.all()
+
+class HegemonyCountryView(generics.ListAPIView):
+    """
+    List AS dependencies of countries. A country infrastructure is defined by its ASes registed in RIRs delegated files. Emphasis can be put on eyeball users with the eyeball weighting scheme (i.e. weightscheme='eyeball').
+    <ul>
+    <li><b>Required parameters:</b> timebin or a range of timebins (using the two parameters timebin__lte and timebin__gte).</li>
+    <li><b>Limitations:</b> At most 31 days of data can be fetched per request.</li>
+    </ul>
+    """
+    serializer_class = HegemonySerializer
+    filter_class = HegemonyFilter
+    ordering = 'timebin'
+
+    def get_queryset(self):
+        check_timebin(self.request.query_params, 31)
+        check_or_fields(self.request.query_params, ['country', 'asn'])
+        return Hegemony_country.objects.all()
+
 
 class NetworkDelayView(generics.ListAPIView):
     """

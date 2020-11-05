@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import ASN, Country, Delay,  Forwarding, Delay_alarms, Forwarding_alarms, Disco_events, Disco_probes, Hegemony, HegemonyCone, Atlas_location, Atlas_delay, Atlas_delay_alarms, Hegemony_alarms
+from .models import ASN, Country, Delay,  Forwarding, Delay_alarms, Forwarding_alarms, Disco_events, Disco_probes, Hegemony, HegemonyCone, Atlas_location, Atlas_delay, Atlas_delay_alarms, Hegemony_alarms, Hegemony_country
 
 class DelaySerializer(serializers.ModelSerializer):
     queryset = Delay.objects.all().prefetch_related("asn")
@@ -119,6 +119,25 @@ class HegemonyConeSerializer(serializers.ModelSerializer):
     class Meta:
         model = HegemonyCone
         fields = ('timebin', 'asn', 'conesize', 'af')
+
+class HegemonyCountrySerializer(serializers.ModelSerializer):
+    queryset = Hegemony_country.objects.all().prefetch_related("asn","country")
+    asn_name = serializers.PrimaryKeyRelatedField(queryset=queryset, source='asn.name', help_text="Autonomous System name of the dependency.")
+    country_name = serializers.PrimaryKeyRelatedField(queryset=queryset, source='country.name', help_text="Monitored country name.")
+
+    class Meta:
+        model = Hegemony
+        fields = ('timebin',
+                'country',
+                'asn',
+                'hege',
+                'af',
+                'asn_name',
+                'country_name',
+                'weight',
+                'weightscheme',
+                'transitonly')
+
 
 class NetworkDelaySerializer(serializers.ModelSerializer):
     queryset = Atlas_delay.objects.all().prefetch_related("startpoint", "endpoint")

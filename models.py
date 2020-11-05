@@ -177,8 +177,8 @@ class Hegemony_country(CachingMixin, models.Model):
     hege = models.FloatField(default=0.0, help_text="AS Hegemony is the estimated fraction of paths towards the originasn. The values range between 0 and 1, low values represent a small number of path (low dependency) and values close to 1 represent strong dependencies.")
     af = models.IntegerField(default=0, help_text="Address Family (IP version), values are either 4 or 6.")
     weight = models.FloatField(default=0.0, help_text="Absolute weight given to the ASN for the AS Hegemony calculation.")
-    weightScheme = models.CharField(max_length=16, default="None", help_text="Weighting scheme used for the AS Hegemony calculation.")
-    transit_only = models.BooleanField(default=False, help_text="If True, then origin ASNs of BGP path are ignored (focus only on transit networks).")
+    weightscheme = models.CharField(max_length=16, default="None", help_text="Weighting scheme used for the AS Hegemony calculation.")
+    transitonly = models.BooleanField(default=False, help_text="If True, then origin ASNs of BGP path are ignored (focus only on transit networks).")
 
     objects = CachingManager()
 
