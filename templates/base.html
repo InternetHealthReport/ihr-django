@@ -51,16 +51,8 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="{% url "ihr:index" %}">Internet Health Report</a>
+          <a class="navbar-brand" href="https://ihr.iijlab.net/ihr/en-us/api">Internet Health Report API</a>
         </div>
-        <div id="navbar" class="navbar-collapse collapse">
-            <form class="navbar-form navbar-right" role="form" action="{% url "ihr:search" %}" method="get">
-            <div class="form-group">
-              <input type="text" placeholder="Enter an ASN" class="form-control" name="asn">
-            </div>
-            <button type="submit" class="btn btn-success glyphicon glyphicon-search"></button>
-          </form>
-        </div><!--/.navbar-collapse -->
       </div>
     </nav>
 
@@ -70,56 +62,6 @@
 
     </div> <!-- /container -->        
     
-    <footer class="container-fluid footer" >
-    <div class="row">
-        <div class="col-md-2 col-lg-2 col-xs-0">
-            <a href="https://twitter.com/ihr_alerts" class="twitter-follow-button" data-show-screen-name="false" data-show-count="false">Follow @ihr_alerts</a><script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
-        </div>
-        <div class="col-md-8 col-lg-8 col-xs-10" align=center>
-            <a href="{% url "ihr:index" %}">Home</a> - 
-            <a href="/ihr/about/">About</a> - 
-            <a href="{% url "ihr:asnList" %}">Networks</a> - 
-            <a href="{% url "ihr:countryList" %}">Countries</a> - 
-            <a href="/ihr/api/doc/">API</a> - 
-            <a href="/ihr/contact/">Contact</a>
-        </div>
-        <div class="col-md-2 col-lg-2 col-xs-2">
-            <a href="" data-toggle="modal" data-target="#permaModal" id="link-permalink"><i class="glyphicon glyphicon-link"></i>permalink</a>
-        </div>
-    </div>
-
-    </footer>    
-
-    <!-- Modal -->
-    <div id="permaModal" class="modal" role="dialog">
-    <div class="modal-dialog">
-
-        <!-- Modal content-->
-        <div class="modal-content">
-        <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal">&times;</button>
-            <h4 class="modal-title">Permanent link to this page</h4>
-        </div>
-        <div class="modal-body">
-            <div class="form-horizontal">
-            <input id="permalink" value="" type="text" class="form-control">
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-        </div>
-        </div>
-
-    </div>
-    </div>
-    <script type="text/javascript">
-        $(function() {
-            $("#link-permalink").click(function() {
-                $("#permalink").val(document.location.href);
-            });
-        });
-    </script>
-
         <script src="{% static "ihr/js/vendor/bootstrap.min.js" %}"></script>
 
         <script src="{% static "ihr/js/main.js" %}"></script>
