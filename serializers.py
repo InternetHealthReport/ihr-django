@@ -126,7 +126,7 @@ class HegemonyCountrySerializer(serializers.ModelSerializer):
     country_name = serializers.PrimaryKeyRelatedField(queryset=queryset, source='country.name', help_text="Monitored country name.")
 
     class Meta:
-        model = Hegemony
+        model = Hegemony_country
         fields = ('timebin',
                 'country',
                 'asn',

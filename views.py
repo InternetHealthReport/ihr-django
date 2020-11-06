@@ -265,7 +265,9 @@ class HegemonyAlarmsFilter(HelpfulFilterSet):
 
 class HegemonyCountryFilter(HelpfulFilterSet):
     asn = ListIntegerFilter(help_text="Dependency. Network commonly seen in BGP paths towards monitored country. Can be a single value or a list of comma separated values. ")
-    country = ListIntegerFilter(help_text="Monitored country. Can be a single value or a list of comma separated values. Retrieve all dependencies of a country by setting a single value and a timebin.")
+    country = ListFilter(help_text="Monitored country or region (e.g. EU and AP) as defined by its set of ASes registered in registeries delegated files. Can be a single value or a list of comma separated values. Retrieve all dependencies of a country by setting a single value and a timebin.")
+    weightscheme = django_filters.CharFilter(help_text="Scheme used to aggregate AS Hegemony scores. 'as' gives equal weight to each AS, 'eyeball' put emphasis on large eyeball networks.")
+    transitonly = django_filters.BooleanFilter(help_text="True means that the last AS (origin AS) in BGP paths is ignored, thus focusing only on transit ASes.")
 
     class Meta:
         model = Hegemony_country
@@ -607,8 +609,8 @@ class HegemonyCountryView(generics.ListAPIView):
     <li><b>Limitations:</b> At most 31 days of data can be fetched per request.</li>
     </ul>
     """
-    serializer_class = HegemonySerializer
-    filter_class = HegemonyFilter
+    serializer_class = HegemonyCountrySerializer
+    filter_class = HegemonyCountryFilter
     ordering = 'timebin'
 
     def get_queryset(self):
