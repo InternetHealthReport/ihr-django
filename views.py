@@ -562,12 +562,11 @@ class HegemonyView(generics.ListAPIView):
     """
     serializer_class = HegemonySerializer
     filter_class = HegemonyFilter
-    ordering = 'timebin'
 
     def get_queryset(self):
         check_timebin(self.request.query_params)
         check_or_fields(self.request.query_params, ['originasn', 'asn'])
-        return Hegemony.objects.all()
+        return Hegemony.objects.select_related("originasn", "asn")
 
 class HegemonyAlarmsView(generics.ListAPIView):
     """
@@ -611,12 +610,11 @@ class HegemonyCountryView(generics.ListAPIView):
     """
     serializer_class = HegemonyCountrySerializer
     filter_class = HegemonyCountryFilter
-    ordering = 'timebin'
 
     def get_queryset(self):
         check_timebin(self.request.query_params, 31)
         check_or_fields(self.request.query_params, ['country', 'asn'])
-        return Hegemony_country.objects.all()
+        return Hegemony_country.objects.select_related("asn")
 
 
 class NetworkDelayView(generics.ListAPIView):
@@ -632,7 +630,7 @@ class NetworkDelayView(generics.ListAPIView):
 
     def get_queryset(self):
         check_timebin(self.request.query_params)
-        return Atlas_delay.objects.all()
+        return Atlas_delay.objects.prefetch_related("startpoint", "endpoint")
 
 class NetworkDelayAlarmsView(generics.ListAPIView):
     """
@@ -647,7 +645,7 @@ class NetworkDelayAlarmsView(generics.ListAPIView):
 
     def get_queryset(self):
         check_timebin(self.request.query_params)
-        return Atlas_delay_alarms.objects.all()
+        return Atlas_delay_alarms.objects.prefetch_related("startpoint", "endpoint")
 
 class NetworkDelayLocationsView(generics.ListAPIView):
     """
