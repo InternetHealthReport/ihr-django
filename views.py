@@ -564,9 +564,18 @@ class HegemonyView(generics.ListAPIView):
     filter_class = HegemonyFilter
 
     def get_queryset(self):
-        check_timebin(self.request.query_params)
+        queryset = Hegemony.objects
+        if('timebin' not in self.request.query_params 
+                and 'timebin__lte' not in self.request.query_params
+                and 'timebin__gte' not in self.request.query_params):
+            # Set default timebin value
+            today = date.today()
+            past_days = today - timedelta(days=LAST_DEFAULT) 
+            queryset = queryset.filter(timebin__gte = past_days)
+        else:
+            check_timebin(self.request.query_params)
         check_or_fields(self.request.query_params, ['originasn', 'asn'])
-        return Hegemony.objects.select_related("originasn", "asn")
+        return queryset.select_related("originasn", "asn")
 
 class HegemonyAlarmsView(generics.ListAPIView):
     """
@@ -612,9 +621,18 @@ class HegemonyCountryView(generics.ListAPIView):
     filter_class = HegemonyCountryFilter
 
     def get_queryset(self):
-        check_timebin(self.request.query_params, 31)
+        queryset = Hegemony_country.objects
+        if('timebin' not in self.request.query_params 
+                and 'timebin__lte' not in self.request.query_params
+                and 'timebin__gte' not in self.request.query_params):
+            # Set default timebin value
+            today = date.today()
+            past_days = today - timedelta(days=LAST_DEFAULT) 
+            queryset = queryset.filter(timebin__gte = past_days)
+        else:
+            check_timebin(self.request.query_params, 31)
         check_or_fields(self.request.query_params, ['country', 'asn'])
-        return Hegemony_country.objects.select_related("asn")
+        return queryset.select_related("asn")
 
 
 class NetworkDelayView(generics.ListAPIView):
