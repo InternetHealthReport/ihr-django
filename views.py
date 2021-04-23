@@ -10,6 +10,9 @@ from django.db import models as django_models
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 
+from django.views.decorators.cache import patch_cache_control
+from django.views.decorators.vary import vary_on_cookie
+
 from datetime import datetime, date, timedelta
 import pandas as pd
 import pytz
@@ -180,6 +183,7 @@ class NetworkDelayFilter(HelpfulFilterSet):
             'endpoint_af': ['exact'],
             'startpoint_key': ['exact'],
             'endpoint_key': ['exact'],
+            'median': ['exact', 'lte', 'gte'],
         }
         ordering_fields = ('timebin', 'startpoint_name', 'endpoint_name')
 
@@ -563,6 +567,20 @@ class HegemonyView(generics.ListAPIView):
     serializer_class = HegemonySerializer
     filter_class = HegemonyFilter
 
+    @vary_on_cookie
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        last = self.request.query_params.get('timebin', 
+                self.request.query_params.get('timebin__gte', None) )
+        if last is not None:
+            # Cache forever content that is more than a week old
+            today = date.today()
+            past_days = today - timedelta(days=7) 
+            if arrow.get(last).date() < past_days: 
+                patch_cache_control(response, max_age=8600*24*356)
+
+        return response
+
     def get_queryset(self):
         queryset = Hegemony.objects
         if('timebin' not in self.request.query_params 
@@ -588,6 +606,20 @@ class HegemonyAlarmsView(generics.ListAPIView):
     serializer_class = HegemonyAlarmsSerializer
     filter_class = HegemonyAlarmsFilter
 
+    @vary_on_cookie
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        last = self.request.query_params.get('timebin', 
+                self.request.query_params.get('timebin__gte', None) )
+        if last is not None:
+            # Cache forever content that is more than a week old
+            today = date.today()
+            past_days = today - timedelta(days=7) 
+            if arrow.get(last).date() < past_days: 
+                patch_cache_control(response, max_age=8600*24*356)
+
+        return response
+
     def get_queryset(self):
         check_timebin(self.request.query_params)
         return Hegemony_alarms.objects.all()
@@ -604,6 +636,20 @@ class HegemonyConeView(generics.ListAPIView):
     serializer_class = HegemonyConeSerializer
     filter_class = HegemonyConeFilter
     ordering = 'timebin'
+
+    @vary_on_cookie
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        last = self.request.query_params.get('timebin', 
+                self.request.query_params.get('timebin__gte', None) )
+        if last is not None:
+            # Cache forever content that is more than a week old
+            today = date.today()
+            past_days = today - timedelta(days=7) 
+            if arrow.get(last).date() < past_days: 
+                patch_cache_control(response, max_age=8600*24*356)
+
+        return response
 
     def get_queryset(self):
         check_timebin(self.request.query_params)
@@ -646,6 +692,20 @@ class NetworkDelayView(generics.ListAPIView):
     serializer_class = NetworkDelaySerializer
     filter_class = NetworkDelayFilter
 
+    @vary_on_cookie
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        last = self.request.query_params.get('timebin', 
+                self.request.query_params.get('timebin__gte', None) )
+        if last is not None:
+            # Cache forever content that is more than a week old
+            today = date.today()
+            past_days = today - timedelta(days=7) 
+            if arrow.get(last).date() < past_days: 
+                patch_cache_control(response, max_age=8600*24*356)
+
+        return response
+
     def get_queryset(self):
         check_timebin(self.request.query_params)
         return Atlas_delay.objects.prefetch_related("startpoint", "endpoint")
@@ -661,6 +721,20 @@ class NetworkDelayAlarmsView(generics.ListAPIView):
     serializer_class = NetworkDelayAlarmsSerializer
     filter_class = NetworkDelayAlarmsFilter
 
+    @vary_on_cookie
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        last = self.request.query_params.get('timebin', 
+                self.request.query_params.get('timebin__gte', None) )
+        if last is not None:
+            # Cache forever content that is more than a week old
+            today = date.today()
+            past_days = today - timedelta(days=7) 
+            if arrow.get(last).date() < past_days: 
+                patch_cache_control(response, max_age=8600*24*356)
+
+        return response
+
     def get_queryset(self):
         check_timebin(self.request.query_params)
         return Atlas_delay_alarms.objects.prefetch_related("startpoint", "endpoint")
@@ -672,6 +746,20 @@ class NetworkDelayLocationsView(generics.ListAPIView):
     queryset = Atlas_location.objects.all()
     serializer_class = NetworkDelayLocationsSerializer
     filter_class = NetworkDelayLocationsFilter
+
+    @vary_on_cookie
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        last = self.request.query_params.get('timebin', 
+                self.request.query_params.get('timebin__gte', None) )
+        if last is not None:
+            # Cache forever content that is more than a week old
+            today = date.today()
+            past_days = today - timedelta(days=7) 
+            if arrow.get(last).date() < past_days: 
+                patch_cache_control(response, max_age=8600*24*356)
+
+        return response
 
 ###### Other pages :
 
