@@ -294,10 +294,10 @@ class HegemonyPrefixFilter(HelpfulFilterSet):
     originasn = ListIntegerFilter(help_text="Origin network, it can be any public ASN. Can be a single value or a list of comma separated values.")
     asn = ListIntegerFilter(help_text="Dependency. Network commonly seen in BGP paths towards monitored prefix. Can be a single value or a list of comma separated values.")
     country = ListFilter(help_text="Country code for prefixes as reported by Maxmind's Geolite2 geolocation database. Can be a single value or a list of comma separated values. Retrieve all dependencies of a country by setting a single value and a timebin.")
-    rpki_status = django_filters.CharFilter(help_text="Route origin validation state for the monitored prefix and origin AS using RPKI.")
-    irr_status = django_filters.CharFilter(help_text="Route origin validation state for the monitored prefix and origin AS using IRR.")
-    delegated_prefix_status = django_filters.CharFilter(help_text="Status of the monitored prefix in the RIR's delegated stats. Status other than 'assigned' are usually considered as bogons.")
-    delegated_asn_status = django_filters.CharFilter(help_text="Status of the origin ASN in the RIR's delegated stats. Status other than 'assigned' are usually considered as bogons.")
+    rpki_status = django_filters.CharFilter(lookup_expr='icontains', help_text="Route origin validation state for the monitored prefix and origin AS using RPKI.")
+    irr_status = django_filters.CharFilter(lookup_expr='icontains', help_text="Route origin validation state for the monitored prefix and origin AS using IRR.")
+    delegated_prefix_status = django_filters.CharFilter(lookup_expr='icontains', help_text="Status of the monitored prefix in the RIR's delegated stats. Status other than 'assigned' are usually considered as bogons.")
+    delegated_asn_status = django_filters.CharFilter(lookup_expr='icontains', help_text="Status of the origin ASN in the RIR's delegated stats. Status other than 'assigned' are usually considered as bogons.")
 
     class Meta:
         model = Hegemony_prefix
