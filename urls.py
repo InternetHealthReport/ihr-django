@@ -24,6 +24,7 @@ exposed_api = [
     url(r'^hegemony/$', views.HegemonyView.as_view(), name='hegemonyListView'),
     url(r'^hegemony/alarms/$', views.HegemonyAlarmsView.as_view(), name='hegemonyAlarmsListView'),
     url(r'^hegemony/countries/$', views.HegemonyCountryView.as_view(), name='hegemonyCountryListView'),
+    url(r'^hegemony/prefixes/$', views.HegemonyPrefixView.as_view(), name='hegemonyPrefixListView'),
     url(r'^hegemony/cones/$', views.HegemonyConeView.as_view(), name='hegemonyConeListView'),
     url(r'^network_delay/$', views.NetworkDelayView.as_view(), name='networkDelayListView'),
     url(r'^network_delay/locations/$', views.NetworkDelayLocationsView.as_view(), name='networkDelayLocationsListView'),

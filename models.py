@@ -174,7 +174,7 @@ class Hegemony_country(CachingMixin, models.Model):
     timebin = models.DateTimeField(db_index=True, help_text="Timestamp of reported value.")
     country = models.ForeignKey(Country, on_delete=models.CASCADE, db_index=True, help_text="Monitored country. Retrieve all dependencies of a country by setting only this parameter and a timebin.")
     asn = models.ForeignKey(ASN, on_delete=models.CASCADE, db_index=True, help_text="Dependency. Network commonly seen in BGP paths towards monitored country.")
-    hege = models.FloatField(default=0.0, help_text="AS Hegemony is the estimated fraction of paths towards the originasn. The values range between 0 and 1, low values represent a small number of path (low dependency) and values close to 1 represent strong dependencies.")
+    hege = models.FloatField(default=0.0, help_text="AS Hegemony is the estimated fraction of paths towards the monitored country. The values range between 0 and 1, low values represent a small number of path (low dependency) and values close to 1 represent strong dependencies.")
     af = models.IntegerField(default=0, help_text="Address Family (IP version), values are either 4 or 6.")
     weight = models.FloatField(default=0.0, help_text="Absolute weight given to the ASN for the AS Hegemony calculation.")
     weightscheme = models.CharField(max_length=16, default="None", help_text="Weighting scheme used for the AS Hegemony calculation.")
@@ -187,6 +187,32 @@ class Hegemony_country(CachingMixin, models.Model):
 
     def __str__(self):
         return "%s %s AS%s %s" % (self.timebin, self.country.name, self.asn.number, self.hege)
+
+
+class Hegemony_prefix(CachingMixin, models.Model):
+    id = models.BigIntegerField(unique=True, primary_key=True)
+    timebin = models.DateTimeField(db_index=True, help_text="Timestamp of reported value.")
+    prefix = models.CharField(max_length=64, db_index=True, help_text="Monitored prefix (IPv4 or IPv6).")
+    originasn = models.ForeignKey(ASN, on_delete=models.CASCADE, related_name="prefix_originasn", db_index=True, help_text="Network seen as originating the monitored prefix.")
+    country = models.ForeignKey(Country, on_delete=models.CASCADE, db_index=True, help_text="Country for the monitored prefix identified by Maxmind's Geolite2 geolocation database.")
+    asn = models.ForeignKey(ASN, on_delete=models.CASCADE, related_name="prefix_asn", help_text="Dependency. Network commonly seen in BGP paths towards monitored prefix.")
+    hege = models.FloatField(default=0.0, help_text="AS Hegemony is the estimated fraction of paths towards the monitored prefix. The values range between 0 and 1, low values represent a small number of path (low dependency) and values close to 1 represent strong dependencies.")
+    af = models.IntegerField(default=0, help_text="Address Family (IP version), values are either 4 or 6.")
+    visibility = models.FloatField(default=0.0, help_text="Percentage of BGP peers that see this prefix.")
+    rpki_status = models.CharField(max_length=32, help_text="Route origin validation state for the monitored prefix and origin AS using RPKI.")
+    irr_status = models.CharField(max_length=32, help_text="Route origin validation state for the monitored prefix and origin AS using IRR.")
+    delegated_prefix_status = models.CharField(max_length=32, help_text="Status of the monitored prefix in the RIR's delegated stats. Status other than 'assigned' are usually considered as bogons.")
+    delegated_asn_status = models.CharField(max_length=32, help_text="Status of the origin ASN in the RIR's delegated stats. Status other than 'assigned' are usually considered as bogons.")
+    descr = models.CharField(max_length=64, help_text="Prefix description from IRR (maximum 64 characters).")
+    moas = models.BooleanField(default=False, help_text="True if the prefix is originated by multiple ASNs.")
+
+    objects = CachingManager()
+
+    class Meta:
+        base_manager_name = 'objects'  # Attribute name of CachingManager(), above
+
+    def __str__(self):
+        return "%s %s AS%s %s" % (self.timebin, self.prefix, self.originasn.number, self.hege)
 
 
 class Atlas_location(CachingMixin, models.Model):

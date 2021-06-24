@@ -19,7 +19,7 @@ import pytz
 import json
 import arrow
 
-from .models import ASN, Country, Delay, Forwarding, Delay_alarms, Forwarding_alarms, Disco_events, Disco_probes, Hegemony, HegemonyCone, Atlas_delay, Atlas_location, Atlas_delay_alarms, Hegemony_alarms, Hegemony_country
+from .models import ASN, Country, Delay, Forwarding, Delay_alarms, Forwarding_alarms, Disco_events, Disco_probes, Hegemony, HegemonyCone, Atlas_delay, Atlas_location, Atlas_delay_alarms, Hegemony_alarms, Hegemony_country, Hegemony_prefix
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -27,7 +27,7 @@ from rest_framework.reverse import reverse
 from rest_framework import generics
 from rest_framework.exceptions import ParseError
 
-from .serializers import ASNSerializer, CountrySerializer, DelaySerializer, ForwardingSerializer, DelayAlarmsSerializer, ForwardingAlarmsSerializer, DiscoEventsSerializer, DiscoProbesSerializer, HegemonySerializer, HegemonyConeSerializer, NetworkDelaySerializer, NetworkDelayLocationsSerializer, NetworkDelayAlarmsSerializer, HegemonyAlarmsSerializer, HegemonyCountrySerializer
+from .serializers import ASNSerializer, CountrySerializer, DelaySerializer, ForwardingSerializer, DelayAlarmsSerializer, ForwardingAlarmsSerializer, DiscoEventsSerializer, DiscoProbesSerializer, HegemonySerializer, HegemonyConeSerializer, NetworkDelaySerializer, NetworkDelayLocationsSerializer, NetworkDelayAlarmsSerializer, HegemonyAlarmsSerializer, HegemonyCountrySerializer, HegemonyPrefixSerializer
 from django_filters import rest_framework as filters
 import django_filters
 from django.db.models import Q
@@ -268,7 +268,7 @@ class HegemonyAlarmsFilter(HelpfulFilterSet):
     }
 
 class HegemonyCountryFilter(HelpfulFilterSet):
-    asn = ListIntegerFilter(help_text="Dependency. Network commonly seen in BGP paths towards monitored country. Can be a single value or a list of comma separated values. ")
+    asn = ListIntegerFilter(help_text="Dependency. Network commonly seen in BGP paths towards monitored country. Can be a single value or a list of comma separated values.")
     country = ListFilter(help_text="Monitored country or region (e.g. EU and AP) as defined by its set of ASes registered in registeries delegated files. Can be a single value or a list of comma separated values. Retrieve all dependencies of a country by setting a single value and a timebin.")
     weightscheme = django_filters.CharFilter(help_text="Scheme used to aggregate AS Hegemony scores. 'as' gives equal weight to each AS, 'eyeball' put emphasis on large eyeball networks.")
     transitonly = django_filters.BooleanFilter(help_text="True means that the last AS (origin AS) in BGP paths is ignored, thus focusing only on transit ASes.")
@@ -281,6 +281,32 @@ class HegemonyCountryFilter(HelpfulFilterSet):
             'af': ['exact'],
         }
         ordering_fields = ('timebin', 'country', 'hege', 'af')
+
+    filter_overrides = {
+        django_models.DateTimeField: {
+            'filter_class': filters.IsoDateTimeFilter
+        },
+    }
+
+
+class HegemonyPrefixFilter(HelpfulFilterSet):
+    prefix = ListFilter(help_text="Monitored prefix, it can be any globally reachable prefix. Can be a single value or a list of comma separated values.")
+    originasn = ListIntegerFilter(help_text="Origin network, it can be any public ASN. Can be a single value or a list of comma separated values.")
+    asn = ListIntegerFilter(help_text="Dependency. Network commonly seen in BGP paths towards monitored prefix. Can be a single value or a list of comma separated values.")
+    country = ListFilter(help_text="Country code for prefixes as reported by Maxmind's Geolite2 geolocation database. Can be a single value or a list of comma separated values. Retrieve all dependencies of a country by setting a single value and a timebin.")
+    rpki_status = django_filters.CharFilter(help_text="Route origin validation state for the monitored prefix and origin AS using RPKI.")
+    irr_status = django_filters.CharFilter(help_text="Route origin validation state for the monitored prefix and origin AS using IRR.")
+    delegated_prefix_status = django_filters.CharFilter(help_text="Status of the monitored prefix in the RIR's delegated stats. Status other than 'assigned' are usually considered as bogons.")
+    delegated_asn_status = django_filters.CharFilter(help_text="Status of the origin ASN in the RIR's delegated stats. Status other than 'assigned' are usually considered as bogons.")
+
+    class Meta:
+        model = Hegemony_prefix
+        fields = {
+            'timebin': ['exact', 'lte', 'gte'],
+            'hege': ['exact', 'lte', 'gte'],
+            'af': ['exact'],
+        }
+        ordering_fields = ('timebin', 'prefix', 'hege', 'af')
 
     filter_overrides = {
         django_models.DateTimeField: {
@@ -679,6 +705,32 @@ class HegemonyCountryView(generics.ListAPIView):
             check_timebin(self.request.query_params, 31)
         check_or_fields(self.request.query_params, ['country', 'asn'])
         return queryset.select_related("asn")
+
+
+class HegemonyPrefixView(generics.ListAPIView):
+    """
+    List AS dependencies of prefixes. 
+    <ul>
+    <li><b>Required parameters:</b> timebin or a range of timebins (using the two parameters timebin__lte and timebin__gte). And one of the following: prefix, originasn, country.</li>
+    <li><b>Limitations:</b> At most 7 days of data can be fetched per request.</li>
+    </ul>
+    """
+    serializer_class = HegemonyPrefixSerializer
+    filter_class = HegemonyPrefixFilter
+
+    def get_queryset(self):
+        queryset = Hegemony_prefix.objects
+        if('timebin' not in self.request.query_params 
+                and 'timebin__lte' not in self.request.query_params
+                and 'timebin__gte' not in self.request.query_params):
+            # Set default timebin value
+            today = date.today()
+            past_days = today - timedelta(days=LAST_DEFAULT) 
+            queryset = queryset.filter(timebin__gte = past_days)
+        else:
+            check_timebin(self.request.query_params, 7)
+        check_or_fields(self.request.query_params, ['country', 'originasn', 'prefix', 'asn', 'rpki_status', 'irr_status', 'delegated_prefix_status', 'delegated_asn_status'])
+        return queryset.select_related("originasn", "asn")
 
 
 class NetworkDelayView(generics.ListAPIView):
