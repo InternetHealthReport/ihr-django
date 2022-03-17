@@ -1,16 +1,15 @@
 appdirs
-Django
+Django==2.2.27
 django-contact
 django-contact-form
 django-cors-headers
 django-crispy-forms
 django-extensions
-django-filter
-django-filters
+django-filter==2.2.0
 django-model-utils
 djangorestframework
-djangorestframework-filters
 drf-extensions
+drf-yasg
 Markdown
 mod-wsgi
 packaging
@@ -20,4 +19,7 @@ python-dateutil
 python-memcached
 pytz
 django-cache-machine
+django-utils-six
+pandas
+arrow
 
