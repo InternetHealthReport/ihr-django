@@ -305,10 +305,10 @@ class HegemonyPrefixFilter(HelpfulFilterSet):
     originasn = ListIntegerFilter(help_text="Origin network, it can be any public ASN. Can be a single value or a list of comma separated values.")
     asn = ListIntegerFilter(help_text="Dependency. Network commonly seen in BGP paths towards monitored prefix. Can be a single value or a list of comma separated values.")
     country = ListFilter(help_text="Country code for prefixes as reported by Maxmind's Geolite2 geolocation database. Can be a single value or a list of comma separated values. Retrieve all dependencies of a country by setting a single value and a timebin.")
-    rpki_status = django_filters.CharFilter(lookup_expr='icontains', help_text="Route origin validation state for the monitored prefix and origin AS using RPKI.")
-    irr_status = django_filters.CharFilter(lookup_expr='icontains', help_text="Route origin validation state for the monitored prefix and origin AS using IRR.")
-    delegated_prefix_status = django_filters.CharFilter(lookup_expr='icontains', help_text="Status of the monitored prefix in the RIR's delegated stats. Status other than 'assigned' are usually considered as bogons.")
-    delegated_asn_status = django_filters.CharFilter(lookup_expr='icontains', help_text="Status of the origin ASN in the RIR's delegated stats. Status other than 'assigned' are usually considered as bogons.")
+    rpki_status = django_filters.CharFilter(lookup_expr='contains', help_text="Route origin validation state for the monitored prefix and origin AS using RPKI.")
+    irr_status = django_filters.CharFilter(lookup_expr='contains', help_text="Route origin validation state for the monitored prefix and origin AS using IRR.")
+    delegated_prefix_status = django_filters.CharFilter(lookup_expr='contains', help_text="Status of the monitored prefix in the RIR's delegated stats. Status other than 'assigned' are usually considered as bogons.")
+    delegated_asn_status = django_filters.CharFilter(lookup_expr='contains', help_text="Status of the origin ASN in the RIR's delegated stats. Status other than 'assigned' are usually considered as bogons.")
     origin_only = SameASNAndOrigin(help_text="Filter out dependency results and provide only prefix/origin ASN results")
 
     class Meta:
@@ -369,7 +369,7 @@ class CountryFilter(HelpfulFilterSet):
     class Meta:
         model = Country
         fields = ["name", "code"]
-        ordering_fields = ("number",)
+        ordering_fields = ("code",)
 
 
 
@@ -505,11 +505,12 @@ class NetworkView(generics.ListAPIView):
     serializer_class = ASNSerializer
     filter_class = NetworkFilter
 
+
 class CountryView(generics.ListAPIView):
     """
-    List countries referenced on IHR. 
+    List countries referenced on IHR. Can be searched by keywordX.
     """
-    
+
     queryset = Country.objects.all()
     serializer_class = CountrySerializer
     filter_class = CountryFilter
@@ -723,7 +724,7 @@ class HegemonyPrefixView(generics.ListAPIView):
     """
     List AS dependencies of prefixes. 
     <ul>
-    <li><b>Required parameters:</b> timebin or a range of timebins (using the two parameters timebin__lte and timebin__gte). And one of the following: rpki_status, irr_status, delegated_prefix_status, delegated_asn_status.</li>
+    <li><b>Required parameters:</b> timebin or a range of timebins (using the two parameters timebin__lte and timebin__gte). And one of the following: prefix, originasn, country, rpki_status, irr_status, delegated_prefix_status, delegated_asn_status.</li>
     <li><b>Limitations:</b> At most 7 days of data can be fetched per request.</li>
     </ul>
     """
@@ -741,7 +742,7 @@ class HegemonyPrefixView(generics.ListAPIView):
             queryset = queryset.filter(timebin__gte = past_days)
         else:
             check_timebin(self.request.query_params, 3)
-        check_or_fields(self.request.query_params, ['rpki_status', 'irr_status', 'delegated_prefix_status', 'delegated_asn_status'])
+        check_or_fields(self.request.query_params, ['prefix', 'originasn', 'country', 'rpki_status', 'irr_status', 'delegated_prefix_status', 'delegated_asn_status'])
         return queryset.select_related("originasn", "asn")
 
 

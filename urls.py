@@ -16,6 +16,7 @@ from drf_yasg.generators import OpenAPISchemaGenerator
 
 exposed_api = [ 
     url(r'^networks/$', views.NetworkView.as_view(), name='networkListView'),
+    url(r'^countries/$', views.CountryView.as_view(), name='countryListView'),
     url(r'^link/delay/$', views.DelayView.as_view(), name='delayListView'),
     url(r'^link/forwarding/$', views.ForwardingView.as_view(), name='forwardingListView'),
     url(r'^link/delay/alarms/$', views.DelayAlarmsView.as_view(), name='delayAlarmsListView'),
