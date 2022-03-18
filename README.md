@@ -74,10 +74,21 @@ Start django:
 
 Go to http://127.0.0.1:8000/hegemony/ to check if it is working.
 
-## TODO Add test data
+## Add test data to the database
+In the production database some of the ids are changed to BIGINT. We should
+locally apply these changes before importing data:
 ```zsh
-wget 
-pg_restore
+psql -U django -d ihr -c "ALTER TABLE ihr_hegemony ALTER COLUMN id SET DATA TYPE bigint"
+psql -U django -d ihr -c "ALTER TABLE ihr_hegemony_prefix ALTER COLUMN id SET DATA TYPE bigint"
+psql -U django -d ihr -c "ALTER TABLE ihr_hegemony_country ALTER COLUMN id SET DATA TYPE bigint"
+psql -U django -d ihr -c "ALTER TABLE ihr_atlas_delay ALTER COLUMN id SET DATA TYPE bigint"
+```
+
+Download a database snapshot and load it:
+```zsh
+wget https://ihr-archive.iijlab.net/ihr-dev/psql-snapshot/2022-03-10/2022-03-10_psql_snapshot.sql.lz4 
+lz4 2022-03-10_psql_snapshot.sql.lz4 
+psql -U django ihr < 2022-03-10_psql_snapshot.sql
 ```
 
 ## Running the application
@@ -87,9 +98,12 @@ cd ihr
 . bin/activate
 internetHealthReport/manage.py runserver
 ```
+Go to http://127.0.0.1:8000/hegemony/ to check if it is working.
 
-
-## Working with a local instance of IHR website
-To redirect all API calls to the local django server, add the following line in /etc/hosts:
-127.0.0.1 ihr.iijlab.net
+## Working with a local instance of IHR website (https://github.com/InternetHealthReport/ihr-website)
+To redirect all API calls to the local django server you should change the API
+URL in ihr-website/src/plugins/IhrApi.js:
+```js
+const IHR_API_BASE = 'http://127.0.0.1:8000/'
+```
 
