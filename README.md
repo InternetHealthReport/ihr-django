@@ -55,7 +55,7 @@ postgres=# ALTER ROLE django SET timezone TO 'UTC';
 ALTER ROLE
 postgres=# GRANT ALL PRIVILEGES ON DATABASE ihr TO django;
 GRANT
-postgres=#quit
+postgres=#\q
 exit
 ```
 
@@ -78,6 +78,14 @@ Go to http://127.0.0.1:8000/hegemony/ to check if it is working.
 ```zsh
 wget 
 pg_restore
+```
+
+## Running the application
+Activate the python environment and lunch django server:
+```zsh
+cd ihr 
+. bin/activate
+internetHealthReport/manage.py runserver
 ```
 
 
