@@ -366,6 +366,24 @@ class MonitoredASN(models.Model):
         default=NOTIFY_LEVEL.HIGH
     )
 
+class Metis(CachingMixin, models.Model):
+    """
+    Metis helps to select a set of diverse Atlas probes in terms of different
+    topological metrics (e.g. AS path, RTT).
+    """
+    timebin = models.DateTimeField(db_index=True, help_text="Time when the ranking is computed. The ranking uses four weeks of data, e.g., timestamp 1648425600 (2022-03-28T00:00) is based on data from 2022-02-28T00:00 to 2022-03-28T00:00 ")
+    metric = models.CharField(max_length=16, help_text="Distance metric used to compute diversity.")
+    rank = models.IntegerField(help_text="Selecting all ASes with rank less than equal to 10, gives the 10 most diverse ASes in terms of the selected metric.")
+    asn = models.ForeignKey(ASN, on_delete=models.CASCADE, db_index=True, help_text="Atlas probes' Autonomous System Number.")
+    af = models.IntegerField(help_text="Address Family (IP version), values are either 4 or 6.")
+    mean = models.FloatField(default=0.0, help_text="The mean distance value (e.g., AS-path length) we get when using all ASes up to this rank. This decreases with increasing rank, since lower ranks represent closer ASes.")
+
+    objects = CachingManager()
+
+    class Meta:
+        base_manager_name = 'objects'  # Attribute name of CachingManager(), above
+
+
 # TODO Remove this?
 
 class Delay_alarms_msms(models.Model):
