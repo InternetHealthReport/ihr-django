@@ -1,4 +1,4 @@
-# django-ihr
+# ihr-django
 Internet Health Report API
 
 This is the implementation for the IHR API: https://ihr.iijlab.net/ihr/en-us/api
