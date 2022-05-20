@@ -11,7 +11,6 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 
 from django.views.decorators.cache import patch_cache_control
-from django.views.decorators.vary import vary_on_cookie
 
 from datetime import datetime, date, timedelta
 import pandas as pd
@@ -19,7 +18,7 @@ import pytz
 import json
 import arrow
 
-from .models import ASN, Country, Delay, Forwarding, Delay_alarms, Forwarding_alarms, Disco_events, Disco_probes, Hegemony, HegemonyCone, Atlas_delay, Atlas_location, Atlas_delay_alarms, Hegemony_alarms, Hegemony_country, Hegemony_prefix
+from .models import ASN, Country, Delay, Forwarding, Delay_alarms, Forwarding_alarms, Disco_events, Disco_probes, Hegemony, HegemonyCone, Atlas_delay, Atlas_location, Atlas_delay_alarms, Hegemony_alarms, Hegemony_country, Hegemony_prefix, Metis
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -27,7 +26,7 @@ from rest_framework.reverse import reverse
 from rest_framework import generics
 from rest_framework.exceptions import ParseError
 
-from .serializers import ASNSerializer, CountrySerializer, DelaySerializer, ForwardingSerializer, DelayAlarmsSerializer, ForwardingAlarmsSerializer, DiscoEventsSerializer, DiscoProbesSerializer, HegemonySerializer, HegemonyConeSerializer, NetworkDelaySerializer, NetworkDelayLocationsSerializer, NetworkDelayAlarmsSerializer, HegemonyAlarmsSerializer, HegemonyCountrySerializer, HegemonyPrefixSerializer
+from .serializers import ASNSerializer, CountrySerializer, DelaySerializer, ForwardingSerializer, DelayAlarmsSerializer, ForwardingAlarmsSerializer, DiscoEventsSerializer, DiscoProbesSerializer, HegemonySerializer, HegemonyConeSerializer, NetworkDelaySerializer, NetworkDelayLocationsSerializer, NetworkDelayAlarmsSerializer, HegemonyAlarmsSerializer, HegemonyCountrySerializer, HegemonyPrefixSerializer, MetisSerializer
 from django_filters import rest_framework as filters
 import django_filters
 from django.db.models import Q, F
@@ -493,6 +492,24 @@ class DiscoProbesFilter(HelpfulFilterSet):
         ordering_fields = ('starttime', 'endtime', 'level')
 
 
+class MetisFilter(HelpfulFilterSet):
+
+    class Meta:
+        model = Metis
+        fields = {
+            'timebin': ['exact', 'lte', 'gte'],
+            'rank': ['exact', 'lte', 'gte'],
+            'metric': ['exact'],
+            'af': ['exact'],
+        }
+        ordering_fields = ('timebin', 'metric', 'rank', 'af')
+
+    filter_overrides = {
+        django_models.DateTimeField: {
+            'filter_class': filters.IsoDateTimeFilter
+        },
+    }
+
 
 ###################### Views:
 class NetworkView(generics.ListAPIView):
@@ -606,7 +623,6 @@ class HegemonyView(generics.ListAPIView):
     serializer_class = HegemonySerializer
     filter_class = HegemonyFilter
 
-    @vary_on_cookie
     def list(self, request, *args, **kwargs):
         response = super().list(request, *args, **kwargs)
         last = self.request.query_params.get('timebin', 
@@ -645,7 +661,6 @@ class HegemonyAlarmsView(generics.ListAPIView):
     serializer_class = HegemonyAlarmsSerializer
     filter_class = HegemonyAlarmsFilter
 
-    @vary_on_cookie
     def list(self, request, *args, **kwargs):
         response = super().list(request, *args, **kwargs)
         last = self.request.query_params.get('timebin', 
@@ -676,7 +691,6 @@ class HegemonyConeView(generics.ListAPIView):
     filter_class = HegemonyConeFilter
     ordering = 'timebin'
 
-    @vary_on_cookie
     def list(self, request, *args, **kwargs):
         response = super().list(request, *args, **kwargs)
         last = self.request.query_params.get('timebin', 
@@ -757,7 +771,6 @@ class NetworkDelayView(generics.ListAPIView):
     serializer_class = NetworkDelaySerializer
     filter_class = NetworkDelayFilter
 
-    @vary_on_cookie
     def list(self, request, *args, **kwargs):
         response = super().list(request, *args, **kwargs)
         last = self.request.query_params.get('timebin', 
@@ -786,7 +799,6 @@ class NetworkDelayAlarmsView(generics.ListAPIView):
     serializer_class = NetworkDelayAlarmsSerializer
     filter_class = NetworkDelayAlarmsFilter
 
-    @vary_on_cookie
     def list(self, request, *args, **kwargs):
         response = super().list(request, *args, **kwargs)
         last = self.request.query_params.get('timebin', 
@@ -812,7 +824,6 @@ class NetworkDelayLocationsView(generics.ListAPIView):
     serializer_class = NetworkDelayLocationsSerializer
     filter_class = NetworkDelayLocationsFilter
 
-    @vary_on_cookie
     def list(self, request, *args, **kwargs):
         response = super().list(request, *args, **kwargs)
         last = self.request.query_params.get('timebin', 
