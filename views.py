@@ -841,7 +841,6 @@ class MetisView(generics.ListAPIView):
     """
     Metis helps to select a set of diverse Atlas probes in terms of different topological metrics (e.g. AS path, RTT).
     <ul>
-    <li><b>Required parameters:</b> timebin or a range of timebins (using the two parameters timebin__lte and timebin__gte).</li>
     <li><b>Limitations:</b> At most 31 days of data can be fetched per request.</li>
     </ul>
     """
