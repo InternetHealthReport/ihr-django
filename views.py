@@ -837,6 +837,44 @@ class NetworkDelayLocationsView(generics.ListAPIView):
 
         return response
 
+class MetisView(generics.ListAPIView):
+    """
+    Metis helps to select a set of diverse Atlas probes in terms of different topological metrics (e.g. AS path, RTT).
+    <ul>
+    <li><b>Required parameters:</b> timebin or a range of timebins (using the two parameters timebin__lte and timebin__gte).</li>
+    <li><b>Limitations:</b> At most 31 days of data can be fetched per request.</li>
+    </ul>
+    """
+    serializer_class = MetisSerializer
+    filter_class = MetisFilter
+
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        last = self.request.query_params.get('timebin', 
+                self.request.query_params.get('timebin__gte', None) )
+        if last is not None:
+            # Cache forever content that is more than a week old
+            today = date.today()
+            past_days = today - timedelta(days=7) 
+            if arrow.get(last).date() < past_days: 
+                patch_cache_control(response, max_age=8600*24*356)
+
+        return response
+
+    def get_queryset(self):
+        queryset = Metis.objects
+        if('timebin' not in self.request.query_params 
+                and 'timebin__lte' not in self.request.query_params
+                and 'timebin__gte' not in self.request.query_params):
+            # Set default timebin value
+            today = date.today()
+            past_days = today - timedelta(days=LAST_DEFAULT) 
+            queryset = queryset.filter(timebin__gte = past_days)
+        else:
+            check_timebin(self.request.query_params, max_range=31)
+
+        return queryset.select_related("asn")
+
 ###### Other pages :
 
 class DateTimeEncoder(json.JSONEncoder):
