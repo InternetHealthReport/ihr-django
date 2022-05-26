@@ -11,6 +11,7 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 
 from django.views.decorators.cache import patch_cache_control, cache_control
+from django.utils.decorators import method_decorator
 
 from datetime import datetime, date, timedelta
 import pandas as pd
@@ -512,7 +513,9 @@ class MetisFilter(HelpfulFilterSet):
 
 
 ###################### Views:
-@cache_control(max_age=2592000)
+cache_1month = [cache_control(max_age=2592000),]
+
+@method_decorator(cache_1month, name='list')
 class NetworkView(generics.ListAPIView):
     """
     List networks referenced on IHR (see. /network_delay/locations/ for network delay locations). Can be searched by keyword, ASN, or IXPID.  Range of ASN/IXPID can be obtained with parameters number__lte and number__gte.
@@ -524,7 +527,7 @@ class NetworkView(generics.ListAPIView):
     filter_class = NetworkFilter
 
 
-@cache_control(max_age=2592000)
+@method_decorator(cache_1month, name='list')
 class CountryView(generics.ListAPIView):
     """
     List countries referenced on IHR. Can be searched by keywordX.
@@ -835,7 +838,7 @@ class NetworkDelayAlarmsView(generics.ListAPIView):
         check_timebin(self.request.query_params)
         return Atlas_delay_alarms.objects.prefetch_related("startpoint", "endpoint")
 
-@cache_control(max_age=2592000)
+@method_decorator(cache_1month, name='list')
 class NetworkDelayLocationsView(generics.ListAPIView):
     """
     List locations monitored for network delay measurements.  A location can be, for example, an AS, city, Atlas probe.
