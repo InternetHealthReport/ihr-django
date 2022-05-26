@@ -10,7 +10,7 @@ from django.db import models as django_models
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 
-from django.views.decorators.cache import patch_cache_control
+from django.views.decorators.cache import patch_cache_control, cache_control
 
 from datetime import datetime, date, timedelta
 import pandas as pd
@@ -512,6 +512,7 @@ class MetisFilter(HelpfulFilterSet):
 
 
 ###################### Views:
+@cache_control(max_age=2592000)
 class NetworkView(generics.ListAPIView):
     """
     List networks referenced on IHR (see. /network_delay/locations/ for network delay locations). Can be searched by keyword, ASN, or IXPID.  Range of ASN/IXPID can be obtained with parameters number__lte and number__gte.
@@ -523,6 +524,7 @@ class NetworkView(generics.ListAPIView):
     filter_class = NetworkFilter
 
 
+@cache_control(max_age=2592000)
 class CountryView(generics.ListAPIView):
     """
     List countries referenced on IHR. Can be searched by keywordX.
@@ -632,7 +634,7 @@ class HegemonyView(generics.ListAPIView):
             today = date.today()
             past_days = today - timedelta(days=7) 
             if arrow.get(last).date() < past_days: 
-                patch_cache_control(response, max_age=8600*24*356)
+                patch_cache_control(response, max_age=15552000)
 
         return response
 
@@ -670,7 +672,7 @@ class HegemonyAlarmsView(generics.ListAPIView):
             today = date.today()
             past_days = today - timedelta(days=7) 
             if arrow.get(last).date() < past_days: 
-                patch_cache_control(response, max_age=8600*24*356)
+                patch_cache_control(response, max_age=15552000)
 
         return response
 
@@ -700,7 +702,7 @@ class HegemonyConeView(generics.ListAPIView):
             today = date.today()
             past_days = today - timedelta(days=7) 
             if arrow.get(last).date() < past_days: 
-                patch_cache_control(response, max_age=8600*24*356)
+                patch_cache_control(response, max_age=15552000)
 
         return response
 
@@ -745,6 +747,23 @@ class HegemonyPrefixView(generics.ListAPIView):
     serializer_class = HegemonyPrefixSerializer
     filter_class = HegemonyPrefixFilter
 
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        last = self.request.query_params.get('timebin', 
+                self.request.query_params.get('timebin__gte', None) )
+        if last is not None:
+            # Cache forever content that is more than a week old
+            today = date.today()
+            past_days = today - timedelta(days=7) 
+            if arrow.get(last).date() < past_days: 
+                patch_cache_control(response, max_age=15552000)
+            else:
+                max_age = 60*60*6
+                patch_cache_control(response, max_age=max_age)
+
+        return response
+
+
     def get_queryset(self):
         queryset = Hegemony_prefix.objects
         if('timebin' not in self.request.query_params 
@@ -780,7 +799,7 @@ class NetworkDelayView(generics.ListAPIView):
             today = date.today()
             past_days = today - timedelta(days=7) 
             if arrow.get(last).date() < past_days: 
-                patch_cache_control(response, max_age=8600*24*356)
+                patch_cache_control(response, max_age=15552000)
 
         return response
 
@@ -808,7 +827,7 @@ class NetworkDelayAlarmsView(generics.ListAPIView):
             today = date.today()
             past_days = today - timedelta(days=7) 
             if arrow.get(last).date() < past_days: 
-                patch_cache_control(response, max_age=8600*24*356)
+                patch_cache_control(response, max_age=15552000)
 
         return response
 
@@ -816,6 +835,7 @@ class NetworkDelayAlarmsView(generics.ListAPIView):
         check_timebin(self.request.query_params)
         return Atlas_delay_alarms.objects.prefetch_related("startpoint", "endpoint")
 
+@cache_control(max_age=2592000)
 class NetworkDelayLocationsView(generics.ListAPIView):
     """
     List locations monitored for network delay measurements.  A location can be, for example, an AS, city, Atlas probe.
@@ -823,19 +843,6 @@ class NetworkDelayLocationsView(generics.ListAPIView):
     queryset = Atlas_location.objects.all()
     serializer_class = NetworkDelayLocationsSerializer
     filter_class = NetworkDelayLocationsFilter
-
-    def list(self, request, *args, **kwargs):
-        response = super().list(request, *args, **kwargs)
-        last = self.request.query_params.get('timebin', 
-                self.request.query_params.get('timebin__gte', None) )
-        if last is not None:
-            # Cache forever content that is more than a week old
-            today = date.today()
-            past_days = today - timedelta(days=7) 
-            if arrow.get(last).date() < past_days: 
-                patch_cache_control(response, max_age=8600*24*356)
-
-        return response
 
 class MetisView(generics.ListAPIView):
     """
@@ -856,7 +863,7 @@ class MetisView(generics.ListAPIView):
             today = date.today()
             past_days = today - timedelta(days=7) 
             if arrow.get(last).date() < past_days: 
-                patch_cache_control(response, max_age=8600*24*356)
+                patch_cache_control(response, max_age=15552000)
 
         return response
 
