@@ -19,7 +19,7 @@ import pytz
 import json
 import arrow
 
-from .models import ASN, Country, Delay, Forwarding, Delay_alarms, Forwarding_alarms, Disco_events, Disco_probes, Hegemony, HegemonyCone, Atlas_delay, Atlas_location, Atlas_delay_alarms, Hegemony_alarms, Hegemony_country, Hegemony_prefix, Metis_atlas_selection
+from .models import ASN, Country, Delay, Forwarding, Delay_alarms, Forwarding_alarms, Disco_events, Disco_probes, Hegemony, HegemonyCone, Atlas_delay, Atlas_location, Atlas_delay_alarms, Hegemony_alarms, Hegemony_country, Hegemony_prefix, Metis_atlas_selection, Metis_atlas_deployment
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -27,7 +27,7 @@ from rest_framework.reverse import reverse
 from rest_framework import generics
 from rest_framework.exceptions import ParseError
 
-from .serializers import ASNSerializer, CountrySerializer, DelaySerializer, ForwardingSerializer, DelayAlarmsSerializer, ForwardingAlarmsSerializer, DiscoEventsSerializer, DiscoProbesSerializer, HegemonySerializer, HegemonyConeSerializer, NetworkDelaySerializer, NetworkDelayLocationsSerializer, NetworkDelayAlarmsSerializer, HegemonyAlarmsSerializer, HegemonyCountrySerializer, HegemonyPrefixSerializer, MetisAtlasSelectionSerializer
+from .serializers import ASNSerializer, CountrySerializer, DelaySerializer, ForwardingSerializer, DelayAlarmsSerializer, ForwardingAlarmsSerializer, DiscoEventsSerializer, DiscoProbesSerializer, HegemonySerializer, HegemonyConeSerializer, NetworkDelaySerializer, NetworkDelayLocationsSerializer, NetworkDelayAlarmsSerializer, HegemonyAlarmsSerializer, HegemonyCountrySerializer, HegemonyPrefixSerializer, MetisAtlasSelectionSerializer, MetisAtlasDeploymentSerializer
 from django_filters import rest_framework as filters
 import django_filters
 from django.db.models import Q, F
@@ -511,6 +511,24 @@ class MetisAtlasSelectionFilter(HelpfulFilterSet):
         },
     }
 
+class MetisAtlasDeploymentFilter(HelpfulFilterSet):
+
+    class Meta:
+        model = Metis_atlas_deployment 
+        fields = {
+            'timebin': ['exact', 'lte', 'gte'],
+            'rank': ['exact', 'lte', 'gte'],
+            'metric': ['exact'],
+            'af': ['exact'],
+        }
+        ordering_fields = ('timebin', 'metric', 'rank', 'af')
+
+    filter_overrides = {
+        django_models.DateTimeField: {
+            'filter_class': filters.IsoDateTimeFilter
+        },
+    }
+
 
 ###################### Views:
 cache_1month = [cache_control(max_age=2592000),]
@@ -872,6 +890,43 @@ class MetisAtlasSelectionView(generics.ListAPIView):
 
     def get_queryset(self):
         queryset = Metis_atlas_selection.objects
+        if('timebin' not in self.request.query_params 
+                and 'timebin__lte' not in self.request.query_params
+                and 'timebin__gte' not in self.request.query_params):
+            # Set default timebin value
+            today = date.today()
+            past_days = today - timedelta(days=LAST_DEFAULT) 
+            queryset = queryset.filter(timebin__gte = past_days)
+        else:
+            check_timebin(self.request.query_params, max_range=31)
+
+        return queryset.select_related("asn")
+
+class MetisAtlasDeploymentView(generics.ListAPIView):
+    """
+    Metis identifies ASes that are far from Atlas probes. Deploying Atlas probes in this ASes would be beneficial for Atlas coverage.
+    <ul>
+    <li><b>Limitations:</b> At most 31 days of data can be fetched per request.</li>
+    </ul>
+    """
+    serializer_class = MetisAtlasDeploymentSerializer
+    filter_class = MetisAtlasDeploymentFilter
+
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        last = self.request.query_params.get('timebin', 
+                self.request.query_params.get('timebin__gte', None) )
+        if last is not None:
+            # Cache forever content that is more than a week old
+            today = date.today()
+            past_days = today - timedelta(days=7) 
+            if arrow.get(last).date() < past_days: 
+                patch_cache_control(response, max_age=15552000)
+
+        return response
+
+    def get_queryset(self):
+        queryset = Metis_atlas_deployment.objects
         if('timebin' not in self.request.query_params 
                 and 'timebin__lte' not in self.request.query_params
                 and 'timebin__gte' not in self.request.query_params):
