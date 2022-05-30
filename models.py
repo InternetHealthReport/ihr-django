@@ -386,7 +386,7 @@ class Metis_atlas_selection(CachingMixin, models.Model):
 class Metis_atlas_deployment(CachingMixin, models.Model):
     """
     Metis identifies ASes that are far from Atlas probes. Deploying Atlas probes 
-    in this ASes would be beneficial for Atlas coverage.
+    in these ASes would be beneficial for Atlas coverage.
     """
     timebin = models.DateTimeField(db_index=True, help_text="Time when the ranking is computed. The ranking uses 24 weeks of data, hence 2022-05-23T00:00 means the ranking using data from 2021-12-06T00:00 to 2022-05-23T00:00.")
     metric = models.CharField(max_length=16, help_text="Distance metric used to compute diversity, possible values are: 'as_path_length', 'ip_hops', 'rtt'")

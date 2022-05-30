@@ -904,7 +904,7 @@ class MetisAtlasSelectionView(generics.ListAPIView):
 
 class MetisAtlasDeploymentView(generics.ListAPIView):
     """
-    Metis identifies ASes that are far from Atlas probes. Deploying Atlas probes in this ASes would be beneficial for Atlas coverage.
+    Metis identifies ASes that are far from Atlas probes. Deploying Atlas probes in these ASes would be beneficial for Atlas coverage.
     <ul>
     <li><b>Limitations:</b> At most 31 days of data can be fetched per request.</li>
     </ul>
