@@ -19,7 +19,7 @@ import pytz
 import json
 import arrow
 
-from .models import ASN, Country, Delay, Forwarding, Delay_alarms, Forwarding_alarms, Disco_events, Disco_probes, Hegemony, HegemonyCone, Atlas_delay, Atlas_location, Atlas_delay_alarms, Hegemony_alarms, Hegemony_country, Hegemony_prefix, Metis
+from .models import ASN, Country, Delay, Forwarding, Delay_alarms, Forwarding_alarms, Disco_events, Disco_probes, Hegemony, HegemonyCone, Atlas_delay, Atlas_location, Atlas_delay_alarms, Hegemony_alarms, Hegemony_country, Hegemony_prefix, Metis_atlas_selection
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -27,7 +27,7 @@ from rest_framework.reverse import reverse
 from rest_framework import generics
 from rest_framework.exceptions import ParseError
 
-from .serializers import ASNSerializer, CountrySerializer, DelaySerializer, ForwardingSerializer, DelayAlarmsSerializer, ForwardingAlarmsSerializer, DiscoEventsSerializer, DiscoProbesSerializer, HegemonySerializer, HegemonyConeSerializer, NetworkDelaySerializer, NetworkDelayLocationsSerializer, NetworkDelayAlarmsSerializer, HegemonyAlarmsSerializer, HegemonyCountrySerializer, HegemonyPrefixSerializer, MetisSerializer
+from .serializers import ASNSerializer, CountrySerializer, DelaySerializer, ForwardingSerializer, DelayAlarmsSerializer, ForwardingAlarmsSerializer, DiscoEventsSerializer, DiscoProbesSerializer, HegemonySerializer, HegemonyConeSerializer, NetworkDelaySerializer, NetworkDelayLocationsSerializer, NetworkDelayAlarmsSerializer, HegemonyAlarmsSerializer, HegemonyCountrySerializer, HegemonyPrefixSerializer, MetisAtlasSelectionSerializer
 from django_filters import rest_framework as filters
 import django_filters
 from django.db.models import Q, F
@@ -493,10 +493,10 @@ class DiscoProbesFilter(HelpfulFilterSet):
         ordering_fields = ('starttime', 'endtime', 'level')
 
 
-class MetisFilter(HelpfulFilterSet):
+class MetisAtlasSelectionFilter(HelpfulFilterSet):
 
     class Meta:
-        model = Metis
+        model = Metis_atlas_selection 
         fields = {
             'timebin': ['exact', 'lte', 'gte'],
             'rank': ['exact', 'lte', 'gte'],
@@ -847,15 +847,15 @@ class NetworkDelayLocationsView(generics.ListAPIView):
     serializer_class = NetworkDelayLocationsSerializer
     filter_class = NetworkDelayLocationsFilter
 
-class MetisView(generics.ListAPIView):
+class MetisAtlasSelectionView(generics.ListAPIView):
     """
     Metis helps to select a set of diverse Atlas probes in terms of different topological metrics (e.g. AS path, RTT).
     <ul>
     <li><b>Limitations:</b> At most 31 days of data can be fetched per request.</li>
     </ul>
     """
-    serializer_class = MetisSerializer
-    filter_class = MetisFilter
+    serializer_class = MetisAtlasSelectionSerializer
+    filter_class = MetisAtlasSelectionFilter
 
     def list(self, request, *args, **kwargs):
         response = super().list(request, *args, **kwargs)
@@ -871,7 +871,7 @@ class MetisView(generics.ListAPIView):
         return response
 
     def get_queryset(self):
-        queryset = Metis.objects
+        queryset = Metis_atlas_selection.objects
         if('timebin' not in self.request.query_params 
                 and 'timebin__lte' not in self.request.query_params
                 and 'timebin__gte' not in self.request.query_params):

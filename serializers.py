@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import ASN, Country, Delay,  Forwarding, Delay_alarms, Forwarding_alarms, Disco_events, Disco_probes, Hegemony, HegemonyCone, Atlas_location, Atlas_delay, Atlas_delay_alarms, Hegemony_alarms, Hegemony_country, Hegemony_prefix, Metis
+from .models import ASN, Country, Delay,  Forwarding, Delay_alarms, Forwarding_alarms, Disco_events, Disco_probes, Hegemony, HegemonyCone, Atlas_location, Atlas_delay, Atlas_delay_alarms, Hegemony_alarms, Hegemony_country, Hegemony_prefix, Metis_atlas_selection
 
 class DelaySerializer(serializers.ModelSerializer):
     queryset = Delay.objects.select_related("asn")
@@ -241,12 +241,12 @@ class NetworkDelayAlarmsSerializer(serializers.ModelSerializer):
                 'endpoint_af',
                 'deviation')
 
-class MetisSerializer(serializers.ModelSerializer):
+class MetisAtlasSelectionSerializer(serializers.ModelSerializer):
     asn_name = serializers.CharField(source='asn.name', 
             help_text="Autonomous System name.")
 
     class Meta:
-        model = Metis
+        model = Metis_atlas_selection
         fields = ('timebin',
                 'metric',
                 'rank',

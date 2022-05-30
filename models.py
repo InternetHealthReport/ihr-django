@@ -366,7 +366,7 @@ class MonitoredASN(models.Model):
         default=NOTIFY_LEVEL.HIGH
     )
 
-class MetisAtlasSelection(CachingMixin, models.Model):
+class Metis_atlas_selection(CachingMixin, models.Model):
     """
     Metis helps to select a set of diverse Atlas probes in terms of different
     topological metrics (e.g. AS path, RTT).
@@ -383,7 +383,7 @@ class MetisAtlasSelection(CachingMixin, models.Model):
     class Meta:
         base_manager_name = 'objects'  # Attribute name of CachingManager(), above
 
-class MetisAtlasDeployment(CachingMixin, models.Model):
+class Metis_atlas_deployment(CachingMixin, models.Model):
     """
     Metis identifies ASes that are far from Atlas probes. Deploying Atlas probes 
     in this ASes would be beneficial for Atlas coverage.

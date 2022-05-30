@@ -30,7 +30,7 @@ exposed_api = [
     url(r'^network_delay/$', views.NetworkDelayView.as_view(), name='networkDelayListView'),
     url(r'^network_delay/locations/$', views.NetworkDelayLocationsView.as_view(), name='networkDelayLocationsListView'),
     url(r'^network_delay/alarms/$', views.NetworkDelayAlarmsView.as_view(), name='networkDelayAlarmsListView'),
-    url(r'^metis/$', views.MetisView.as_view(), name='metisListView'),
+    url(r'^metis/atlas/selection/$', views.MetisAtlasSelectionView.as_view(), name='metisListView'),
 ]   
 
 schema_view = get_schema_view(
