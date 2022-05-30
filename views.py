@@ -35,7 +35,7 @@ from django.db.models import Q, F
 
 
 # by default shows only one week of data
-LAST_DEFAULT = 7
+LAST_DEFAULT = 6
 HEGE_GRANULARITY = 15
 DEFAULT_MAX_RANGE = 7
 
