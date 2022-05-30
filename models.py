@@ -366,12 +366,12 @@ class MonitoredASN(models.Model):
         default=NOTIFY_LEVEL.HIGH
     )
 
-class Metis(CachingMixin, models.Model):
+class MetisAtlasSelection(CachingMixin, models.Model):
     """
     Metis helps to select a set of diverse Atlas probes in terms of different
     topological metrics (e.g. AS path, RTT).
     """
-    timebin = models.DateTimeField(db_index=True, help_text="Time when the ranking is computed. The ranking uses four weeks of data, hence 2022-03-28T00:00 means the ranking using data from 2022-02-28T00:00 to 2022-03-28T00:00 ")
+    timebin = models.DateTimeField(db_index=True, help_text="Time when the ranking is computed. The ranking uses four weeks of data, hence 2022-03-28T00:00 means the ranking using data from 2022-02-28T00:00 to 2022-03-28T00:00.")
     metric = models.CharField(max_length=16, help_text="Distance metric used to compute diversity, possible values are: 'as_path_length', 'ip_hops', 'rtt'")
     rank = models.IntegerField(help_text="Selecting all ASes with rank less than equal to 10 (i.e. rank__lte=10), gives the 10 most diverse ASes in terms of the selected metric.")
     asn = models.ForeignKey(ASN, on_delete=models.CASCADE, db_index=True, help_text="Atlas probes' Autonomous System Number.")
@@ -382,6 +382,25 @@ class Metis(CachingMixin, models.Model):
 
     class Meta:
         base_manager_name = 'objects'  # Attribute name of CachingManager(), above
+
+class MetisAtlasDeployment(CachingMixin, models.Model):
+    """
+    Metis identifies ASes that are far from Atlas probes. Deploying Atlas probes 
+    in this ASes would be beneficial for Atlas coverage.
+    """
+    timebin = models.DateTimeField(db_index=True, help_text="Time when the ranking is computed. The ranking uses 24 weeks of data, hence 2022-05-23T00:00 means the ranking using data from 2021-12-06T00:00 to 2022-05-23T00:00.")
+    metric = models.CharField(max_length=16, help_text="Distance metric used to compute diversity, possible values are: 'as_path_length', 'ip_hops', 'rtt'")
+    rank = models.IntegerField(help_text="Selecting all ASes with rank less than equal to 10 (i.e. rank__lte=10), gives the 10 most diverse ASes in terms of the selected metric.")
+    asn = models.ForeignKey(ASN, on_delete=models.CASCADE, db_index=True, help_text="Atlas probes' Autonomous System Number.")
+    af = models.IntegerField(help_text="Address Family (IP version), values are either 4 or 6.")
+    mean = models.FloatField(default=0.0, help_text="The mean distance value (e.g., AS-path length) we get when using all ASes up to this rank. This decreases with increasing rank, since lower ranks represent closer ASes.")
+    nbsamples = models.IntegerField(default=0, help_text="The number of probe ASes for which we have traceroutes to this AS in the time interval. We currently only include candidates that were reached by at least 50% of probe ASes, hence these values are always large.")
+
+    objects = CachingManager()
+
+    class Meta:
+        base_manager_name = 'objects'  # Attribute name of CachingManager(), above
+
 
 
 # TODO Remove this?
