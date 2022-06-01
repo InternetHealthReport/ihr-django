@@ -265,6 +265,6 @@ class MetisAtlasDeploymentSerializer(serializers.ModelSerializer):
                 'rank',
                 'asn',
                 'af',
-                'nbsamples'
+                'nbsamples',
                 'asn_name')
 

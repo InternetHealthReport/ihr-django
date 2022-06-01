@@ -35,7 +35,7 @@ from django.db.models import Q, F
 
 
 # by default shows only one week of data
-LAST_DEFAULT = 7
+LAST_DEFAULT = 6
 HEGE_GRANULARITY = 15
 DEFAULT_MAX_RANGE = 7
 
@@ -904,7 +904,7 @@ class MetisAtlasSelectionView(generics.ListAPIView):
 
 class MetisAtlasDeploymentView(generics.ListAPIView):
     """
-    Metis identifies ASes that are far from Atlas probes. Deploying Atlas probes in this ASes would be beneficial for Atlas coverage.
+    Metis identifies ASes that are far from Atlas probes. Deploying Atlas probes in these ASes would be beneficial for Atlas coverage.
     <ul>
     <li><b>Limitations:</b> At most 31 days of data can be fetched per request. For bulk downloads see: <a href="https://ihr-archive.iijlab.net/" target="_blank">https://ihr-archive.iijlab.net/</a>.</li>
     </ul>
