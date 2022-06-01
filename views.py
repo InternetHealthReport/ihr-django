@@ -561,7 +561,7 @@ class DelayView(generics.ListAPIView):
     The details of each congested link is available in /delay/alarms/.
     <ul>
     <li><b>Required parameters:</b> timebin or a range of timebins (using the two parameters timebin__lte and timebin__gte).</li>
-    <li><b>Limitations:</b> At most 7 days of data can be fetched per request.</li>
+    <li><b>Limitations:</b> At most 7 days of data can be fetched per request. For bulk downloads see: <a href="https://ihr-archive.iijlab.net/" target="_blank">https://ihr-archive.iijlab.net/</a>.</li>
     </ul>
     """
 
@@ -578,7 +578,7 @@ class ForwardingView(generics.ListAPIView):
     The details of each forwarding anomaly is available in /forwarding/alarms/.
     <ul>
     <li><b>Required parameters:</b> timebin or a range of timebins (using the two parameters timebin__lte and timebin__gte).</li>
-    <li><b>Limitations:</b> At most 7 days of data can be fetched per request.</li>
+    <li><b>Limitations:</b> At most 7 days of data can be fetched per request. For bulk downloads see: <a href="https://ihr-archive.iijlab.net/" target="_blank">https://ihr-archive.iijlab.net/</a>.</li>
     </ul>
     """
     serializer_class = ForwardingSerializer
@@ -593,7 +593,7 @@ class DelayAlarmsView(generics.ListAPIView):
     List detected link delay changes.
     <ul>
     <li><b>Required parameters:</b> timebin or a range of timebins (using the two parameters timebin__lte and timebin__gte).</li>
-    <li><b>Limitations:</b> At most 7 days of data can be fetched per request.</li>
+    <li><b>Limitations:</b> At most 7 days of data can be fetched per request. For bulk downloads see: <a href="https://ihr-archive.iijlab.net/" target="_blank">https://ihr-archive.iijlab.net/</a>.</li>
     </ul>
     """
     serializer_class = DelayAlarmsSerializer
@@ -608,7 +608,7 @@ class ForwardingAlarmsView(generics.ListAPIView):
     List anomalous forwarding patterns.
     <ul>
     <li><b>Required parameters:</b> timebin or a range of timebins (using the two parameters timebin__lte and timebin__gte).</li>
-    <li><b>Limitations:</b> At most 7 days of data can be fetched per request.</li>
+    <li><b>Limitations:</b> At most 7 days of data can be fetched per request. For bulk downloads see: <a href="https://ihr-archive.iijlab.net/" target="_blank">https://ihr-archive.iijlab.net/</a>.</li>
     </ul>
     """
     serializer_class = ForwardingAlarmsSerializer
@@ -640,7 +640,7 @@ class HegemonyView(generics.ListAPIView):
     List AS dependencies for all ASes visible in monitored BGP data. This endpoint also provides the AS dependency to the entire IP space (a.k.a. global graph) which is available by setting the originasn parameter to 0.
     <ul>
     <li><b>Required parameters:</b> timebin or a range of timebins (using the two parameters timebin__lte and timebin__gte).</li>
-    <li><b>Limitations:</b> At most 7 days of data can be fetched per request.</li>
+    <li><b>Limitations:</b> At most 7 days of data can be fetched per request. For bulk downloads see: <a href="https://ihr-archive.iijlab.net/" target="_blank">https://ihr-archive.iijlab.net/</a>.</li>
     </ul>
     """
     serializer_class = HegemonySerializer
@@ -678,7 +678,7 @@ class HegemonyAlarmsView(generics.ListAPIView):
     List significant AS dependency changes detected by IHR anomaly detector.
     <ul>
     <li><b>Required parameters:</b> timebin or a range of timebins (using the two parameters timebin__lte and timebin__gte).</li>
-    <li><b>Limitations:</b> At most 7 days of data can be fetched per request.</li>
+    <li><b>Limitations:</b> At most 7 days of data can be fetched per request. For bulk downloads see: <a href="https://ihr-archive.iijlab.net/" target="_blank">https://ihr-archive.iijlab.net/</a>.</li>
     </ul>
     """
     serializer_class = HegemonyAlarmsSerializer
@@ -706,7 +706,7 @@ class HegemonyConeView(generics.ListAPIView):
     The number of networks that depend on a given network. This is similar to CAIDA's customer cone size.
     <ul>
     <li><b>Required parameters:</b> timebin or a range of timebins (using the two parameters timebin__lte and timebin__gte).</li>
-    <li><b>Limitations:</b> At most 7 days of data can be fetched per request.</li>
+    <li><b>Limitations:</b> At most 7 days of data can be fetched per request. For bulk downloads see: <a href="https://ihr-archive.iijlab.net/" target="_blank">https://ihr-archive.iijlab.net/</a>.</li>
     </ul>
     networks).
     """
@@ -736,7 +736,7 @@ class HegemonyCountryView(generics.ListAPIView):
     List AS dependencies of countries. A country infrastructure is defined by its ASes registed in RIRs delegated files. Emphasis can be put on eyeball users with the eyeball weighting scheme (i.e. weightscheme='eyeball').
     <ul>
     <li><b>Required parameters:</b> timebin or a range of timebins (using the two parameters timebin__lte and timebin__gte).</li>
-    <li><b>Limitations:</b> At most 31 days of data can be fetched per request.</li>
+    <li><b>Limitations:</b> At most 31 days of data can be fetched per request. For bulk downloads see: <a href="https://ihr-archive.iijlab.net/" target="_blank">https://ihr-archive.iijlab.net/</a>.</li>
     </ul>
     """
     serializer_class = HegemonyCountrySerializer
@@ -762,7 +762,7 @@ class HegemonyPrefixView(generics.ListAPIView):
     List AS dependencies of prefixes. 
     <ul>
     <li><b>Required parameters:</b> timebin or a range of timebins (using the two parameters timebin__lte and timebin__gte). And one of the following: prefix, originasn, country, rpki_status, irr_status, delegated_prefix_status, delegated_asn_status.</li>
-    <li><b>Limitations:</b> At most 7 days of data can be fetched per request.</li>
+    <li><b>Limitations:</b> At most 7 days of data can be fetched per request. For bulk downloads see: <a href="https://ihr-archive.iijlab.net/" target="_blank">https://ihr-archive.iijlab.net/</a>.</li>
     </ul>
     """
     serializer_class = HegemonyPrefixSerializer
@@ -805,7 +805,7 @@ class NetworkDelayView(generics.ListAPIView):
     List estimated network delays between two potentially remote locations. A location can be, for example, an AS, city, Atlas probe.
     <ul>
     <li><b>Required parameters:</b> timebin or a range of timebins (using the two parameters timebin__lte and timebin__gte).</li>
-    <li><b>Limitations:</b> At most 7 days of data can be fetched per request.</li>
+    <li><b>Limitations:</b> At most 7 days of data can be fetched per request. For bulk downloads see: <a href="https://ihr-archive.iijlab.net/" target="_blank">https://ihr-archive.iijlab.net/</a>.</li>
     </ul>
     """
     serializer_class = NetworkDelaySerializer
@@ -833,7 +833,7 @@ class NetworkDelayAlarmsView(generics.ListAPIView):
     List significant network delay changes detected by IHR anomaly detector.
     <ul>
     <li><b>Required parameters:</b> timebin or a range of timebins (using the two parameters timebin__lte and timebin__gte).</li>
-    <li><b>Limitations:</b> At most 7 days of data can be fetched per request.</li>
+    <li><b>Limitations:</b> At most 7 days of data can be fetched per request. For bulk downloads see: <a href="https://ihr-archive.iijlab.net/" target="_blank">https://ihr-archive.iijlab.net/</a>.</li>
     </ul>
     """
     serializer_class = NetworkDelayAlarmsSerializer
@@ -869,7 +869,7 @@ class MetisAtlasSelectionView(generics.ListAPIView):
     """
     Metis helps to select a set of diverse Atlas probes in terms of different topological metrics (e.g. AS path, RTT).
     <ul>
-    <li><b>Limitations:</b> At most 31 days of data can be fetched per request.</li>
+    <li><b>Limitations:</b> At most 31 days of data can be fetched per request. For bulk downloads see: <a href="https://ihr-archive.iijlab.net/" target="_blank">https://ihr-archive.iijlab.net/</a>.</li>
     </ul>
     """
     serializer_class = MetisAtlasSelectionSerializer
@@ -906,7 +906,7 @@ class MetisAtlasDeploymentView(generics.ListAPIView):
     """
     Metis identifies ASes that are far from Atlas probes. Deploying Atlas probes in this ASes would be beneficial for Atlas coverage.
     <ul>
-    <li><b>Limitations:</b> At most 31 days of data can be fetched per request.</li>
+    <li><b>Limitations:</b> At most 31 days of data can be fetched per request. For bulk downloads see: <a href="https://ihr-archive.iijlab.net/" target="_blank">https://ihr-archive.iijlab.net/</a>.</li>
     </ul>
     """
     serializer_class = MetisAtlasDeploymentSerializer
