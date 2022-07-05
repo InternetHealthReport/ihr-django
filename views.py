@@ -10,16 +10,34 @@ from django.db import models as django_models
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 
-from django.views.decorators.cache import patch_cache_control, cache_control
-from django.utils.decorators import method_decorator
+from django.views.decorators.cache import patch_cache_control
+from django.views.decorators.vary import vary_on_cookie
 
 from datetime import datetime, date, timedelta
 import pandas as pd
 import pytz
 import json
 import arrow
+from email.errors import HeaderParseError
+from smtplib import SMTPException
+from django.db import transaction, IntegrityError
+from django.core.mail import send_mail
+from .const import ConfirmationEmail, ChangePasswordEmail, StrErrors, Msg, POOL, std_response
+import redis
+conn = redis.Redis(connection_pool=POOL)
 
-from .models import ASN, Country, Delay, Forwarding, Delay_alarms, Forwarding_alarms, Disco_events, Disco_probes, Hegemony, HegemonyCone, Atlas_delay, Atlas_location, Atlas_delay_alarms, Hegemony_alarms, Hegemony_country, Hegemony_prefix, Metis_atlas_selection, Metis_atlas_deployment
+from rest_framework.status import (
+    HTTP_400_BAD_REQUEST,
+    HTTP_401_UNAUTHORIZED,
+    HTTP_403_FORBIDDEN,
+    HTTP_404_NOT_FOUND,
+    HTTP_410_GONE,
+    HTTP_409_CONFLICT,
+    HTTP_200_OK,
+    HTTP_202_ACCEPTED 
+)
+
+from .models import ASN, Country, Delay, Forwarding, Delay_alarms, Forwarding_alarms, Disco_events, Disco_probes, Hegemony, HegemonyCone, Atlas_delay, Atlas_location, Atlas_delay_alarms, Hegemony_alarms, Hegemony_country, Hegemony_prefix
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -27,15 +45,21 @@ from rest_framework.reverse import reverse
 from rest_framework import generics
 from rest_framework.exceptions import ParseError
 
-from .serializers import ASNSerializer, CountrySerializer, DelaySerializer, ForwardingSerializer, DelayAlarmsSerializer, ForwardingAlarmsSerializer, DiscoEventsSerializer, DiscoProbesSerializer, HegemonySerializer, HegemonyConeSerializer, NetworkDelaySerializer, NetworkDelayLocationsSerializer, NetworkDelayAlarmsSerializer, HegemonyAlarmsSerializer, HegemonyCountrySerializer, HegemonyPrefixSerializer, MetisAtlasSelectionSerializer, MetisAtlasDeploymentSerializer
+from .serializers import ASNSerializer, CountrySerializer, DelaySerializer, ForwardingSerializer, DelayAlarmsSerializer, ForwardingAlarmsSerializer, DiscoEventsSerializer, DiscoProbesSerializer, HegemonySerializer, HegemonyConeSerializer, NetworkDelaySerializer, NetworkDelayLocationsSerializer, NetworkDelayAlarmsSerializer, HegemonyAlarmsSerializer, HegemonyCountrySerializer, HegemonyPrefixSerializer
 from django_filters import rest_framework as filters
 import django_filters
 from django.db.models import Q, F
 
+from rest_framework.views import APIView
 
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
+from .models import IHRUser
+import time
+from rest_framework.authtoken.models import Token
 
 # by default shows only one week of data
-LAST_DEFAULT = 6
+LAST_DEFAULT = 7
 HEGE_GRANULARITY = 15
 DEFAULT_MAX_RANGE = 7
 
@@ -492,60 +516,313 @@ class DiscoProbesFilter(HelpfulFilterSet):
         fields = {}
         ordering_fields = ('starttime', 'endtime', 'level')
 
+class UserLoginView(APIView):
+    @swagger_auto_schema(
+        operation_description="apiview post description override",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['email', "password"],
+            properties={
+                'email': openapi.Schema(type=openapi.TYPE_STRING),
+                'password': openapi.Schema(type=openapi.TYPE_STRING)
+            },
+        ),
+        security=[]
+    )
+    def post(self, request, *args, **kwargs):
+        ret = {}
+        print("################")
+        try:
+            print("request.data:", request.data)
 
-class MetisAtlasSelectionFilter(HelpfulFilterSet):
+            email = request.data.get('email')
+            password = request.data.get('password')
+ 
+            obj = IHRUser.objects.filter(email=email).first()
+            if not obj:
+                ret['code'] = HTTP_202_ACCEPTED
+                ret['msg'] = Msg.USER_NOT_EXIST
+                return JsonResponse(ret)
+            else:
+                if password == obj.password:
+                    ret['code'] = HTTP_200_OK
+                    ret['msg'] = Msg.LOGIN_SUCCEEDED
+                    try:
+                        token,_ = Token.objects.get_or_create(user=obj)
+                        ret['token'] = token.key
+                        conn.set(f"Login_{email}", token.key)
+   
+                        return JsonResponse(ret)
+                    except (KeyError, IHRUser.DoesNotExist)  as e:
+                        return std_response(StrErrors.WRONG_DATA, HTTP_400_BAD_REQUEST)
+                else:
+                    ret['code'] = HTTP_202_ACCEPTED
+                    ret['msg'] = Msg.LOGIN_FAILED
+                    
+                    return JsonResponse(ret)
 
-    class Meta:
-        model = Metis_atlas_selection 
-        fields = {
-            'timebin': ['exact', 'lte', 'gte'],
-            'rank': ['exact', 'lte', 'gte'],
-            'metric': ['exact'],
-            'af': ['exact'],
-        }
-        ordering_fields = ('timebin', 'metric', 'rank', 'af')
+        except Exception as e:
+            print(e)
+            ret['code'] = HTTP_404_NOT_FOUND
+            ret['msg'] = Msg.REQUEST_EXCEPTION
+            return JsonResponse(ret)
 
-    filter_overrides = {
-        django_models.DateTimeField: {
-            'filter_class': filters.IsoDateTimeFilter
-        },
-    }
+class UserLogoutView(APIView):
+    @swagger_auto_schema(
+        operation_description="apiview post description override",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=[] 
+        ),
+        security=[]
+    )
+    def post(self, request, *args, **kwargs):
+        ret = {}
+        try:
+            token = Token.objects.get(key=request.META.get("HTTP_COOKIE").split('=')[-1])
+            #print(token.user)
+            conn.delete(f"Login_{token.user}")
+            user_login = conn.get(f"Login_{token.user}")
+            #print(user_login)
+            #request.user.auth_token.delete()
+            ret['code'] = HTTP_200_OK
+            ret['msg'] = Msg.LOGOUT_SUCCEEDED
+            return JsonResponse(ret)
+        except Exception as e:
+            print(e)
+            ret['code'] = HTTP_404_NOT_FOUND
+            ret['msg'] = Msg.REQUEST_EXCEPTION
+            return JsonResponse(ret)
 
-class MetisAtlasDeploymentFilter(HelpfulFilterSet):
+class UserChangePasswordView(APIView):
+    @swagger_auto_schema(
+        operation_description="apiview post description override",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['email', "password", "new_password"],
+            properties={
+                'email': openapi.Schema(type=openapi.TYPE_STRING),
+                'password': openapi.Schema(type=openapi.TYPE_STRING),
+                'new_password': openapi.Schema(type=openapi.TYPE_STRING)
+            },
+        ),
+        security=[]
+    )
+    def post(self, request, *args, **kwargs):
+        ret = {}
+        try:
+            print("request.data:", request.data)
 
-    class Meta:
-        model = Metis_atlas_deployment 
-        fields = {
-            'timebin': ['exact', 'lte', 'gte'],
-            'rank': ['exact', 'lte', 'gte'],
-            'metric': ['exact'],
-            'af': ['exact'],
-        }
-        ordering_fields = ('timebin', 'metric', 'rank', 'af')
+            email = request.data.get('email')
+            password = request.data.get('password')
+            new_password = request.data.get('new_password')
 
-    filter_overrides = {
-        django_models.DateTimeField: {
-            'filter_class': filters.IsoDateTimeFilter
-        },
-    }
+            obj = IHRUser.objects.filter(email=email).first()
+            if not obj:
+                ret['code'] = HTTP_202_ACCEPTED
+                ret['msg'] = Msg.USER_NOT_EXIST
+                return JsonResponse(ret)
+            else:
+                if password == obj.password:
+                    ret['code'] = HTTP_200_OK
+                    ret['msg'] = Msg.CHANGE_PASSWORD_SUCCEEDED
+                    try:
+                        obj.password = new_password
+                        obj.save()
+
+                        return JsonResponse(ret)
+                    except (KeyError, IHRUser.DoesNotExist)  as e:
+                        return std_response(StrErrors.WRONG_DATA, HTTP_400_BAD_REQUEST)
+                else:
+                    ret['code'] = HTTP_202_ACCEPTED
+                    ret['msg'] = Msg.LOGIN_FAILED
+                    
+                    return JsonResponse(ret)
+
+        except Exception as e:
+            print(e)
+            ret['code'] = HTTP_404_NOT_FOUND
+            ret['msg'] = Msg.REQUEST_EXCEPTION
+            return JsonResponse(ret)
 
 
+class UserForgetPasswordView(APIView):
+    @swagger_auto_schema(
+        operation_description="apiview post description override",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['email', "new_password", "code"],
+            properties={
+                'email': openapi.Schema(type=openapi.TYPE_STRING),
+                'new_password': openapi.Schema(type=openapi.TYPE_STRING),
+				'code': openapi.Schema(type=openapi.TYPE_STRING)
+            },
+        ),
+        security=[]
+    )
+    def post(self, request, *args, **kwargs):
+        ret = {}
+        try:
+            print("request.data:", request.data)
+
+            email = request.data.get('email')
+            new_password = request.data.get('new_password')
+            code = request.data.get('code')
+ 
+            user_code = conn.get(f"ChangePassword_{email}")
+            
+            if code == user_code:
+                obj = IHRUser.objects.filter(email=email).first()
+                if obj:
+                    obj = IHRUser.objects.filter(email=email).first()
+                    obj.password = new_password
+                    obj.save()
+                    
+                    ret['code'] = HTTP_200_OK
+                    ret['msg'] = Msg.CHANGE_PASSWORD_SUCCEEDED
+                    return JsonResponse(ret)
+                else:
+                    ret['code'] = HTTP_202_ACCEPTED
+                    ret['msg'] = Msg.USER_NOT_EXIST
+                    return JsonResponse(ret)
+            else:
+                ret['code'] = HTTP_202_ACCEPTED
+                ret['msg'] = Msg.CODE_ERROR
+                return JsonResponse(ret)
+        except Exception as e:
+            print(e)
+            ret['code'] = HTTP_404_NOT_FOUND
+            ret['msg'] = Msg.REQUEST_EXCEPTION
+            return JsonResponse(ret)
+
+
+class UserRegisterView(APIView):
+    @swagger_auto_schema(
+        operation_description="apiview post description override",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['email', "password", "code"],
+            properties={
+                'email': openapi.Schema(type=openapi.TYPE_STRING),
+                'password': openapi.Schema(type=openapi.TYPE_STRING),
+				'code': openapi.Schema(type=openapi.TYPE_STRING)
+            },
+        ),
+        security=[]
+    )
+    def post(self, request, *args, **kwargs):
+        ret = {}
+        try:
+            print("request.data:", request.data)
+
+            email = request.data.get('email')
+            password = request.data.get('password')
+            code = request.data.get('code')
+
+            user_code = conn.get(f"Confirmation_{email}")
+            
+            if code == user_code:
+                obj = IHRUser.objects.filter(email=email).first()
+                if obj:
+                    ret['code'] = HTTP_202_ACCEPTED
+                    ret['msg'] = Msg.USER_REGISTERED
+                    return JsonResponse(ret)
+                else:
+                    obj = IHRUser.objects.create(email=email, password=password)
+                    ret['code'] = HTTP_200_OK
+                    ret['msg'] = Msg.REGISTER_SUCCEEDED
+                    return JsonResponse(ret)
+            else:
+                ret['code'] = HTTP_202_ACCEPTED
+                ret['msg'] = Msg.CODE_ERROR
+                return JsonResponse(ret)
+        except Exception as e:
+            print(e)
+            ret['code'] = HTTP_404_NOT_FOUND
+            ret['msg'] = Msg.REQUEST_EXCEPTION
+            return JsonResponse(ret)
+
+class UserSendEmailView(APIView):
+    @swagger_auto_schema(
+        operation_description="apiview post description override",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['email'],
+            properties={
+                'email': openapi.Schema(type=openapi.TYPE_STRING)
+            },
+        ),
+        security=[]
+    )
+    def post(self, request, *args, **kwargs):
+        ret = {}
+        
+        try:
+            email = request.data.get('email')
+            confirmation_email = ConfirmationEmail(email)
+            send_mail(
+                    'Account activation',
+                    confirmation_email.PLAIN,
+                    '1347143378@qq.com',
+                    [email],
+                    fail_silently=False,
+                    )
+        except IntegrityError as e:
+            return std_response(StrErrors.DUPLICATED, HTTP_409_CONFLICT)
+        except (ValueError, SMTPException, HeaderParseError, KeyError) as e:
+            print(e)
+            return std_response(StrErrors.WRONG_DATA, HTTP_400_BAD_REQUEST)
+        ret['code'] = HTTP_200_OK
+        ret['msg'] = Msg.CODE_SENT
+        return JsonResponse(ret)
+
+
+class UserSendForgetPasswordEmailView(APIView):
+    @swagger_auto_schema(
+        operation_description="apiview post description override",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['email'],
+            properties={
+                'email': openapi.Schema(type=openapi.TYPE_STRING)
+            },
+        ),
+        security=[]
+    )
+    def post(self, request, *args, **kwargs):
+        ret = {}
+        
+        try:
+            email = request.data.get('email')
+            confirmation_email = ChangePasswordEmail(email)
+            send_mail(
+                    'Account activation',
+                    confirmation_email.PLAIN,
+                    '1347143378@qq.com',
+                    [email],
+                    fail_silently=False,
+                    )
+        except IntegrityError as e:
+            return std_response(StrErrors.DUPLICATED, HTTP_409_CONFLICT)
+        except (ValueError, SMTPException, HeaderParseError, KeyError) as e:
+            print(e)
+            return std_response(StrErrors.WRONG_DATA, HTTP_400_BAD_REQUEST)
+        ret['code'] = HTTP_200_OK
+        ret['msg'] = Msg.CODE_SENT
+        return JsonResponse(ret)
+        
 ###################### Views:
-cache_1month = [cache_control(max_age=2592000),]
-
-@method_decorator(cache_1month, name='list')
-class NetworkView(generics.ListAPIView):
+class NetworkView(generics.ListAPIView, APIView):
     """
     List networks referenced on IHR (see. /network_delay/locations/ for network delay locations). Can be searched by keyword, ASN, or IXPID.  Range of ASN/IXPID can be obtained with parameters number__lte and number__gte.
     """
-
+	
     #schema = AutoSchema(tags=['entity'])
     queryset = ASN.objects.all()
     serializer_class = ASNSerializer
     filter_class = NetworkFilter
 
 
-@method_decorator(cache_1month, name='list')
 class CountryView(generics.ListAPIView):
     """
     List countries referenced on IHR. Can be searched by keywordX.
@@ -561,7 +838,7 @@ class DelayView(generics.ListAPIView):
     The details of each congested link is available in /delay/alarms/.
     <ul>
     <li><b>Required parameters:</b> timebin or a range of timebins (using the two parameters timebin__lte and timebin__gte).</li>
-    <li><b>Limitations:</b> At most 7 days of data can be fetched per request. For bulk downloads see: <a href="https://ihr-archive.iijlab.net/" target="_blank">https://ihr-archive.iijlab.net/</a>.</li>
+    <li><b>Limitations:</b> At most 7 days of data can be fetched per request.</li>
     </ul>
     """
 
@@ -578,7 +855,7 @@ class ForwardingView(generics.ListAPIView):
     The details of each forwarding anomaly is available in /forwarding/alarms/.
     <ul>
     <li><b>Required parameters:</b> timebin or a range of timebins (using the two parameters timebin__lte and timebin__gte).</li>
-    <li><b>Limitations:</b> At most 7 days of data can be fetched per request. For bulk downloads see: <a href="https://ihr-archive.iijlab.net/" target="_blank">https://ihr-archive.iijlab.net/</a>.</li>
+    <li><b>Limitations:</b> At most 7 days of data can be fetched per request.</li>
     </ul>
     """
     serializer_class = ForwardingSerializer
@@ -593,7 +870,7 @@ class DelayAlarmsView(generics.ListAPIView):
     List detected link delay changes.
     <ul>
     <li><b>Required parameters:</b> timebin or a range of timebins (using the two parameters timebin__lte and timebin__gte).</li>
-    <li><b>Limitations:</b> At most 7 days of data can be fetched per request. For bulk downloads see: <a href="https://ihr-archive.iijlab.net/" target="_blank">https://ihr-archive.iijlab.net/</a>.</li>
+    <li><b>Limitations:</b> At most 7 days of data can be fetched per request.</li>
     </ul>
     """
     serializer_class = DelayAlarmsSerializer
@@ -608,7 +885,7 @@ class ForwardingAlarmsView(generics.ListAPIView):
     List anomalous forwarding patterns.
     <ul>
     <li><b>Required parameters:</b> timebin or a range of timebins (using the two parameters timebin__lte and timebin__gte).</li>
-    <li><b>Limitations:</b> At most 7 days of data can be fetched per request. For bulk downloads see: <a href="https://ihr-archive.iijlab.net/" target="_blank">https://ihr-archive.iijlab.net/</a>.</li>
+    <li><b>Limitations:</b> At most 7 days of data can be fetched per request.</li>
     </ul>
     """
     serializer_class = ForwardingAlarmsSerializer
@@ -640,12 +917,13 @@ class HegemonyView(generics.ListAPIView):
     List AS dependencies for all ASes visible in monitored BGP data. This endpoint also provides the AS dependency to the entire IP space (a.k.a. global graph) which is available by setting the originasn parameter to 0.
     <ul>
     <li><b>Required parameters:</b> timebin or a range of timebins (using the two parameters timebin__lte and timebin__gte).</li>
-    <li><b>Limitations:</b> At most 7 days of data can be fetched per request. For bulk downloads see: <a href="https://ihr-archive.iijlab.net/" target="_blank">https://ihr-archive.iijlab.net/</a>.</li>
+    <li><b>Limitations:</b> At most 7 days of data can be fetched per request.</li>
     </ul>
     """
     serializer_class = HegemonySerializer
     filter_class = HegemonyFilter
 
+    @vary_on_cookie
     def list(self, request, *args, **kwargs):
         response = super().list(request, *args, **kwargs)
         last = self.request.query_params.get('timebin', 
@@ -655,7 +933,7 @@ class HegemonyView(generics.ListAPIView):
             today = date.today()
             past_days = today - timedelta(days=7) 
             if arrow.get(last).date() < past_days: 
-                patch_cache_control(response, max_age=15552000)
+                patch_cache_control(response, max_age=8600*24*356)
 
         return response
 
@@ -678,12 +956,13 @@ class HegemonyAlarmsView(generics.ListAPIView):
     List significant AS dependency changes detected by IHR anomaly detector.
     <ul>
     <li><b>Required parameters:</b> timebin or a range of timebins (using the two parameters timebin__lte and timebin__gte).</li>
-    <li><b>Limitations:</b> At most 7 days of data can be fetched per request. For bulk downloads see: <a href="https://ihr-archive.iijlab.net/" target="_blank">https://ihr-archive.iijlab.net/</a>.</li>
+    <li><b>Limitations:</b> At most 7 days of data can be fetched per request.</li>
     </ul>
     """
     serializer_class = HegemonyAlarmsSerializer
     filter_class = HegemonyAlarmsFilter
 
+    @vary_on_cookie
     def list(self, request, *args, **kwargs):
         response = super().list(request, *args, **kwargs)
         last = self.request.query_params.get('timebin', 
@@ -693,7 +972,7 @@ class HegemonyAlarmsView(generics.ListAPIView):
             today = date.today()
             past_days = today - timedelta(days=7) 
             if arrow.get(last).date() < past_days: 
-                patch_cache_control(response, max_age=15552000)
+                patch_cache_control(response, max_age=8600*24*356)
 
         return response
 
@@ -706,7 +985,7 @@ class HegemonyConeView(generics.ListAPIView):
     The number of networks that depend on a given network. This is similar to CAIDA's customer cone size.
     <ul>
     <li><b>Required parameters:</b> timebin or a range of timebins (using the two parameters timebin__lte and timebin__gte).</li>
-    <li><b>Limitations:</b> At most 7 days of data can be fetched per request. For bulk downloads see: <a href="https://ihr-archive.iijlab.net/" target="_blank">https://ihr-archive.iijlab.net/</a>.</li>
+    <li><b>Limitations:</b> At most 7 days of data can be fetched per request.</li>
     </ul>
     networks).
     """
@@ -714,6 +993,7 @@ class HegemonyConeView(generics.ListAPIView):
     filter_class = HegemonyConeFilter
     ordering = 'timebin'
 
+    @vary_on_cookie
     def list(self, request, *args, **kwargs):
         response = super().list(request, *args, **kwargs)
         last = self.request.query_params.get('timebin', 
@@ -723,7 +1003,7 @@ class HegemonyConeView(generics.ListAPIView):
             today = date.today()
             past_days = today - timedelta(days=7) 
             if arrow.get(last).date() < past_days: 
-                patch_cache_control(response, max_age=15552000)
+                patch_cache_control(response, max_age=8600*24*356)
 
         return response
 
@@ -736,7 +1016,7 @@ class HegemonyCountryView(generics.ListAPIView):
     List AS dependencies of countries. A country infrastructure is defined by its ASes registed in RIRs delegated files. Emphasis can be put on eyeball users with the eyeball weighting scheme (i.e. weightscheme='eyeball').
     <ul>
     <li><b>Required parameters:</b> timebin or a range of timebins (using the two parameters timebin__lte and timebin__gte).</li>
-    <li><b>Limitations:</b> At most 31 days of data can be fetched per request. For bulk downloads see: <a href="https://ihr-archive.iijlab.net/" target="_blank">https://ihr-archive.iijlab.net/</a>.</li>
+    <li><b>Limitations:</b> At most 31 days of data can be fetched per request.</li>
     </ul>
     """
     serializer_class = HegemonyCountrySerializer
@@ -762,28 +1042,11 @@ class HegemonyPrefixView(generics.ListAPIView):
     List AS dependencies of prefixes. 
     <ul>
     <li><b>Required parameters:</b> timebin or a range of timebins (using the two parameters timebin__lte and timebin__gte). And one of the following: prefix, originasn, country, rpki_status, irr_status, delegated_prefix_status, delegated_asn_status.</li>
-    <li><b>Limitations:</b> At most 7 days of data can be fetched per request. For bulk downloads see: <a href="https://ihr-archive.iijlab.net/" target="_blank">https://ihr-archive.iijlab.net/</a>.</li>
+    <li><b>Limitations:</b> At most 7 days of data can be fetched per request.</li>
     </ul>
     """
     serializer_class = HegemonyPrefixSerializer
     filter_class = HegemonyPrefixFilter
-
-    def list(self, request, *args, **kwargs):
-        response = super().list(request, *args, **kwargs)
-        last = self.request.query_params.get('timebin', 
-                self.request.query_params.get('timebin__gte', None) )
-        if last is not None:
-            # Cache forever content that is more than a week old
-            today = date.today()
-            past_days = today - timedelta(days=7) 
-            if arrow.get(last).date() < past_days: 
-                patch_cache_control(response, max_age=15552000)
-            else:
-                max_age = 60*60*6
-                patch_cache_control(response, max_age=max_age)
-
-        return response
-
 
     def get_queryset(self):
         queryset = Hegemony_prefix.objects
@@ -805,12 +1068,13 @@ class NetworkDelayView(generics.ListAPIView):
     List estimated network delays between two potentially remote locations. A location can be, for example, an AS, city, Atlas probe.
     <ul>
     <li><b>Required parameters:</b> timebin or a range of timebins (using the two parameters timebin__lte and timebin__gte).</li>
-    <li><b>Limitations:</b> At most 7 days of data can be fetched per request. For bulk downloads see: <a href="https://ihr-archive.iijlab.net/" target="_blank">https://ihr-archive.iijlab.net/</a>.</li>
+    <li><b>Limitations:</b> At most 7 days of data can be fetched per request.</li>
     </ul>
     """
     serializer_class = NetworkDelaySerializer
     filter_class = NetworkDelayFilter
 
+    @vary_on_cookie
     def list(self, request, *args, **kwargs):
         response = super().list(request, *args, **kwargs)
         last = self.request.query_params.get('timebin', 
@@ -820,7 +1084,7 @@ class NetworkDelayView(generics.ListAPIView):
             today = date.today()
             past_days = today - timedelta(days=7) 
             if arrow.get(last).date() < past_days: 
-                patch_cache_control(response, max_age=15552000)
+                patch_cache_control(response, max_age=8600*24*356)
 
         return response
 
@@ -833,12 +1097,13 @@ class NetworkDelayAlarmsView(generics.ListAPIView):
     List significant network delay changes detected by IHR anomaly detector.
     <ul>
     <li><b>Required parameters:</b> timebin or a range of timebins (using the two parameters timebin__lte and timebin__gte).</li>
-    <li><b>Limitations:</b> At most 7 days of data can be fetched per request. For bulk downloads see: <a href="https://ihr-archive.iijlab.net/" target="_blank">https://ihr-archive.iijlab.net/</a>.</li>
+    <li><b>Limitations:</b> At most 7 days of data can be fetched per request.</li>
     </ul>
     """
     serializer_class = NetworkDelayAlarmsSerializer
     filter_class = NetworkDelayAlarmsFilter
 
+    @vary_on_cookie
     def list(self, request, *args, **kwargs):
         response = super().list(request, *args, **kwargs)
         last = self.request.query_params.get('timebin', 
@@ -848,7 +1113,7 @@ class NetworkDelayAlarmsView(generics.ListAPIView):
             today = date.today()
             past_days = today - timedelta(days=7) 
             if arrow.get(last).date() < past_days: 
-                patch_cache_control(response, max_age=15552000)
+                patch_cache_control(response, max_age=8600*24*356)
 
         return response
 
@@ -856,7 +1121,6 @@ class NetworkDelayAlarmsView(generics.ListAPIView):
         check_timebin(self.request.query_params)
         return Atlas_delay_alarms.objects.prefetch_related("startpoint", "endpoint")
 
-@method_decorator(cache_1month, name='list')
 class NetworkDelayLocationsView(generics.ListAPIView):
     """
     List locations monitored for network delay measurements.  A location can be, for example, an AS, city, Atlas probe.
@@ -865,16 +1129,7 @@ class NetworkDelayLocationsView(generics.ListAPIView):
     serializer_class = NetworkDelayLocationsSerializer
     filter_class = NetworkDelayLocationsFilter
 
-class MetisAtlasSelectionView(generics.ListAPIView):
-    """
-    Metis helps to select a set of diverse Atlas probes in terms of different topological metrics (e.g. AS path, RTT).
-    <ul>
-    <li><b>Limitations:</b> At most 31 days of data can be fetched per request. For bulk downloads see: <a href="https://ihr-archive.iijlab.net/" target="_blank">https://ihr-archive.iijlab.net/</a>.</li>
-    </ul>
-    """
-    serializer_class = MetisAtlasSelectionSerializer
-    filter_class = MetisAtlasSelectionFilter
-
+    @vary_on_cookie
     def list(self, request, *args, **kwargs):
         response = super().list(request, *args, **kwargs)
         last = self.request.query_params.get('timebin', 
@@ -884,60 +1139,9 @@ class MetisAtlasSelectionView(generics.ListAPIView):
             today = date.today()
             past_days = today - timedelta(days=7) 
             if arrow.get(last).date() < past_days: 
-                patch_cache_control(response, max_age=15552000)
+                patch_cache_control(response, max_age=8600*24*356)
 
         return response
-
-    def get_queryset(self):
-        queryset = Metis_atlas_selection.objects
-        if('timebin' not in self.request.query_params 
-                and 'timebin__lte' not in self.request.query_params
-                and 'timebin__gte' not in self.request.query_params):
-            # Set default timebin value
-            today = date.today()
-            past_days = today - timedelta(days=LAST_DEFAULT) 
-            queryset = queryset.filter(timebin__gte = past_days)
-        else:
-            check_timebin(self.request.query_params, max_range=31)
-
-        return queryset.select_related("asn")
-
-class MetisAtlasDeploymentView(generics.ListAPIView):
-    """
-    Metis identifies ASes that are far from Atlas probes. Deploying Atlas probes in these ASes would be beneficial for Atlas coverage.
-    <ul>
-    <li><b>Limitations:</b> At most 31 days of data can be fetched per request. For bulk downloads see: <a href="https://ihr-archive.iijlab.net/" target="_blank">https://ihr-archive.iijlab.net/</a>.</li>
-    </ul>
-    """
-    serializer_class = MetisAtlasDeploymentSerializer
-    filter_class = MetisAtlasDeploymentFilter
-
-    def list(self, request, *args, **kwargs):
-        response = super().list(request, *args, **kwargs)
-        last = self.request.query_params.get('timebin', 
-                self.request.query_params.get('timebin__gte', None) )
-        if last is not None:
-            # Cache forever content that is more than a week old
-            today = date.today()
-            past_days = today - timedelta(days=7) 
-            if arrow.get(last).date() < past_days: 
-                patch_cache_control(response, max_age=15552000)
-
-        return response
-
-    def get_queryset(self):
-        queryset = Metis_atlas_deployment.objects
-        if('timebin' not in self.request.query_params 
-                and 'timebin__lte' not in self.request.query_params
-                and 'timebin__gte' not in self.request.query_params):
-            # Set default timebin value
-            today = date.today()
-            past_days = today - timedelta(days=LAST_DEFAULT) 
-            queryset = queryset.filter(timebin__gte = past_days)
-        else:
-            check_timebin(self.request.query_params, max_range=31)
-
-        return queryset.select_related("asn")
 
 ###### Other pages :
 

@@ -23,12 +23,18 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'put_some_random_text_here'
 SECRET_KEY_PSQL = '123password456'
 RECAPTCHA_SECRET = ''
-EMAIL_HOST_PASSWORD = '' #os.environ['EMAIL_HOST_PASSWORD']   # set environ yourself
+EMAIL_HOST_PASSWORD = 'cnupftddgfjlghec' #os.environ['EMAIL_HOST_PASSWORD']   # set environ yourself
+# EMAIL_USE_TLS = False 
+EMAIL_USE_SSL = True 
+EMAIL_HOST = 'smtp.qq.com'  
+EMAIL_HOST_USER = '1347143378@qq.com'  # this is my email address, use yours
+EMAIL_PORT = 465  
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["localhost","127.0.0.1","ihr.iijlab.net"]
+ALLOWED_HOSTS = ["*"]
 
 SITE_ID = 1
 
@@ -69,6 +75,8 @@ MIDDLEWARE = [
     'django.middleware.cache.FetchFromCacheMiddleware',
 ]
 
+
+SESSION_COOKIE_SAMESITE=None
 CACHE_MIDDLEWARE_ALIAS = 'default'
 CACHE_MIDDLEWARE_SECONDS = 1800
 CACHE_MIDDLEWARE_KEY_PREFIX = 'ihr.iijlab.net'
@@ -120,13 +128,13 @@ REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema'
 }
 
-#CACHES = {
-#    'default': {
-#        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
-#        'LOCATION': '127.0.0.1:11211',
-#        'TIMEOUT': 3600
-#    },
-#}
+# CACHES = {
+   # 'default': {
+       # 'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+       # 'LOCATION': '127.0.0.1:11211',
+       # 'TIMEOUT': 3600
+   # },
+# }
 
 # Database
 # https://docs.djangoproject.com/en/1.9/ref/settings/#databases
@@ -190,10 +198,7 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = '/home/romain/ihr/internetHealthReport/ihr/static/'
 
-EMAIL_USE_TLS = True  
-EMAIL_HOST = 'smtp.gmail.com'  
-EMAIL_HOST_USER = 'romain.fontugne@gmail.com'  # this is my email address, use yours
-EMAIL_PORT = 587  
+
 
 ADMINS = (
     ('Romain Fontugne', 'romain.fontugne@gmail.com'),   # email will be sent to your_email
@@ -222,4 +227,4 @@ LOGGING = {
         },
     },
 }
-
+ 
