@@ -18,6 +18,24 @@ import pandas as pd
 import pytz
 import json
 import arrow
+from email.errors import HeaderParseError
+from smtplib import SMTPException
+from django.db import transaction, IntegrityError
+from django.core.mail import send_mail
+from .const import ConfirmationEmail, ChangePasswordEmail, StrErrors, Msg, POOL, std_response
+import redis
+conn = redis.Redis(connection_pool=POOL)
+
+from rest_framework.status import (
+    HTTP_400_BAD_REQUEST,
+    HTTP_401_UNAUTHORIZED,
+    HTTP_403_FORBIDDEN,
+    HTTP_404_NOT_FOUND,
+    HTTP_410_GONE,
+    HTTP_409_CONFLICT,
+    HTTP_200_OK,
+    HTTP_202_ACCEPTED 
+)
 
 from .models import ASN, Country, Delay, Forwarding, Delay_alarms, Forwarding_alarms, Disco_events, Disco_probes, Hegemony, HegemonyCone, Atlas_delay, Atlas_location, Atlas_delay_alarms, Hegemony_alarms, Hegemony_country, Hegemony_prefix, Metis_atlas_selection, Metis_atlas_deployment
 
@@ -32,7 +50,13 @@ from django_filters import rest_framework as filters
 import django_filters
 from django.db.models import Q, F
 
+from rest_framework.views import APIView
 
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
+from .models import IHRUser, Country, ASN, Atlas_location, IHRUser_Channel
+import time
+from rest_framework.authtoken.models import Token
 
 # by default shows only one week of data
 LAST_DEFAULT = 6
@@ -492,6 +516,501 @@ class DiscoProbesFilter(HelpfulFilterSet):
         fields = {}
         ordering_fields = ('starttime', 'endtime', 'level')
 
+class UserLoginView(APIView):
+    @swagger_auto_schema(
+        operation_description="apiview post description override",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['email', "password"],
+            properties={
+                'email': openapi.Schema(type=openapi.TYPE_STRING),
+                'password': openapi.Schema(type=openapi.TYPE_STRING)
+            },
+        ),
+        security=[]
+    )
+    def post(self, request, *args, **kwargs):
+        ret = {}
+        print("################")
+        try:
+            print("request.data:", request.data)
+
+            email = request.data.get('email')
+            password = request.data.get('password')
+ 
+            obj = IHRUser.objects.filter(email=email).first()
+            if not obj:
+                ret['code'] = HTTP_202_ACCEPTED
+                ret['msg'] = Msg.USER_NOT_EXIST
+                return JsonResponse(ret)
+            else:
+                if password == obj.password:
+                    ret['code'] = HTTP_200_OK
+                    ret['msg'] = Msg.LOGIN_SUCCEEDED
+                    try:
+                        token,_ = Token.objects.get_or_create(user=obj)
+                        ret['token'] = token.key
+                        conn.set(f"Login_{email}", token.key)
+   
+                        return JsonResponse(ret)
+                    except (KeyError, IHRUser.DoesNotExist)  as e:
+                        return std_response(StrErrors.WRONG_DATA, HTTP_400_BAD_REQUEST)
+                else:
+                    ret['code'] = HTTP_202_ACCEPTED
+                    ret['msg'] = Msg.LOGIN_FAILED
+                    
+                    return JsonResponse(ret)
+
+        except Exception as e:
+            print(e)
+            ret['code'] = HTTP_404_NOT_FOUND
+            ret['msg'] = Msg.REQUEST_EXCEPTION
+            return JsonResponse(ret)
+
+class UserLogoutView(APIView):
+    @swagger_auto_schema(
+        operation_description="apiview post description override",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=[] 
+        ),
+        security=[]
+    )
+    def post(self, request, *args, **kwargs):
+        ret = {}
+        try:
+            token = Token.objects.get(key=request.META.get("HTTP_COOKIE").split('=')[-1])
+            #print(token.user)
+            conn.delete(f"Login_{token.user}")
+            user_login = conn.get(f"Login_{token.user}")
+            #print(user_login)
+            #request.user.auth_token.delete()
+            ret['code'] = HTTP_200_OK
+            ret['msg'] = Msg.LOGOUT_SUCCEEDED
+            return JsonResponse(ret)
+        except Exception as e:
+            print(e)
+            ret['code'] = HTTP_404_NOT_FOUND
+            ret['msg'] = Msg.REQUEST_EXCEPTION
+            return JsonResponse(ret)
+
+class UserChangePasswordView(APIView):
+    @swagger_auto_schema(
+        operation_description="apiview post description override",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['email', "password", "new_password"],
+            properties={
+                'email': openapi.Schema(type=openapi.TYPE_STRING),
+                'password': openapi.Schema(type=openapi.TYPE_STRING),
+                'new_password': openapi.Schema(type=openapi.TYPE_STRING)
+            },
+        ),
+        security=[]
+    )
+    def post(self, request, *args, **kwargs):
+        ret = {}
+        try:
+            print("request.data:", request.data)
+
+            email = request.data.get('email')
+            password = request.data.get('password')
+            new_password = request.data.get('new_password')
+
+            obj = IHRUser.objects.filter(email=email).first()
+            if not obj:
+                ret['code'] = HTTP_202_ACCEPTED
+                ret['msg'] = Msg.USER_NOT_EXIST
+                return JsonResponse(ret)
+            else:
+                if password == obj.password:
+                    ret['code'] = HTTP_200_OK
+                    ret['msg'] = Msg.CHANGE_PASSWORD_SUCCEEDED
+                    try:
+                        obj.password = new_password
+                        obj.save()
+
+                        return JsonResponse(ret)
+                    except (KeyError, IHRUser.DoesNotExist)  as e:
+                        return std_response(StrErrors.WRONG_DATA, HTTP_400_BAD_REQUEST)
+                else:
+                    ret['code'] = HTTP_202_ACCEPTED
+                    ret['msg'] = Msg.LOGIN_FAILED
+                    
+                    return JsonResponse(ret)
+
+        except Exception as e:
+            print(e)
+            ret['code'] = HTTP_404_NOT_FOUND
+            ret['msg'] = Msg.REQUEST_EXCEPTION
+            return JsonResponse(ret)
+
+
+class UserForgetPasswordView(APIView):
+    @swagger_auto_schema(
+        operation_description="apiview post description override",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['email', "new_password", "code"],
+            properties={
+                'email': openapi.Schema(type=openapi.TYPE_STRING),
+                'new_password': openapi.Schema(type=openapi.TYPE_STRING),
+				'code': openapi.Schema(type=openapi.TYPE_STRING)
+            },
+        ),
+        security=[]
+    )
+    def post(self, request, *args, **kwargs):
+        ret = {}
+        try:
+            print("request.data:", request.data)
+
+            email = request.data.get('email')
+            new_password = request.data.get('new_password')
+            code = request.data.get('code')
+ 
+            user_code = conn.get(f"ChangePassword_{email}")
+            
+            if code == user_code:
+                obj = IHRUser.objects.filter(email=email).first()
+                if obj:
+                    obj = IHRUser.objects.filter(email=email).first()
+                    obj.password = new_password
+                    obj.save()
+                    
+                    ret['code'] = HTTP_200_OK
+                    ret['msg'] = Msg.CHANGE_PASSWORD_SUCCEEDED
+                    return JsonResponse(ret)
+                else:
+                    ret['code'] = HTTP_202_ACCEPTED
+                    ret['msg'] = Msg.USER_NOT_EXIST
+                    return JsonResponse(ret)
+            else:
+                ret['code'] = HTTP_202_ACCEPTED
+                ret['msg'] = Msg.CODE_ERROR
+                return JsonResponse(ret)
+        except Exception as e:
+            print(e)
+            ret['code'] = HTTP_404_NOT_FOUND
+            ret['msg'] = Msg.REQUEST_EXCEPTION
+            return JsonResponse(ret)
+
+
+class UserRegisterView(APIView):
+    @swagger_auto_schema(
+        operation_description="apiview post description override",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['email', "password", "code"],
+            properties={
+                'email': openapi.Schema(type=openapi.TYPE_STRING),
+                'password': openapi.Schema(type=openapi.TYPE_STRING),
+				'code': openapi.Schema(type=openapi.TYPE_STRING)
+            },
+        ),
+        security=[]
+    )
+    def post(self, request, *args, **kwargs):
+        ret = {}
+        try:
+            print("request.data:", request.data)
+
+            email = request.data.get('email')
+            password = request.data.get('password')
+            code = request.data.get('code')
+
+            user_code = conn.get(f"Confirmation_{email}")
+            
+            if code == user_code:
+                obj = IHRUser.objects.filter(email=email).first()
+                if obj:
+                    ret['code'] = HTTP_202_ACCEPTED
+                    ret['msg'] = Msg.USER_REGISTERED
+                    return JsonResponse(ret)
+                else:
+                    obj = IHRUser.objects.create(email=email, password=password)
+                    ret['code'] = HTTP_200_OK
+                    ret['msg'] = Msg.REGISTER_SUCCEEDED
+                    return JsonResponse(ret)
+            else:
+                ret['code'] = HTTP_202_ACCEPTED
+                ret['msg'] = Msg.CODE_ERROR
+                return JsonResponse(ret)
+        except Exception as e:
+            print(e)
+            ret['code'] = HTTP_404_NOT_FOUND
+            ret['msg'] = Msg.REQUEST_EXCEPTION
+            return JsonResponse(ret)
+
+class UserSendEmailView(APIView):
+    @swagger_auto_schema(
+        operation_description="apiview post description override",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['email'],
+            properties={
+                'email': openapi.Schema(type=openapi.TYPE_STRING)
+            },
+        ),
+        security=[]
+    )
+    def post(self, request, *args, **kwargs):
+        ret = {}
+        
+        try:
+            email = request.data.get('email')
+            confirmation_email = ConfirmationEmail(email)
+            send_mail(
+                    'Account activation',
+                    confirmation_email.PLAIN,
+                    '1347143378@qq.com',
+                    [email],
+                    fail_silently=False,
+                    )
+        except IntegrityError as e:
+            return std_response(StrErrors.DUPLICATED, HTTP_409_CONFLICT)
+        except (ValueError, SMTPException, HeaderParseError, KeyError) as e:
+            print(e)
+            return std_response(StrErrors.WRONG_DATA, HTTP_400_BAD_REQUEST)
+        ret['code'] = HTTP_200_OK
+        ret['msg'] = Msg.CODE_SENT
+        return JsonResponse(ret)
+
+
+class UserSendForgetPasswordEmailView(APIView):
+    @swagger_auto_schema(
+        operation_description="apiview post description override",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['email'],
+            properties={
+                'email': openapi.Schema(type=openapi.TYPE_STRING)
+            },
+        ),
+        security=[]
+    )
+    def post(self, request, *args, **kwargs):
+        ret = {}
+        
+        try:
+            email = request.data.get('email')
+            confirmation_email = ChangePasswordEmail(email)
+            send_mail(
+                    'Account activation',
+                    confirmation_email.PLAIN,
+                    '1347143378@qq.com',
+                    [email],
+                    fail_silently=False,
+                    )
+        except IntegrityError as e:
+            return std_response(StrErrors.DUPLICATED, HTTP_409_CONFLICT)
+        except (ValueError, SMTPException, HeaderParseError, KeyError) as e:
+            print(e)
+            return std_response(StrErrors.WRONG_DATA, HTTP_400_BAD_REQUEST)
+        ret['code'] = HTTP_200_OK
+        ret['msg'] = Msg.CODE_SENT
+        return JsonResponse(ret)
+
+#  class UserSearchChannelView(APIView):
+#     @swagger_auto_schema(
+#         operation_description="apiview post description override",
+#         request_body=openapi.Schema(
+#             type=openapi.TYPE_OBJECT,
+#             required=['type', "content"],
+#             properties={
+#                 'type': openapi.Schema(type=openapi.TYPE_STRING),
+#                 'content': openapi.Schema(type=openapi.TYPE_STRING)
+#             },
+#         ),
+#         security=[]
+#     )
+#     def post(self, request, *args, **kwargs):
+#         ret = {}
+#         try:
+#             print("request.data:", request.data)
+#             type = request.data.get('type')
+#             content = request.data.get('content')
+#             # Country, ASN, Atlas_location
+#             if type == "country":
+#                 if content == '':
+#                     obj_group = ["Japan", "France", "United States", "Brazil", "Germany", "China", "Singapore", "Canada", "Netherlands", "United Kingdom", "Russia", "Australia"]
+#                     ret['code'] = HTTP_200_OK
+#                     ret['msg'] = Msg.SEARCH_SUCCEEDED
+#                     ret['data'] = obj_group
+#                     return JsonResponse(ret)
+#                 else:
+#                     obj = Country.objects.filter(name__icontains=content)[:30]
+#             elif type == "network":
+#                 if content == '':
+#                     obj_group = ["AS3356 - Lumen", "AS2914 - NTT","AS6939 - HE","AS1299 - Telia","AS174  - Cogent","AS15169 - Google","AS20940 - Akamai","AS16509 - Amazon","AS13335 - Cloudflare","AS32934 - Facebook","AS7922  - Comcast","AS8075  - Microsoft"]
+#                     ret['code'] = HTTP_200_OK
+#                     ret['msg'] = Msg.SEARCH_SUCCEEDED
+#                     ret['data'] = obj_group
+#                     return JsonResponse(ret)
+#                 else:
+#                     obj = ASN.objects.filter(name__icontains=content)[:30]
+#             elif type == "city":
+#                 if content == '':
+#                     obj_group = ["Amsterdam North Holland NL", "Ashburn Virginia US","London England GB","Singapore Central Singapore, SG","Hong Kong Central and Western HK","Frankfurt am Main Hesse DE","Paris Île-de-France FR","Los Angeles California US","Tokyo Tokyo JP","Sydney New South Wales AU","New York City New York US","Toronto Ontario CA"]
+#                     ret['msg'] = Msg.SEARCH_SUCCEEDED
+#                     ret['data'] = obj_group
+#                     return JsonResponse(ret)
+#                 else:
+#                     obj = Atlas_location.objects.filter(name__icontains=content, type = "CT")[:30]
+            
+#             obj_group = []
+#             for temp in obj:
+#                 if type == "city":
+#                     obj_group.append(str(temp).replace(",", "")[5:].strip())
+#                 else:
+#                     obj_group.append(str(temp))
+#             print(obj_group)
+
+#             ret['code'] = HTTP_200_OK
+#             ret['msg'] = Msg.SEARCH_SUCCEEDED
+#             ret['data'] = obj_group
+#             return JsonResponse(ret)
+
+#         except Exception as e:
+#             print(e)
+#             ret['code'] = HTTP_404_NOT_FOUND
+#             ret['msg'] = Msg.REQUEST_EXCEPTION
+#             return JsonResponse(ret)
+
+# class UserSearchChannelPrefixView(APIView):
+#     @swagger_auto_schema(
+#         operation_description="apiview post description override",
+#         request_body=openapi.Schema(
+#             type=openapi.TYPE_OBJECT,
+#             required=['type', "content"],
+#             properties={
+#                 'type': openapi.Schema(type=openapi.TYPE_STRING),
+#                 'content': openapi.Schema(type=openapi.TYPE_STRING)
+#             },
+#         ),
+#         security=[]
+#     )
+#     def post(self, request, *args, **kwargs):
+#         ret = {}
+#         try:
+#             print("request.data:", request.data)
+#             type = request.data.get('type')
+#             content = request.data.get('content')
+#             # Country, ASN, Atlas_location
+#             if type == "country":
+#                 obj = Country.objects.filter(name__icontains=content)[:5]
+#             elif type == "network":
+#                 obj = ASN.objects.filter(name__icontains=content)[:5]
+#             elif type == "city":
+#                 obj = Atlas_location.objects.filter(name__icontains=content, type = "CT")[:5]
+ 
+#             obj_group = []
+#             for temp in obj:
+#                 if type == "city":
+#                     for str_temo in str(temp).replace(",", "")[5:].strip().split(" "):
+#                         if content in str_temo:
+#                             obj_group.append(str_temo)
+#                 else:
+#                     for str_temo in str(temp).replace(",", "").strip().split(" "):
+#                         if content in str_temo:
+#                             obj_group.append(str_temo)
+#             print(list(set(obj_group)))
+#             print(list(set(obj_group))[:5])
+
+#             ret['code'] = HTTP_200_OK
+#             ret['msg'] = Msg.SEARCH_SUCCEEDED
+#             ret['data'] = list(set(obj_group))[:5]
+#             return JsonResponse(ret)
+
+#         except Exception as e:
+#             print(e)
+#             ret['code'] = HTTP_404_NOT_FOUND
+#             ret['msg'] = Msg.REQUEST_EXCEPTION
+#             return JsonResponse(ret)
+
+
+class UserSaveChannelView(APIView):
+    @swagger_auto_schema(
+        operation_description="apiview post description override",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['channel'],
+            properties={
+                'channel': openapi.Schema(type=openapi.TYPE_STRING)
+            },
+        ),
+        security=[]
+    )
+    def post(self, request, *args, **kwargs):
+        ret = {}
+        try:
+            import ast
+            print("request.data:", request.data)
+            channel = request.data.get('channel')
+            print(channel)
+            # frequency = request.data.get('channel')
+            # print(frequency)
+            token = Token.objects.get(key=request.META.get("HTTP_COOKIE").split('=')[-1])
+            # print(len(request.data.get('channel')))
+
+            IHRUser_Channel.objects.filter(name=token.user).delete()
+            for temp in range(len(request.data.get('channel'))):
+                # print(channel[temp]['channel'])
+                # print(channel[temp]['frequency'])
+                # print("$$$$$$$$$$")
+                obj = IHRUser_Channel.objects.create(channel=channel[temp]['channel'], name=token.user, frequency=channel[temp]['frequency'])
+            obj = IHRUser_Channel.objects.filter(name=token.user).first()
+            print(obj)
+            ret['code'] = HTTP_200_OK
+            ret['msg'] = Msg.SAVE_SUCCEEDED
+            print(ret)
+            return JsonResponse(ret)
+
+        except Exception as e:
+            print(e)
+            ret['code'] = HTTP_404_NOT_FOUND
+            ret['msg'] = Msg.REQUEST_EXCEPTION
+            return JsonResponse(ret)
+
+
+class UserGetChannelView(APIView):
+    @swagger_auto_schema(
+        operation_description="apiview post description override",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['type', "content"],
+            properties={
+                # 'user': openapi.Schema(type=openapi.TYPE_STRING),
+            },
+        ),
+        security=[]
+    )
+    def post(self, request, *args, **kwargs):
+        ret = {}
+        try:
+            token = Token.objects.get(key=request.META.get("HTTP_COOKIE").split('=')[-1])
+            # print(token.user)
+            user_name = token.user # request.data.get('user')
+            obj = IHRUser_Channel.objects.filter(name = user_name).values_list('channel','frequency').distinct()
+
+            obj_group = []
+            for temp in obj:
+                temp_dict = {}
+                temp_dict["channel"] = temp[0]
+                temp_dict["frequency"] = temp[1]
+                obj_group.append(temp_dict)
+            # print(obj_group)
+
+            ret['code'] = HTTP_200_OK
+            ret['msg'] = Msg.SEARCH_SUCCEEDED
+            ret['data'] = {"channel":obj_group}
+            return JsonResponse(ret)
+
+        except Exception as e:
+            print(e)
+            ret['code'] = HTTP_404_NOT_FOUND
+            ret['msg'] = Msg.REQUEST_EXCEPTION
+            return JsonResponse(ret)
 
 class MetisAtlasSelectionFilter(HelpfulFilterSet):
 

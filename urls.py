@@ -15,6 +15,17 @@ from drf_yasg.generators import OpenAPISchemaGenerator
 
 
 exposed_api = [ 
+    url(r'^user/sendregisteremail$', views.UserSendEmailView.as_view(), name='UserSendEmailListView'),
+    url(r'^user/sendforgetpasswordemail$', views.UserSendForgetPasswordEmailView.as_view(), name='UserSendForgetPasswordEmailListView'),
+    url(r'^user/register$', views.UserRegisterView.as_view(), name='UserRegisterListView'),
+	url(r'^user/login$', views.UserLoginView.as_view(), name='UserLoginListView'),
+	url(r'^user/logout$', views.UserLogoutView.as_view(), name='UserLogoutListView'),
+	url(r'^user/changepassword$', views.UserChangePasswordView.as_view(), name='UserChangePasswordListView'),
+	url(r'^user/forgetpassword$', views.UserForgetPasswordView.as_view(), name='UserForgetPasswordListView'),
+
+	url(r'^user/savechannel$', views.UserSaveChannelView.as_view(), name='UserSaveChannelListView'),
+	url(r'^user/getchannel$', views.UserGetChannelView.as_view(), name='UserGetChannelListView'),
+
     url(r'^networks/$', views.NetworkView.as_view(), name='networkListView'),
     url(r'^countries/$', views.CountryView.as_view(), name='countryListView'),
     url(r'^link/delay/$', views.DelayView.as_view(), name='delayListView'),
