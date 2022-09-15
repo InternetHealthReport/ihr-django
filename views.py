@@ -763,7 +763,7 @@ class UserSendEmailView(APIView):
             send_mail(
                     'Account activation',
                     confirmation_email.PLAIN,
-                    '1347143378@qq.com',
+                    '', #TO DO
                     [email],
                     fail_silently=False,
                     )
