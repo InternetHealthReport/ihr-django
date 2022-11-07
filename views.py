@@ -895,7 +895,7 @@ class MetisAtlasSelectionView(generics.ListAPIView):
                 and 'timebin__gte' not in self.request.query_params):
             # Set default timebin value
             today = date.today()
-            past_days = today - timedelta(days=LAST_DEFAULT) 
+            past_days = today - timedelta(days=7) 
             queryset = queryset.filter(timebin__gte = past_days)
         else:
             check_timebin(self.request.query_params, max_range=31)
@@ -932,7 +932,7 @@ class MetisAtlasDeploymentView(generics.ListAPIView):
                 and 'timebin__gte' not in self.request.query_params):
             # Set default timebin value
             today = date.today()
-            past_days = today - timedelta(days=LAST_DEFAULT) 
+            past_days = today - timedelta(days=7) 
             queryset = queryset.filter(timebin__gte = past_days)
         else:
             check_timebin(self.request.query_params, max_range=31)
