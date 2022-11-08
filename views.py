@@ -13,7 +13,7 @@ from django.views.decorators.cache import cache_page
 from django.views.decorators.cache import patch_cache_control, cache_control
 from django.utils.decorators import method_decorator
 
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, time
 import pandas as pd
 import pytz
 import json
@@ -881,7 +881,7 @@ class MetisAtlasSelectionView(generics.ListAPIView):
                 self.request.query_params.get('timebin__gte', None) )
         if last is not None:
             # Cache forever content that is more than a week old
-            today = date.today()
+            today = datetime.combine(date.today(), time.min)
             past_days = today - timedelta(days=7) 
             if arrow.get(last).date() < past_days: 
                 patch_cache_control(response, max_age=15552000)
@@ -894,8 +894,8 @@ class MetisAtlasSelectionView(generics.ListAPIView):
                 and 'timebin__lte' not in self.request.query_params
                 and 'timebin__gte' not in self.request.query_params):
             # Set default timebin value
-            today = date.today()
-            past_days = today - timedelta(days=7) 
+            today = datetime.combine(date.today(), time.min)
+            past_days = today - timedelta(days=6) 
             queryset = queryset.filter(timebin__gte = past_days)
         else:
             check_timebin(self.request.query_params, max_range=31)
@@ -918,7 +918,7 @@ class MetisAtlasDeploymentView(generics.ListAPIView):
                 self.request.query_params.get('timebin__gte', None) )
         if last is not None:
             # Cache forever content that is more than a week old
-            today = date.today()
+            today = datetime.combine(date.today(), time.min)
             past_days = today - timedelta(days=7) 
             if arrow.get(last).date() < past_days: 
                 patch_cache_control(response, max_age=15552000)
@@ -931,8 +931,8 @@ class MetisAtlasDeploymentView(generics.ListAPIView):
                 and 'timebin__lte' not in self.request.query_params
                 and 'timebin__gte' not in self.request.query_params):
             # Set default timebin value
-            today = date.today()
-            past_days = today - timedelta(days=7) 
+            today = datetime.combine(date.today(), time.min)
+            past_days = today - timedelta(days=6) 
             queryset = queryset.filter(timebin__gte = past_days)
         else:
             check_timebin(self.request.query_params, max_range=31)
