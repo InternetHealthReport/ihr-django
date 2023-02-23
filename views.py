@@ -54,7 +54,7 @@ from rest_framework.views import APIView
 
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
-from .models import IHRUser, Country, ASN, Atlas_location, IHRUser_Channel
+from .models import IHRUser, Country, ASN, Atlas_location
 import time
 from rest_framework.authtoken.models import Token
 
@@ -579,8 +579,8 @@ class UserLogoutView(APIView):
     def post(self, request, *args, **kwargs):
         ret = {}
         try:
-            token = Token.objects.get(key=request.META.get("HTTP_COOKIE").split('=')[-1])
-            #print(token.user)
+            token = Token.objects.get(key=request.META.get("HTTP_AUTHORIZATION").split('=')[-1])
+            
             conn.delete(f"Login_{token.user}")
             user_login = conn.get(f"Login_{token.user}")
             #print(user_login)
