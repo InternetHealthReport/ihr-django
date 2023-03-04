@@ -9,22 +9,22 @@ services:
       - .:/code
     ports:
       - "8000:8000"
-    depends_on:
-      - db
+    extra_hosts:
+      - "database:xxx.xxx.x.xx"
 
   redis:
     image: redis:alpine
     ports:
      - "6379:6379"
 
-  db:
-    image: kartoza/postgis:9.6-2.4
-    volumes:
-      - postgres_data:/var/lib/postgresql/data/
-    environment:
-      - POSTGRES_USER=django
-      - POSTGRES_PASSWORD=123password456
-      - POSTGRES_DB=ihr
+#   db:
+#     image: kartoza/postgis:9.6-2.4
+#     volumes:
+#       - postgres_data:/var/lib/postgresql/data/
+#     environment:
+#       - POSTGRES_USER=django
+#       - POSTGRES_PASSWORD=123password456
+#       - POSTGRES_DB=ihr
 
-volumes:
-  postgres_data:
+# volumes:
+#   postgres_data:

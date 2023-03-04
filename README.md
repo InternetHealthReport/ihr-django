@@ -9,6 +9,8 @@ This is the implementation for the IHR API: https://ihr.iijlab.net/ihr/en-us/api
 - [basic installation for all](#install-all)
   - [If you wish to use your machine](#machine)
   - [using docker](#docker)
+    - [using docker with local database](#docker-local)
+    - [using docker with image database](#docker-remote)
 - [Add test data to the database](#add-test-data)
 
 
@@ -121,6 +123,55 @@ scroll down to the DATABASES section and make sure that the host is db
 
 make sure you are in the internetHealthReport directory
 
+## if you want to use docker with local postgres <a name = "docker-local"></a>
+
+Get your local ip address
+
+```zsh
+hostname -I
+```
+you will get something like that
+
+```zsh
+xxx.xxx.x.xx
+```
+copy the first IP address and paste it in the docker compose file in extra hosts section
+
+```zsh
+    extra_hosts:
+      - "database:xxx.xxx.x.xx"
+```
+
+allow your postgres to accept connections from outside
+
+```zsh
+sudo nano /etc/postgresql/**/main/postgresql.conf
+```
+
+change the following line
+
+```zsh
+#listen_addresses = 'localhost'
+```
+
+to
+
+```zsh
+listen_addresses = '*'
+```
+
+allow your postgres to accept connections from outside
+
+```zsh
+sudo nano /etc/postgresql/**/main/pg_hba.conf
+```
+
+add the following line
+
+```zsh
+host    all             all            172.xx.0.00/16            md5
+```
+xx may vary depending on postgres version but in newer versions it is 20 else it could be 17
 
 
 start the docker container
@@ -128,6 +179,34 @@ start the docker container
 ```zsh
 docker compose up
 ```
+and of course you need to have a postgres database running on your machine 
+
+## if you want to use docker with remote postgres <a name = "docker-remote"></a>
+
+uncomment the postgres image and volume database in docker compose
+
+```zsh
+    #   db:
+    #     image: kartoza/postgis:9.6-2.4
+    #     volumes:
+    #       - postgres_data:/var/lib/postgresql/data/
+    #     environment:
+    #       - POSTGRES_USER=django
+    #       - POSTGRES_PASSWORD=123password456
+    #       - POSTGRES_DB=ihr
+
+    # volumes:
+    #   postgres_data:
+```
+
+make sure in settings in DATABASES the host is db not database
+
+and then start the container 
+    
+```zsh
+    docker compose up
+```
+
 
 If this is the first time to run the container, you need to apply the migration files
 
