@@ -342,6 +342,18 @@ class IHRUser(AbstractBaseUser, PermissionsMixin):
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
+    
+class IHRUser_Channel(CachingMixin,models.Model):
+    name = models.CharField(max_length=255)
+    channel = models.CharField(max_length=255)
+    frequency = models.CharField(max_length=255,default="normal")
+    
+    objects = CachingManager()
+    
+    class Meta:
+        base_manager_name = 'objects' # Attribute name of CachingManager(), above
+    def __str__(self):
+        return "%s (%s)" % (self.name,self.channel)
 
 
 class EmailChangeRequest(models.Model):
