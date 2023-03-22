@@ -54,7 +54,7 @@ from rest_framework.views import APIView
 
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
-from .models import IHRUser, Country, ASN, Atlas_location
+from .models import IHRUser, Country, ASN, Atlas_location,IHRUser_Channel
 import time
 from rest_framework.authtoken.models import Token
 
