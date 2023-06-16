@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404, render
 from django.http import HttpResponseRedirect, JsonResponse
 # from django.core.urlresolvers import reverse
@@ -27,6 +28,7 @@ import redis
 conn = redis.Redis(connection_pool=POOL)
 
 from rest_framework.status import (
+    HTTP_201_CREATED,
     HTTP_400_BAD_REQUEST,
     HTTP_401_UNAUTHORIZED,
     HTTP_403_FORBIDDEN,
@@ -45,7 +47,30 @@ from rest_framework.reverse import reverse
 from rest_framework import generics
 from rest_framework.exceptions import ParseError
 
-from .serializers import ASNSerializer, CountrySerializer, DelaySerializer, ForwardingSerializer, DelayAlarmsSerializer, ForwardingAlarmsSerializer, DiscoEventsSerializer, DiscoProbesSerializer, HegemonySerializer, HegemonyConeSerializer, NetworkDelaySerializer, NetworkDelayLocationsSerializer, NetworkDelayAlarmsSerializer, HegemonyAlarmsSerializer, HegemonyCountrySerializer, HegemonyPrefixSerializer, MetisAtlasSelectionSerializer, MetisAtlasDeploymentSerializer
+from .serializers import (
+    UserChangePasswordSerializer,
+    UserForgetPasswordSerializer,
+    UserLoginSerializer,
+    UserEmailSerializer, 
+    UserRegisterSerializer, 
+    ASNSerializer, 
+    CountrySerializer, 
+    DelaySerializer, 
+    ForwardingSerializer, 
+    DelayAlarmsSerializer, 
+    ForwardingAlarmsSerializer, 
+    DiscoEventsSerializer, 
+    DiscoProbesSerializer, 
+    HegemonySerializer, 
+    HegemonyConeSerializer, 
+    NetworkDelaySerializer, 
+    NetworkDelayLocationsSerializer, 
+    NetworkDelayAlarmsSerializer, 
+    HegemonyAlarmsSerializer, 
+    HegemonyCountrySerializer, 
+    HegemonyPrefixSerializer, 
+    MetisAtlasSelectionSerializer, 
+    MetisAtlasDeploymentSerializer )
 from django_filters import rest_framework as filters
 import django_filters
 from django.db.models import Q, F
@@ -533,33 +558,40 @@ class UserLoginView(APIView):
         ret = {}
         print("################")
         try:
-            print("request.data:", request.data)
+            serializer = UserLoginSerializer(data=request.data)
+            if serializer.is_valid():
+                print("request.data:", request.data)
 
-            email = request.data.get('email')
-            password = request.data.get('password')
- 
-            obj = IHRUser.objects.filter(email=email).first()
-            if not obj:
-                ret['code'] = HTTP_202_ACCEPTED
-                ret['msg'] = Msg.USER_NOT_EXIST
-                return JsonResponse(ret)
-            else:
-                if password == obj.password:
-                    ret['code'] = HTTP_200_OK
-                    ret['msg'] = Msg.LOGIN_SUCCEEDED
-                    try:
-                        token,_ = Token.objects.get_or_create(user=obj)
-                        ret['token'] = token.key
-                        conn.set(f"Login_{email}", token.key)
-   
-                        return JsonResponse(ret)
-                    except (KeyError, IHRUser.DoesNotExist)  as e:
-                        return std_response(StrErrors.WRONG_DATA, HTTP_400_BAD_REQUEST)
-                else:
+                email = serializer.validated_data['email']
+                password = serializer.validated_data['password']
+    
+                obj = IHRUser.objects.filter(email=email).first()
+                if not obj:
                     ret['code'] = HTTP_202_ACCEPTED
-                    ret['msg'] = Msg.LOGIN_FAILED
-                    
-                    return JsonResponse(ret)
+                    ret['msg'] = Msg.USER_NOT_EXIST
+                    return JsonResponse(ret, status=HTTP_202_ACCEPTED)
+                else:
+
+                    UserModel = get_user_model()
+                    user = UserModel.objects.get(email=email)
+                    if user.check_password(password):
+                        ret['code'] = HTTP_200_OK
+                        ret['msg'] = Msg.LOGIN_SUCCEEDED
+                        try:
+                            token,_ = Token.objects.get_or_create(user=obj)
+                            ret['token'] = token.key
+                            conn.set(f"Login_{email}", token.key)
+                            return JsonResponse(ret, status=HTTP_200_OK)
+                        except (KeyError, IHRUser.DoesNotExist)  as e:
+                            return std_response(StrErrors.WRONG_DATA, HTTP_400_BAD_REQUEST)
+                    else:
+                        ret['code'] = HTTP_202_ACCEPTED
+                        ret['msg'] = Msg.LOGIN_FAILED
+                        return JsonResponse(ret, status=HTTP_202_ACCEPTED)
+            else:
+                ret['code'] = HTTP_401_UNAUTHORIZED
+                ret['msg'] = Msg.INVALID_DATA
+                return JsonResponse(ret, status=HTTP_401_UNAUTHORIZED)
 
         except Exception as e:
             print(e)
@@ -587,12 +619,12 @@ class UserLogoutView(APIView):
             #request.user.auth_token.delete()
             ret['code'] = HTTP_200_OK
             ret['msg'] = Msg.LOGOUT_SUCCEEDED
-            return JsonResponse(ret)
+            return JsonResponse(ret, status=HTTP_202_ACCEPTED)
         except Exception as e:
             print(e)
             ret['code'] = HTTP_404_NOT_FOUND
             ret['msg'] = Msg.REQUEST_EXCEPTION
-            return JsonResponse(ret)
+            return JsonResponse(ret, status=HTTP_404_NOT_FOUND)
 
 class UserChangePasswordView(APIView):
     @swagger_auto_schema(
@@ -611,33 +643,40 @@ class UserChangePasswordView(APIView):
     def post(self, request, *args, **kwargs):
         ret = {}
         try:
-            print("request.data:", request.data)
+            serializer = UserChangePasswordSerializer(data=request.data)
+            
+            if serializer.is_valid():
+                print("request.data:", request.data)
+                email = serializer.validated_data['email']
+                password = serializer.validated_data['password']
+                new_password = serializer.validated_data['new_password']
 
-            email = request.data.get('email')
-            password = request.data.get('password')
-            new_password = request.data.get('new_password')
-
-            obj = IHRUser.objects.filter(email=email).first()
-            if not obj:
-                ret['code'] = HTTP_202_ACCEPTED
-                ret['msg'] = Msg.USER_NOT_EXIST
-                return JsonResponse(ret)
-            else:
-                if password == obj.password:
-                    ret['code'] = HTTP_200_OK
-                    ret['msg'] = Msg.CHANGE_PASSWORD_SUCCEEDED
-                    try:
-                        obj.password = new_password
-                        obj.save()
-
-                        return JsonResponse(ret)
-                    except (KeyError, IHRUser.DoesNotExist)  as e:
-                        return std_response(StrErrors.WRONG_DATA, HTTP_400_BAD_REQUEST)
-                else:
+                obj = IHRUser.objects.filter(email=email).first()
+                if not obj:
                     ret['code'] = HTTP_202_ACCEPTED
-                    ret['msg'] = Msg.LOGIN_FAILED
-                    
-                    return JsonResponse(ret)
+                    ret['msg'] = Msg.USER_NOT_EXIST
+                    return JsonResponse(ret, status=HTTP_202_ACCEPTED)
+                else:
+                    UserModel = get_user_model()
+                    user = UserModel.objects.get(email=email)
+                    if user.check_password(password):
+                        ret['code'] = HTTP_200_OK
+                        ret['msg'] = Msg.CHANGE_PASSWORD_SUCCEEDED
+                        try:
+                            obj.password = new_password
+                            obj.save()
+
+                            return JsonResponse(ret)
+                        except (KeyError, IHRUser.DoesNotExist)  as e:
+                            return std_response(StrErrors.WRONG_DATA, HTTP_400_BAD_REQUEST)
+                    else:
+                        ret['code'] = HTTP_202_ACCEPTED
+                        ret['msg'] = Msg.LOGIN_FAILED
+                        return JsonResponse(ret, status=HTTP_202_ACCEPTED)
+            else:
+                ret['code'] = HTTP_400_BAD_REQUEST
+                ret['msg'] = Msg.INVALID_DATA
+                return JsonResponse(ret, status=HTTP_400_BAD_REQUEST)
 
         except Exception as e:
             print(e)
@@ -663,32 +702,37 @@ class UserForgetPasswordView(APIView):
     def post(self, request, *args, **kwargs):
         ret = {}
         try:
+            serializer = UserForgetPasswordSerializer(data=request.data)
             print("request.data:", request.data)
-
-            email = request.data.get('email')
-            new_password = request.data.get('new_password')
-            code = request.data.get('code')
- 
-            user_code = conn.get(f"ChangePassword_{email}")
+            if serializer.is_valid():
+                email = serializer.validated_data['email']
+                new_password = serializer.validated_data['new_password']
+                code = serializer.validated_data['code']
+    
+                user_code = conn.get(f"ChangePassword_{email}")
             
-            if code == user_code:
-                obj = IHRUser.objects.filter(email=email).first()
-                if obj:
+                if code == user_code:
                     obj = IHRUser.objects.filter(email=email).first()
-                    obj.password = new_password
-                    obj.save()
-                    
-                    ret['code'] = HTTP_200_OK
-                    ret['msg'] = Msg.CHANGE_PASSWORD_SUCCEEDED
-                    return JsonResponse(ret)
+                    if obj:
+                        obj = IHRUser.objects.filter(email=email).first()
+                        obj.password = new_password
+                        obj.save()
+                        
+                        ret['code'] = HTTP_200_OK
+                        ret['msg'] = Msg.CHANGE_PASSWORD_SUCCEEDED
+                        return JsonResponse(ret, status=HTTP_200_OK)
+                    else:
+                        ret['code'] = HTTP_202_ACCEPTED
+                        ret['msg'] = Msg.USER_NOT_EXIST
+                        return JsonResponse(ret, status=HTTP_202_ACCEPTED)
                 else:
                     ret['code'] = HTTP_202_ACCEPTED
-                    ret['msg'] = Msg.USER_NOT_EXIST
-                    return JsonResponse(ret)
+                    ret['msg'] = Msg.CODE_ERROR
+                    return JsonResponse(ret, status=HTTP_202_ACCEPTED)
             else:
-                ret['code'] = HTTP_202_ACCEPTED
-                ret['msg'] = Msg.CODE_ERROR
-                return JsonResponse(ret)
+                ret['code'] = HTTP_400_BAD_REQUEST
+                ret['msg'] = Msg.INVALID_DATA
+                return JsonResponse(ret, status=HTTP_400_BAD_REQUEST)
         except Exception as e:
             print(e)
             ret['code'] = HTTP_404_NOT_FOUND
@@ -697,7 +741,10 @@ class UserForgetPasswordView(APIView):
 
 
 class UserRegisterView(APIView):
+    queryset = IHRUser.objects.all()
+    serializer_class = UserRegisterSerializer
     @swagger_auto_schema(
+        
         operation_description="apiview post description override",
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
@@ -713,34 +760,40 @@ class UserRegisterView(APIView):
     def post(self, request, *args, **kwargs):
         ret = {}
         try:
-            print("request.data:", request.data)
+            serializer = UserRegisterSerializer(data=request.data)
+            print("request.data:", serializer.initial_data)
+            if serializer.is_valid():
+                email = serializer.validated_data['email']
+                password = serializer.validated_data['password']
+                code = serializer.validated_data['code']
+                print("code:", code)
 
-            email = request.data.get('email')
-            password = request.data.get('password')
-            code = request.data.get('code')
-
-            user_code = conn.get(f"Confirmation_{email}")
-            
-            if code == user_code:
-                obj = IHRUser.objects.filter(email=email).first()
-                if obj:
-                    ret['code'] = HTTP_202_ACCEPTED
-                    ret['msg'] = Msg.USER_REGISTERED
-                    return JsonResponse(ret)
+                user_code = conn.get(f"Confirmation_{email}")
+                if code == user_code:
+                    obj = IHRUser.objects.filter(email=email).first()
+                    if obj:
+                        ret['code'] = HTTP_200_OK
+                        ret['msg'] = Msg.USER_ALREADY_REGISTERED
+                        return JsonResponse(ret, status=HTTP_200_OK)
+                    else:
+                        obj = IHRUser.objects.create_user(email=email, password=password)
+                        ret['code'] = HTTP_201_CREATED
+                        ret['msg'] = Msg.REGISTER_SUCCEEDED
+                        return JsonResponse(ret, status=HTTP_201_CREATED)
                 else:
-                    obj = IHRUser.objects.create(email=email, password=password)
-                    ret['code'] = HTTP_200_OK
-                    ret['msg'] = Msg.REGISTER_SUCCEEDED
-                    return JsonResponse(ret)
+                    ret['code'] = HTTP_202_ACCEPTED
+                    ret['msg'] = Msg.CODE_ERROR
+                    return JsonResponse(ret, status=HTTP_202_ACCEPTED)
             else:
-                ret['code'] = HTTP_202_ACCEPTED
-                ret['msg'] = Msg.CODE_ERROR
-                return JsonResponse(ret)
+                ret['code'] = HTTP_400_BAD_REQUEST
+                ret['msg'] = Msg.INVALID_DATA
+                return JsonResponse(ret, status=HTTP_400_BAD_REQUEST)
         except Exception as e:
             print(e)
             ret['code'] = HTTP_404_NOT_FOUND
             ret['msg'] = Msg.REQUEST_EXCEPTION
-            return JsonResponse(ret)
+            return JsonResponse(ret, status=HTTP_404_NOT_FOUND)
+
 
 class UserSendEmailView(APIView):
     @swagger_auto_schema(
@@ -758,15 +811,21 @@ class UserSendEmailView(APIView):
         ret = {}
         
         try:
-            email = request.data.get('email')
-            confirmation_email = ConfirmationEmail(email)
-            send_mail(
-                    'Account activation',
-                    confirmation_email.PLAIN,
-                    '', #TO DO
-                    [email],
-                    fail_silently=False,
-                    )
+            serializer = UserEmailSerializer(data=request.data)
+            if serializer.is_valid():
+                email = serializer.validated_data['email']
+                confirmation_email = ConfirmationEmail(email)
+                send_mail(
+                        'Account activation',
+                        confirmation_email.PLAIN,
+                        '', #TO DO
+                        [email],
+                        fail_silently=False,
+                        )
+            else:
+                ret['code'] = HTTP_400_BAD_REQUEST
+                ret['msg'] = Msg.INVALID_DATA
+                return JsonResponse(ret, status=HTTP_400_BAD_REQUEST)
         except IntegrityError as e:
             return std_response(StrErrors.DUPLICATED, HTTP_409_CONFLICT)
         except (ValueError, SMTPException, HeaderParseError, KeyError) as e:
@@ -774,7 +833,7 @@ class UserSendEmailView(APIView):
             return std_response(StrErrors.WRONG_DATA, HTTP_400_BAD_REQUEST)
         ret['code'] = HTTP_200_OK
         ret['msg'] = Msg.CODE_SENT
-        return JsonResponse(ret)
+        return JsonResponse(ret, status=HTTP_200_OK)
 
 
 class UserSendForgetPasswordEmailView(APIView):
@@ -793,15 +852,21 @@ class UserSendForgetPasswordEmailView(APIView):
         ret = {}
         
         try:
-            email = request.data.get('email')
-            confirmation_email = ChangePasswordEmail(email)
-            send_mail(
-                    'Account activation',
-                    confirmation_email.PLAIN,
-                    '1347143378@qq.com',
-                    [email],
-                    fail_silently=False,
-                    )
+            serializer = UserEmailSerializer(data=request.data)
+            if serializer.is_valid():
+                email = serializer.validated_data['email']
+                confirmation_email = ChangePasswordEmail(email)
+                send_mail(
+                        'Account activation',
+                        confirmation_email.PLAIN,
+                        '1347143378@qq.com',
+                        [email],
+                        fail_silently=False,
+                        )
+            else:
+                ret['code'] = HTTP_400_BAD_REQUEST
+                ret['msg'] = Msg.INVALID_DATA
+                return JsonResponse(ret, status=HTTP_400_BAD_REQUEST)
         except IntegrityError as e:
             return std_response(StrErrors.DUPLICATED, HTTP_409_CONFLICT)
         except (ValueError, SMTPException, HeaderParseError, KeyError) as e:
@@ -809,7 +874,7 @@ class UserSendForgetPasswordEmailView(APIView):
             return std_response(StrErrors.WRONG_DATA, HTTP_400_BAD_REQUEST)
         ret['code'] = HTTP_200_OK
         ret['msg'] = Msg.CODE_SENT
-        return JsonResponse(ret)
+        return JsonResponse(ret, status=HTTP_200_OK)
 
 #  class UserSearchChannelView(APIView):
 #     @swagger_auto_schema(
