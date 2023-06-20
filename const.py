@@ -63,7 +63,7 @@ def std_response(detail, status_code):
     return Response({'detail': detail}, status=status_code)
 
 class Msg:
-    USER_REGISTERED = "User already exists!"
+    USER_ALREADY_REGISTERED = "User already exists!"
     USER_NOT_EXIST = "User does not exist"
     REGISTER_SUCCEEDED = "User registration succeeded!"
     LOGIN_SUCCEEDED = "User login succeeded!"
@@ -79,12 +79,14 @@ class Msg:
 
     SEARCH_SUCCEEDED = "User search succeeded!"
     SAVE_SUCCEEDED = "User save succeeded!"
+
+    INVALID_DATA = "Invalid data!"
     
 
 class StrErrors:
     OK = "ok"
     GENERIC = "Try again later. If the error persist please contact the administrator"
-    WRONG_DATA= "check your data e try again"
+    WRONG_DATA= "check your data and try again"
     DUPLICATED = "duplicated email"
     INVALID = "invalid"
     TRY_AGAIN = "try again"

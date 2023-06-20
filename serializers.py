@@ -1,6 +1,50 @@
 from rest_framework import serializers
 from .models import ASN, Country, Delay,  Forwarding, Delay_alarms, Forwarding_alarms, Disco_events, Disco_probes, Hegemony, HegemonyCone, Atlas_location, Atlas_delay, Atlas_delay_alarms, Hegemony_alarms, Hegemony_country, Hegemony_prefix, Metis_atlas_selection, Metis_atlas_deployment
 
+class UserRegisterSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+    password = serializers.CharField(required=True)
+    code = serializers.CharField(required=True)
+
+    def validate(self, data):
+        return data
+
+class UserSerializer(serializers.Serializer):
+        email = serializers.EmailField(required=True)
+        password = serializers.CharField(required=True)
+        
+        def validate(self, data):
+                return data
+
+class UserEmailSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+
+    def validate(self, data):
+        return data
+    
+class UserLoginSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+    password = serializers.CharField(required=True)
+
+    def validate(self, data):
+        return data
+    
+class UserChangePasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+    password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
+
+    def validate(self, data):
+        return data
+
+class UserForgetPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+    new_password = serializers.CharField(required=True)
+    code = serializers.CharField(required=True)
+    
+    def validate(self, data):
+        return data
+
 class DelaySerializer(serializers.ModelSerializer):
     queryset = Delay.objects.select_related("asn")
     asn_name = serializers.PrimaryKeyRelatedField(
