@@ -20,7 +20,7 @@ exposed_api = [
     url(r'^user/register$', views.UserRegisterView.as_view(), name='UserRegisterListView'),
 	url(r'^user/login$', views.UserLoginView.as_view(), name='UserLoginListView'),
 	url(r'^user/logout$', views.UserLogoutView.as_view(), name='UserLogoutListView'),
-	url(r'^user/changepassword$', views.UserChangePasswordView.as_view(), name='UserChangePasswordListView'),
+    url(r'^user/changepassword$', views.UserChangePasswordView.as_view(), name='UserChangePasswordListView'),
 	url(r'^user/forgetpassword$', views.UserForgetPasswordView.as_view(), name='UserForgetPasswordListView'),
 
 	url(r'^user/savechannel$', views.UserSaveChannelView.as_view(), name='UserSaveChannelListView'),

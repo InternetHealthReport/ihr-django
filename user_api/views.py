@@ -133,10 +133,12 @@ class UserView(viewsets.GenericViewSet):
     def verify_token(self, request):
         return Response(status=HTTP_200_OK)
 
-    @action(detail=False, methods=["POST"], permission_classes=[IsAuthenticated])
+    @action(detail=False, methods=["POST"], permission_classes=[])
     def change_credentials(self, request):
         email = request.data.get("email")
         if email is not None:
+            token = Token.objects.get(key=request.META.get("HTTP_AUTHORIZATION").split('=')[-1])
+            request.user = token.user
             #change email
             if self.get_queryset().filter(email=email).count() > 0:
                 return std_response(StrErrors.DUPLICATED, HTTP_409_CONFLICT)
@@ -194,9 +196,10 @@ class UserView(viewsets.GenericViewSet):
             raise e
         return std_response(StrErrors.WRONG_DATA, HTTP_400_BAD_REQUEST)
 
-    @action(detail=False, methods=["POST"], permission_classes=[IsAuthenticated])
+    @action(detail=False, methods=["POST"], permission_classes=[])
     def show(self, request):
-        serializer = self.get_serializer(request.user)
+        token = Token.objects.get(key=request.META.get("HTTP_AUTHORIZATION").split('=')[-1])
+        serializer = self.get_serializer(token.user)
         return Response(serializer.data, status=HTTP_200_OK)
 
     @action(detail=False, methods=["POST"], permission_classes=[IsAuthenticated])

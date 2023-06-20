@@ -47,30 +47,7 @@ from rest_framework.reverse import reverse
 from rest_framework import generics
 from rest_framework.exceptions import ParseError
 
-from .serializers import (
-    UserChangePasswordSerializer,
-    UserForgetPasswordSerializer,
-    UserLoginSerializer,
-    UserEmailSerializer, 
-    UserRegisterSerializer, 
-    ASNSerializer, 
-    CountrySerializer, 
-    DelaySerializer, 
-    ForwardingSerializer, 
-    DelayAlarmsSerializer, 
-    ForwardingAlarmsSerializer, 
-    DiscoEventsSerializer, 
-    DiscoProbesSerializer, 
-    HegemonySerializer, 
-    HegemonyConeSerializer, 
-    NetworkDelaySerializer, 
-    NetworkDelayLocationsSerializer, 
-    NetworkDelayAlarmsSerializer, 
-    HegemonyAlarmsSerializer, 
-    HegemonyCountrySerializer, 
-    HegemonyPrefixSerializer, 
-    MetisAtlasSelectionSerializer, 
-    MetisAtlasDeploymentSerializer )
+from .serializers import *
 from django_filters import rest_framework as filters
 import django_filters
 from django.db.models import Q, F
@@ -592,7 +569,40 @@ class UserLoginView(APIView):
                 ret['code'] = HTTP_401_UNAUTHORIZED
                 ret['msg'] = Msg.INVALID_DATA
                 return JsonResponse(ret, status=HTTP_401_UNAUTHORIZED)
+<
 
+        except Exception as e:
+            print(e)
+            ret['code'] = HTTP_404_NOT_FOUND
+            ret['msg'] = Msg.REQUEST_EXCEPTION
+            return JsonResponse(ret)
+
+
+class UserShowView(APIView):
+    @swagger_auto_schema(
+        operation_description="apiview post description override",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=[]
+        ),
+        security=[]
+    )
+    def post(self, request, *args, **kwargs):
+        ret = {}
+        try:
+            token = Token.objects.get(key=request.META.get("HTTP_AUTHORIZATION").split('=')[-1])
+            user_login = conn.get(f"Login_{token.user}")
+            if user_login:
+                user = IHRUser.objects.get(email=token.user)
+                serializer = UserSerializer(user)
+                ret['code'] = HTTP_200_OK
+                ret['msg'] = Msg.LOGIN_SUCCEEDED
+                ret['data'] = serializer.data
+                return JsonResponse(ret, status=HTTP_200_OK)
+            else:
+                ret['code'] = HTTP_401_UNAUTHORIZED
+                ret['msg'] = Msg.LOGIN_FAILED
+                return JsonResponse(ret, status=HTTP_401_UNAUTHORIZED)
         except Exception as e:
             print(e)
             ret['code'] = HTTP_404_NOT_FOUND
@@ -612,7 +622,6 @@ class UserLogoutView(APIView):
         ret = {}
         try:
             token = Token.objects.get(key=request.META.get("HTTP_AUTHORIZATION").split('=')[-1])
-            
             conn.delete(f"Login_{token.user}")
             user_login = conn.get(f"Login_{token.user}")
             #print(user_login)
@@ -781,9 +790,15 @@ class UserRegisterView(APIView):
                         ret['msg'] = Msg.REGISTER_SUCCEEDED
                         return JsonResponse(ret, status=HTTP_201_CREATED)
                 else:
+
+                    ret['code'] = HTTP_400_BAD_REQUEST
+                    ret['msg'] = Msg.CODE_ERROR
+                    return JsonResponse(ret, status=HTTP_400_BAD_REQUEST)
+
                     ret['code'] = HTTP_202_ACCEPTED
                     ret['msg'] = Msg.CODE_ERROR
                     return JsonResponse(ret, status=HTTP_202_ACCEPTED)
+
             else:
                 ret['code'] = HTTP_400_BAD_REQUEST
                 ret['msg'] = Msg.INVALID_DATA
@@ -815,6 +830,8 @@ class UserSendEmailView(APIView):
             if serializer.is_valid():
                 email = serializer.validated_data['email']
                 confirmation_email = ConfirmationEmail(email)
+
+                print(confirmation_email.PLAIN)
                 send_mail(
                         'Account activation',
                         confirmation_email.PLAIN,

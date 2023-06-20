@@ -8,7 +8,15 @@ class UserRegisterSerializer(serializers.Serializer):
 
     def validate(self, data):
         return data
-    
+
+
+class UserSerializer(serializers.Serializer):
+        email = serializers.EmailField(required=True)
+        password = serializers.CharField(required=True)
+        
+        def validate(self, data):
+                return data
+
 class UserEmailSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
 
