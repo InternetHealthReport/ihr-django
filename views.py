@@ -569,6 +569,7 @@ class UserLoginView(APIView):
                 ret['code'] = HTTP_401_UNAUTHORIZED
                 ret['msg'] = Msg.INVALID_DATA
                 return JsonResponse(ret, status=HTTP_401_UNAUTHORIZED)
+<
 
         except Exception as e:
             print(e)
@@ -789,9 +790,15 @@ class UserRegisterView(APIView):
                         ret['msg'] = Msg.REGISTER_SUCCEEDED
                         return JsonResponse(ret, status=HTTP_201_CREATED)
                 else:
+
                     ret['code'] = HTTP_400_BAD_REQUEST
                     ret['msg'] = Msg.CODE_ERROR
                     return JsonResponse(ret, status=HTTP_400_BAD_REQUEST)
+
+                    ret['code'] = HTTP_202_ACCEPTED
+                    ret['msg'] = Msg.CODE_ERROR
+                    return JsonResponse(ret, status=HTTP_202_ACCEPTED)
+
             else:
                 ret['code'] = HTTP_400_BAD_REQUEST
                 ret['msg'] = Msg.INVALID_DATA
@@ -823,6 +830,7 @@ class UserSendEmailView(APIView):
             if serializer.is_valid():
                 email = serializer.validated_data['email']
                 confirmation_email = ConfirmationEmail(email)
+
                 print(confirmation_email.PLAIN)
                 send_mail(
                         'Account activation',
