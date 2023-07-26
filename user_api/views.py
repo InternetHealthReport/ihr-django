@@ -15,6 +15,8 @@ from rest_framework.status import (
     HTTP_409_CONFLICT,
     HTTP_200_OK
 )
+from django.conf import settings as conf_settings
+
 from django.core.mail import send_mail
 from smtplib import SMTPException
 from email.errors import HeaderParseError
@@ -136,9 +138,9 @@ class UserView(viewsets.GenericViewSet):
     @action(detail=False, methods=["POST"], permission_classes=[])
     def change_credentials(self, request):
         email = request.data.get("email")
+        token = Token.objects.get(key=request.META.get("HTTP_AUTHORIZATION").split('=')[-1])
+        request.user = token.user
         if email is not None:
-            token = Token.objects.get(key=request.META.get("HTTP_AUTHORIZATION").split('=')[-1])
-            request.user = token.user
             #change email
             if self.get_queryset().filter(email=email).count() > 0:
                 return std_response(StrErrors.DUPLICATED, HTTP_409_CONFLICT)
@@ -151,7 +153,7 @@ class UserView(viewsets.GenericViewSet):
                 send_mail(
                     'Email change',
                     reset_email.PLAIN,
-                    'noreplay@ihr.iij.jp',
+                    conf_settings.EMAIL_HOST_USER,
                     [change.new_email],
                     fail_silently=False,
                 )
@@ -173,7 +175,7 @@ class UserView(viewsets.GenericViewSet):
         try:
             change  = EmailChangeRequest.objects.get(new_email=content["email"])
             user = change.user
-            if not user.is_active or not user.check_password(content["password"]):
+            if not user.check_password(content["password"]):
                 return std_response(StrErrors.WRONG_DATA, HTTP_403_FORBIDDEN)
 
             now = datetime.utcnow()

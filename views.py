@@ -13,7 +13,7 @@ from django.views.decorators.cache import cache_page
 
 from django.views.decorators.cache import patch_cache_control, cache_control
 from django.utils.decorators import method_decorator
-
+from django.conf import settings as conf_settings
 from datetime import datetime, date, timedelta
 import pandas as pd
 import pytz
@@ -569,8 +569,6 @@ class UserLoginView(APIView):
                 ret['code'] = HTTP_401_UNAUTHORIZED
                 ret['msg'] = Msg.INVALID_DATA
                 return JsonResponse(ret, status=HTTP_401_UNAUTHORIZED)
-<
-
         except Exception as e:
             print(e)
             ret['code'] = HTTP_404_NOT_FOUND
@@ -723,10 +721,8 @@ class UserForgetPasswordView(APIView):
                 if code == user_code:
                     obj = IHRUser.objects.filter(email=email).first()
                     if obj:
-                        obj = IHRUser.objects.filter(email=email).first()
-                        obj.password = new_password
+                        obj.set_password(new_password)
                         obj.save()
-                        
                         ret['code'] = HTTP_200_OK
                         ret['msg'] = Msg.CHANGE_PASSWORD_SUCCEEDED
                         return JsonResponse(ret, status=HTTP_200_OK)
@@ -827,6 +823,7 @@ class UserSendEmailView(APIView):
         
         try:
             serializer = UserEmailSerializer(data=request.data)
+            print("request.data:", request.data)
             if serializer.is_valid():
                 email = serializer.validated_data['email']
                 confirmation_email = ConfirmationEmail(email)
@@ -835,11 +832,12 @@ class UserSendEmailView(APIView):
                 send_mail(
                         'Account activation',
                         confirmation_email.PLAIN,
-                        '', #TO DO
+                        conf_settings.EMAIL_HOST_USER, #TO DO
                         [email],
                         fail_silently=False,
                         )
             else:
+                # mohhamedfathyy@gmail.com
                 ret['code'] = HTTP_400_BAD_REQUEST
                 ret['msg'] = Msg.INVALID_DATA
                 return JsonResponse(ret, status=HTTP_400_BAD_REQUEST)
@@ -1032,7 +1030,7 @@ class UserSaveChannelView(APIView):
             print(channel)
             # frequency = request.data.get('channel')
             # print(frequency)
-            token = Token.objects.get(key=request.META.get("HTTP_COOKIE").split('=')[-1])
+            token = Token.objects.get(key=request.META.get("HTTP_AUTHORIZATION").split('=')[-1])
             # print(len(request.data.get('channel')))
 
             IHRUser_Channel.objects.filter(name=token.user).delete()
@@ -1070,7 +1068,7 @@ class UserGetChannelView(APIView):
     def post(self, request, *args, **kwargs):
         ret = {}
         try:
-            token = Token.objects.get(key=request.META.get("HTTP_COOKIE").split('=')[-1])
+            token = Token.objects.get(key=request.META.get("HTTP_AUTHORIZATION").split('=')[-1])
             # print(token.user)
             user_name = token.user # request.data.get('user')
             obj = IHRUser_Channel.objects.filter(name = user_name).values_list('channel','frequency').distinct()
