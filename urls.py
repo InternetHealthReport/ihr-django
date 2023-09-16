@@ -23,8 +23,16 @@ exposed_api = [
     url(r'^user/changepassword$', views.UserChangePasswordView.as_view(), name='UserChangePasswordListView'),
 	url(r'^user/forgetpassword$', views.UserForgetPasswordView.as_view(), name='UserForgetPasswordListView'),
 
+	url(r'^user/savefrequency$', views.UserSaveFrequencyView.as_view(), name='UserSaveChannelListView'),
 	url(r'^user/savechannel$', views.UserSaveChannelView.as_view(), name='UserSaveChannelListView'),
 	url(r'^user/getchannel$', views.UserGetChannelView.as_view(), name='UserGetChannelListView'),
+
+    url(r'^user/channel$', views.UserChannel.as_view(), name='UserSaveCountryListView'),
+    url(r'^user/emailchannel$', views.UserEmailChannel.as_view(), name='UserSaveCountryListView'),
+    url(r'^user/removeemailchannel$', views.RemoveUserEmailChannel.as_view(), name='UserSaveCountryListView'),
+    url(r'^user/slackchannel$', views.UserSlackChannel.as_view(), name='UserSaveCountryListView'),
+    url(r'^user/discordchannel$', views.UserDiscordChannel.as_view(), name='UserSaveDiscordListView'),
+
 
     url(r'^networks/$', views.NetworkView.as_view(), name='networkListView'),
     url(r'^countries/$', views.CountryView.as_view(), name='countryListView'),
@@ -43,6 +51,7 @@ exposed_api = [
     url(r'^network_delay/alarms/$', views.NetworkDelayAlarmsView.as_view(), name='networkDelayAlarmsListView'),
     url(r'^metis/atlas/selection/$', views.MetisAtlasSelectionView.as_view(), name='metisAtlasSelectionListView'),
     url(r'^metis/atlas/deployment/$', views.MetisAtlasDeploymentView.as_view(), name='metisAtlasDeploymentListView'),
+    url(r'test/$', views.test, name='testListView'),
 ]   
 
 schema_view = get_schema_view(
