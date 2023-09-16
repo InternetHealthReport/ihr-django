@@ -11,6 +11,8 @@ This is the implementation for the IHR API: https://ihr.iijlab.net/ihr/en-us/api
   - [using docker](#docker)
     - [using docker with local database](#docker-local)
     - [using docker with image database](#docker-remote)
+
+- [Celery and Celery Beat](#celery)
 - [Add test data to the database](#add-test-data)
 
 
@@ -236,6 +238,26 @@ python manage.py migrate
 congratulations, you have a running django server
 
 Go to http://127.0.0.1:8000/hegemony/ to check if it is working.
+
+
+## Celery components <a name = "celery"></a>
+
+    You can find celery in many files including 
+    - _init_.py in internethealthreport directory
+    - celery.py
+    - tasks.py
+    - settings.py
+
+    Celery Beat is used as a scheduler for Celery to do the task in a fixed interval of time.
+
+    In the __init__.py file, it just tells the apps that there is a Celery app to link with them.
+
+    In the celery.py file, it just integrates Celery with the app, and compine their settings, and discovers the tasks that it will be linked with.
+
+    The celery performs the appropriate tasks in tasks.py.
+
+    In settings.py, line 260+, it sets the zone of the celery and tells him which task will be scheduled and its interval.
+
 
 ## Add test data to the database <a name = "add-test-data"></a>
 In the production database some of the ids are changed to BIGINT. We should
