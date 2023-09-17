@@ -1257,7 +1257,7 @@ class UserSlackChannel(APIView):
                 response = requests.post('https://slack.com/api/oauth.v2.access', data=data)
                 json_response = response.json()
                 channel_id = json_response['incoming_webhook']['channel_id']
-            
+                access_token = json_response['access_token']
             if not channel_id:
                 ret['code'] = HTTP_404_NOT_FOUND
                 ret['msg'] = Msg.REQUEST_EXCEPTION
@@ -1266,10 +1266,11 @@ class UserSlackChannel(APIView):
             user_notification = IHRUser_notification.objects.filter(user = user_name).first()
             if user_notification:
                 user_notification.slack_notification_id = channel_id
+                user_notification.slack_access_token = access_token
                 user_notification.save()
             else:
                 IHRUser_notification.objects.create(user = user_name,email = user_name.email,
-                                                     slack_notification_id = channel_id)
+                                                     slack_notification_id = channel_id, slack_access_token = access_token)
 
             ret['code'] = HTTP_200_OK
             ret['msg'] = Msg.SAVE_SUCCEEDED
