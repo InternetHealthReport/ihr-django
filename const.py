@@ -3,7 +3,10 @@ from rest_framework.response import Response
 import urllib.parse
 import random
 import redis
-POOL = redis.ConnectionPool(host='127.0.0.1', port=6379,max_connections=100, decode_responses=True)
+from django.conf import settings as conf_settings
+host = conf_settings.REDIS_HOST
+print("host => ", host)
+POOL = redis.ConnectionPool(host=host, port=6379,max_connections=100, decode_responses=True)
 conn = redis.Redis(connection_pool=POOL)
 
 from rest_framework.status import (

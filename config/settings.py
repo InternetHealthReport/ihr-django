@@ -11,10 +11,11 @@ https://docs.djangoproject.com/en/1.9/ref/settings/
 """
 
 import os
-
+from celery.schedules import crontab
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+REDIS_HOST="REDIS"
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.9/howto/deployment/checklist/
@@ -25,10 +26,23 @@ SECRET_KEY_PSQL = '123password456'
 RECAPTCHA_SECRET = ''
 EMAIL_HOST_PASSWORD = '' #os.environ['EMAIL_HOST_PASSWORD']   # set environ yourself
 
+# Slack API
+SLACK_CLIENT_ID = 'client id'
+SLACK_CLIENT_SECRET = 'secret'
+SLACK_APP_TOKEN='token'
+
+# Discord api   
+DISCORD_CLIENT_ID = 'id'
+DISCORD_CLIENT_SECRET = 'secret'
+DISCORD_APP_TOKEN = 'app token'
+DISCORD_BOT_TOKEN = 'bot token'
+DISCORD_REDIRECT_URI = 'http://localhost:8080/ihr/en-us/discord_redirect'
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["localhost","127.0.0.1","ihr.iijlab.net"]
+# ALLOWED_HOSTS = ["localhost","127.0.0.1","ihr.iijlab.net"]
+ALLOWED_HOSTS = ["*"]
 
 SITE_ID = 1
 
@@ -67,11 +81,21 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',
     'django.middleware.cache.FetchFromCacheMiddleware',
+    'django.middleware.cache.UpdateCacheMiddleware',
 ]
 
 CACHE_MIDDLEWARE_ALIAS = 'default'
 CACHE_MIDDLEWARE_SECONDS = 1800
 CACHE_MIDDLEWARE_KEY_PREFIX = 'ihr.iijlab.net'
+# CACHES = {
+#     'default': {
+#         'BACKEND': 'django_redis.cache.RedisCache',
+#         'LOCATION': 'redis://0.0.0.0:6379/0',  # Replace with your Redis server details if necessary
+#         'OPTIONS': {
+#             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+#         }
+#     }
+# }
 
 CORS_ORIGIN_ALLOW_ALL = True
 
@@ -139,7 +163,7 @@ DATABASES = {
         'NAME': 'ihr',
         'USER': 'django',
         'PASSWORD': SECRET_KEY_PSQL,
-        'HOST': 'localhost',
+        'HOST': "localhost",
         'PORT': '5432',
     }
 }
@@ -194,7 +218,6 @@ EMAIL_USE_TLS = True
 EMAIL_HOST = 'smtp.gmail.com'  
 EMAIL_HOST_USER = 'romain.fontugne@gmail.com'  # this is my email address, use yours
 EMAIL_PORT = 587  
-
 ADMINS = (
     ('Romain Fontugne', 'romain.fontugne@gmail.com'),   # email will be sent to your_email
 )
@@ -223,3 +246,16 @@ LOGGING = {
     },
 }
 
+# Celery settings
+CELERY_TIMEZONE = 'UTC'
+CELERY_TASK_TRACK_STARTED = True
+CELERY_BROKER_URL = "redis://redis:6379"
+CELERY_RESULT_BACKEND = "redis://redis:6379"
+
+CELERY_BEAT_SCHEDULE = {
+    "kafka_alert": {
+        "task": "internetHealthReport.tasks.kafka_alert",
+        "schedule": crontab(minute="0",hour="*/1"),
+        # it tells that it will be scheduled at min 0 from each hour
+    },
+}
