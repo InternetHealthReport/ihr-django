@@ -259,6 +259,22 @@ Go to http://127.0.0.1:8000/hegemony/ to check if it is working.
     In settings.py, line 260+, it sets the zone of the celery and tells him which task will be scheduled and its interval.
 
 
+### If you want to add a new task to celery
+
+    If it is new task 
+        - You can add the task in tasks.py
+    
+    If it is the same task but for different topic 
+        - You can copy the task and just change the topic that is found in the TopicPartition function
+
+    Note that 
+        - tasks.py is exists in internethealthreport folder
+        - Don't forget to write ```@shared_task()``` on top of the function
+
+    - import this function in celery.py file the same way as the kafka_alert imported
+
+    - in settings.py, scroll down to the last thing and you will find CELERY_BEAT_SCHEDULE and add this function to it the same way as kafka_alert is added (please note that you have to give it the same name as the function name)
+
 ## Add test data to the database <a name = "add-test-data"></a>
 In the production database some of the ids are changed to BIGINT. We should
 locally apply these changes before importing data:

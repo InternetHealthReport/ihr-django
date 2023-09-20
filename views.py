@@ -2278,37 +2278,3 @@ class DiscoDetail(generic.DetailView):
 
     template_name = "ihr/disco_detail.html"
 
-
-
-def test(request):
-    from confluent_kafka import Producer
-    import msgpack 
-
-    conf = {
-            'bootstrap.servers': "kafka1:29092",
-    }
-
-    producer = Producer(conf)
-    
-    def acked(err, msg):
-        if err is not None:
-            print("Failed to deliver message: %s: %s" % (str(msg), str(err)))
-        else:
-            print("Message produced: %s" % (str(msg.value())))
-
-    msg_value = {'topic': 'ihr_raclette_diffrtt_anomalies', 'partition': 0, 'key': None, 
-                  'headers': None, 'value': {'datapoint': 
-                {'ts': 1692024300.0, 'startpoint': 'CTVienna, Vienna, ATv4', 'endpoint': 'AS21299v4',
-                  'median': 113.61099999999999, 'minimum': 84.598, 'nb_samples': 96, 'nb_tracks': 11,
-                    'nb_probes': 6, 'entropy': 1.0, 'hop': 5.0, 'nb_real_rtts': 0}, 
-                    'deviation': 45.00720258298086}}
-    
-    value = msgpack.packb(msg_value, use_bin_type=True)
-    
-    producer.produce("ihr_raclette_diffrtt_anomalies", key= "alert", value=value, callback=acked)
-
-    # Wait up to 1 second for events. Callbacks will be invoked during
-    # this method call if the message is acknowledged.
-    producer.flush()
-
-    return HttpResponse("ok")
