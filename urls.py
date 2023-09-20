@@ -51,7 +51,6 @@ exposed_api = [
     url(r'^network_delay/alarms/$', views.NetworkDelayAlarmsView.as_view(), name='networkDelayAlarmsListView'),
     url(r'^metis/atlas/selection/$', views.MetisAtlasSelectionView.as_view(), name='metisAtlasSelectionListView'),
     url(r'^metis/atlas/deployment/$', views.MetisAtlasDeploymentView.as_view(), name='metisAtlasDeploymentListView'),
-    url(r'test/$', views.test, name='testListView'),
 ]   
 
 schema_view = get_schema_view(
