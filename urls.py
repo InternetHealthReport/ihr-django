@@ -14,7 +14,18 @@ from .user_api import urls as user_urls
 from drf_yasg.generators import OpenAPISchemaGenerator
 
 
-exposed_api = [ 
+exposed_api = [
+    url(r'^user/sendregisteremail$', views.UserSendEmailView.as_view(), name='UserSendEmailListView'),
+    url(r'^user/sendforgetpasswordemail$', views.UserSendForgetPasswordEmailView.as_view(), name='UserSendForgetPasswordEmailListView'),
+    url(r'^user/register$', views.UserRegisterView.as_view(), name='UserRegisterListView'),
+	url(r'^user/login$', views.UserLoginView.as_view(), name='UserLoginListView'),
+	url(r'^user/logout$', views.UserLogoutView.as_view(), name='UserLogoutListView'),
+    url(r'^user/changepassword$', views.UserChangePasswordView.as_view(), name='UserChangePasswordListView'),
+	url(r'^user/forgetpassword$', views.UserForgetPasswordView.as_view(), name='UserForgetPasswordListView'),
+
+	url(r'^user/savechannel$', views.UserSaveChannelView.as_view(), name='UserSaveChannelListView'),
+	url(r'^user/getchannel$', views.UserGetChannelView.as_view(), name='UserGetChannelListView'),
+
     url(r'^networks/$', views.NetworkView.as_view(), name='networkListView'),
     url(r'^countries/$', views.CountryView.as_view(), name='countryListView'),
     url(r'^link/delay/$', views.DelayView.as_view(), name='delayListView'),
@@ -32,13 +43,13 @@ exposed_api = [
     url(r'^network_delay/alarms/$', views.NetworkDelayAlarmsView.as_view(), name='networkDelayAlarmsListView'),
     url(r'^metis/atlas/selection/$', views.MetisAtlasSelectionView.as_view(), name='metisAtlasSelectionListView'),
     url(r'^metis/atlas/deployment/$', views.MetisAtlasDeploymentView.as_view(), name='metisAtlasDeploymentListView'),
-]   
+]
 
 schema_view = get_schema_view(
        openapi.Info(
          title="IHR API",
          default_version='',
-         description="""This RESTful API is intended for developpers and researchers who want to fetch Internet Health Report data and integrate IHR results to their workflow. API data is also available via our <a href='/ihr/en-us/documentation#Python_Library'>Python library</a>. 
+         description="""This RESTful API is intended for developers and researchers who want to fetch Internet Health Report data and integrate IHR results to their workflow. API data is also available via our <a href='/ihr/en-us/documentation#Python_Library'>Python library</a>.
          <b>For bulk downloads please use: <a href="https://ihr-archive.iijlab.net/" target="_blank">https://ihr-archive.iijlab.net/</a></b>
          <br>Parameters ending with __lte and __gte (acronyms for 'less than or equal to', and, 'greater than or equal to') are used for selecting a range of values.""",
          # terms_of_service="https://ihr.iijlab.net/ihr/en-us/documentation#Data_policy",

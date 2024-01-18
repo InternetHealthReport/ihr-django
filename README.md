@@ -3,7 +3,18 @@ Internet Health Report API
 
 This is the implementation for the IHR API: https://ihr.iijlab.net/ihr/en-us/api
 
-## Installation of Django and IHR app
+
+# 📝 Table of Contents
+
+- [basic installation for all](#install-all)
+  - [If you wish to use your machine](#machine)
+  - [using docker](#docker)
+    - [using docker with local database](#docker-local)
+    - [using docker with image database](#docker-remote)
+- [Add test data to the database](#add-test-data)
+
+
+## basic installation for all <a name = "install-all"></a>
 
 Required packages for Ubuntu:
 ```zsh
@@ -28,18 +39,36 @@ Create a new django project:
 django-admin startproject internetHealthReport
 ```
 
-Copy IHR's django application and install dependencies:
+Copy IHR's django application :
 ```zsh
 cd internetHealthReport
 git clone git@github.com:InternetHealthReport/ihr-django.git ihr
+
+```
+
+Then copy settings.py, urls.py, wsgi.py, Dockerfile,docker compose to the correct place:
+```zsh
+cp ihr/config/*.py internetHealthReport/
+cp ihr/config/Dockerfile .
+cp ihr/config/docker-compose.yml .
+```
+You may have to adjust some variables in settings.py to match your database, smtp account, recapcha credentials.
+
+## If you wish to use your machine <a name = "machine"></a>
+
+install dependencies
+```zsh
 pip install -r ihr/requirements.txt
 ```
 
-Then copy settings.py, urls.py, wsgi.py to the correct place:
+make sure that the host of database in the settings is localhost
+    
 ```zsh
-cp ihr/config/*.py internetHealthReport/
+    cd internetHealthReport
+    nano settings.py
 ```
-You may have to adjust some variables in settings.py to match your database, smtp account, recapcha credentials.
+scroll down to the DATABASES section and make sure that the host is localhost
+    
 
 Create the database and django user (change password as needed):
 ```zsh
@@ -72,9 +101,143 @@ Start django:
 ./manage.py runserver
 ```
 
+## if you want to use docker <a name = "docker"></a>
+
+
+install docker
+
+```zsh
+sudo apt install docker
+```
+
+
+make sure that the host of database in the settings is db
+    
+```zsh
+    cd internetHealthReport
+    nano settings.py
+```
+scroll down to the DATABASES section and make sure that the host is db
+    
+
+
+make sure you are in the internetHealthReport directory
+
+## if you want to use docker with local postgres <a name = "docker-local"></a>
+
+Get your local ip address
+
+```zsh
+hostname -I
+```
+you will get something like that
+
+```zsh
+xxx.xxx.x.xx
+```
+copy the first IP address and paste it in the docker compose file in extra hosts section
+
+```zsh
+    extra_hosts:
+      - "database:xxx.xxx.x.xx"
+```
+
+allow your postgres to accept connections from outside
+
+```zsh
+sudo nano /etc/postgresql/**/main/postgresql.conf
+```
+
+change the following line
+
+```zsh
+#listen_addresses = 'localhost'
+```
+
+to
+
+```zsh
+listen_addresses = '*'
+```
+
+allow your postgres to accept connections from outside
+
+```zsh
+sudo nano /etc/postgresql/**/main/pg_hba.conf
+```
+
+add the following line
+
+```zsh
+host    all             all            172.xx.0.00/16            md5
+```
+xx may vary depending on postgres version but in newer versions it is 20 else it could be 17
+
+
+start the docker container
+
+```zsh
+docker compose up
+```
+and of course you need to have a postgres database running on your machine 
+
+## if you want to use docker with remote postgres <a name = "docker-remote"></a>
+
+uncomment the postgres image and volume database in docker compose
+
+```zsh
+    #   db:
+    #     image: kartoza/postgis:9.6-2.4
+    #     volumes:
+    #       - postgres_data:/var/lib/postgresql/data/
+    #     environment:
+    #       - POSTGRES_USER=django
+    #       - POSTGRES_PASSWORD=123password456
+    #       - POSTGRES_DB=ihr
+
+    # volumes:
+    #   postgres_data:
+```
+
+make sure in settings in DATABASES the host is db not database
+
+and then start the container 
+    
+```zsh
+    docker compose up
+```
+
+
+If this is the first time to run the container, you need to apply the migration files
+
+```zsh
+docker ps
+```
+
+you will find something like that 
+    
+```zsh
+    CONTAINER ID   IMAGE                                        COMMAND                  CREATED          STATUS          PORTS                    NAMES
+    1c1c1c1c1c1c   internethealthreport-django-app         "python manage.py ru…"       20 seconds ago   Up 19 seconds
+```
+
+copy the container id and run the following command
+
+```zsh
+docker exec -it 1c1c1c1c1c1c /bin/bash
+```
+
+you will be inside the container
+
+```zsh
+python manage.py migrate
+```
+
+congratulations, you have a running django server
+
 Go to http://127.0.0.1:8000/hegemony/ to check if it is working.
 
-## Add test data to the database
+## Add test data to the database <a name = "add-test-data"></a>
 In the production database some of the ids are changed to BIGINT. We should
 locally apply these changes before importing data:
 ```zsh
