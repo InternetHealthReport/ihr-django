@@ -14,7 +14,7 @@ from django.views.decorators.cache import cache_page
 from django.views.decorators.cache import patch_cache_control, cache_control
 from django.utils.decorators import method_decorator
 from django.conf import settings as conf_settings
-from datetime import datetime, date, timedelta, time
+from datetime import datetime, date, timedelta, time, timezone
 
 import pandas as pd
 import pytz
@@ -1480,7 +1480,7 @@ class MetisAtlasSelectionView(generics.ListAPIView):
                 self.request.query_params.get('timebin__gte', None) )
         if last is not None:
             # Cache forever content that is more than a week old
-            today = datetime.combine(date.today(), time.min)
+            today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=timezone.utc)
             past_days = today - timedelta(days=7) 
             if arrow.get(last).datetime < past_days: 
                 patch_cache_control(response, max_age=15552000)
@@ -1517,7 +1517,7 @@ class MetisAtlasDeploymentView(generics.ListAPIView):
                 self.request.query_params.get('timebin__gte', None) )
         if last is not None:
             # Cache forever content that is more than a week old
-            today = datetime.combine(date.today(), time.min)
+            today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=timezone.utc)
             past_days = today - timedelta(days=7) 
             if arrow.get(last).datetime < past_days: 
                 patch_cache_control(response, max_age=15552000)
