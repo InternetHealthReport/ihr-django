@@ -14,7 +14,7 @@ from django.views.decorators.cache import cache_page
 from django.views.decorators.cache import patch_cache_control, cache_control
 from django.utils.decorators import method_decorator
 from django.conf import settings as conf_settings
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, time
 
 import pandas as pd
 import pytz
@@ -58,7 +58,6 @@ from rest_framework.views import APIView
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from .models import IHRUser, Country, ASN, Atlas_location,IHRUser_Channel
-import time
 from rest_framework.authtoken.models import Token
 
 # by default shows only one week of data
@@ -1483,7 +1482,7 @@ class MetisAtlasSelectionView(generics.ListAPIView):
             # Cache forever content that is more than a week old
             today = datetime.combine(date.today(), time.min)
             past_days = today - timedelta(days=7) 
-            if arrow.get(last).date() < past_days: 
+            if arrow.get(last).datetime < past_days: 
                 patch_cache_control(response, max_age=15552000)
 
         return response
@@ -1520,7 +1519,7 @@ class MetisAtlasDeploymentView(generics.ListAPIView):
             # Cache forever content that is more than a week old
             today = datetime.combine(date.today(), time.min)
             past_days = today - timedelta(days=7) 
-            if arrow.get(last).date() < past_days: 
+            if arrow.get(last).datetime < past_days: 
                 patch_cache_control(response, max_age=15552000)
 
         return response
