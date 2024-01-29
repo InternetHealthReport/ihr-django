@@ -430,7 +430,7 @@ class TR_hegemony_identifier(CachingMixin, models.Model):
 
 class TR_hegemony(CachingMixin, models.Model):
     timebin = models.DateTimeField(db_index=True, help_text="Timestamp of reported value. The computation uses four weeks of data, hence 2022-03-28T00:00 means the values are based on data from 2022-02-28T00:00 to 2022-03-28T00:00.")
-    origin = models.ForeignKey(TR_hegemony_identifier, on_delete=models.CASCADE, db_index=True,
+    origin = models.ForeignKey(TR_hegemony_identifier, on_delete=models.CASCADE, db_index=True, related_name='local_graph',
                                help_text="Dependent network, it can be any public ASN. Retrieve all dependencies of a network by setting only this parameter and a timebin.")
     dependency = models.ForeignKey(TR_hegemony_identifier, on_delete=models.CASCADE, db_index=True,
                                    help_text="Dependency. Transit network or IXP commonly seen in traceroutes towards the origin.")
