@@ -1133,9 +1133,9 @@ class TRHegemonyFilter(HelpfulFilterSet):
     origin_name = ListStringFilter(field_name='origin__name', help_text="Origin name. It can be a single value or a list of values separated by the pipe character (i.e. | ). The meaning of values depends on the identifier type: <ul><li>type=AS: ASN</li><li>type=IX: PeeringDB IX ID</li><li>type=MB: IXP member (format: ix_id;asn)</li><li>type=IP: Interface IP of an IXP member</li></ul>")
     dependency_name = ListStringFilter(field_name='dependency__name', help_text="Dependency name. It can be a single value or a list of values separated by the pipe character (i.e. | ). The meaning of values depends on the identifier type: <ul><li>type=AS: ASN</li><li>type=IX: PeeringDB IX ID</li><li>type=MB: IXP member (format: ix_id;asn)</li><li>type=IP: Interface IP of an IXP member</li></ul>")
     origin_type = django_filters.CharFilter(
-        field_name='origin__type', help_text="Type of the origin. Possible values are: Possible values are: <ul><li>AS: Autonomous System</li><li>IX: IXP</li><li>MB: IXP member</li><li>IP: IXP member IP</li></ul>")
+        field_name='origin__type', help_text="Type of the origin. Possible values are: <ul><li>AS: Autonomous System</li><li>IX: IXP</li><li>MB: IXP member</li><li>IP: IXP member IP</li></ul>")
     dependency_type = django_filters.CharFilter(
-        field_name='dependency__type', help_text="Type of the dependency. Possible values are: Possible values are: <ul><li>AS: Autonomous System</li><li>IX: IXP</li><li>MB: IXP member</li><li>IP: IXP member IP</li></ul>")
+        field_name='dependency__type', help_text="Type of the dependency. Possible values are: <ul><li>AS: Autonomous System</li><li>IX: IXP</li><li>MB: IXP member</li><li>IP: IXP member IP</li></ul>")
     origin_af = django_filters.NumberFilter(
         field_name='origin__af', help_text="Address family (IP version) of the origin. Values are either 4 or 6.")
     dependency_af = django_filters.NumberFilter(

@@ -436,6 +436,7 @@ class TR_hegemony(CachingMixin, models.Model):
                                    help_text="Dependency. Transit network or IXP commonly seen in traceroutes towards the origin.")
     hege = models.FloatField(default=0.0, help_text="AS Hegemony is the estimated fraction of paths towards the origin. The values range between 0 and 1, low values represent a small number of path (low dependency) and values close to 1 represent strong dependencies.")
     af = models.IntegerField(default=0, help_text="Address family (IP version), values are either 4 or 6.")
+    nbsamples = models.IntegerField(default=0, help_text="The number of probe ASes for which we have traceroutes to the origin in the time interval. We only include AS Hegemony values that are based on traceroutes from at least ten probe ASes.")
 
     objects = CachingManager()
 
@@ -443,7 +444,7 @@ class TR_hegemony(CachingMixin, models.Model):
         base_manager_name = 'objects'  # Attribute name of CachingManager(), above
 
     def __str__(self):
-        return f'{self.timebin} origin {self.origin.type} {self.origin.name} dep {self.dependency.type} {self.dependency.name} hege {self.hege}'
+        return f'{self.timebin} origin {self.origin.type} {self.origin.name} dep {self.dependency.type} {self.dependency.name} hege {self.hege} nbsamples {self.nbsamples}'
 
 
 # TODO Remove this?
