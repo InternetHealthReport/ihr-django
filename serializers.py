@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import ASN, Country, Delay,  Forwarding, Delay_alarms, Forwarding_alarms, Disco_events, Disco_probes, Hegemony, HegemonyCone, Atlas_location, Atlas_delay, Atlas_delay_alarms, Hegemony_alarms, Hegemony_country, Hegemony_prefix, Metis_atlas_selection, Metis_atlas_deployment
+from .models import ASN, Country, Delay,  Forwarding, Delay_alarms, Forwarding_alarms, Disco_events, Disco_probes, Hegemony, HegemonyCone, Atlas_location, Atlas_delay, Atlas_delay_alarms, Hegemony_alarms, Hegemony_country, Hegemony_prefix, Metis_atlas_selection, Metis_atlas_deployment, TR_hegemony
 
 class UserRegisterSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
@@ -313,3 +313,22 @@ class MetisAtlasDeploymentSerializer(serializers.ModelSerializer):
                 'nbsamples',
                 'asn_name')
 
+class TRHegemonySerializer(serializers.ModelSerializer):
+    origin_type = serializers.CharField(source='origin.type')
+    origin_name = serializers.CharField(source='origin.name')
+    origin_af = serializers.IntegerField(source='origin.af')
+    dependency_type = serializers.CharField(source='dependency.type')
+    dependency_name = serializers.CharField(source='dependency.name')
+    dependency_af = serializers.IntegerField(source='dependency.af')
+
+    class Meta:
+        model = TR_hegemony
+        fields = ('timebin',
+                'origin_type',
+                'origin_name',
+                'origin_af',
+                'dependency_type',
+                'dependency_name',
+                'dependency_af',
+                'hege',
+                'af')

@@ -413,6 +413,37 @@ class Metis_atlas_deployment(CachingMixin, models.Model):
     class Meta:
         base_manager_name = 'objects'  # Attribute name of CachingManager(), above
 
+# Traceroute dependencies
+class TR_hegemony_identifier(CachingMixin, models.Model):
+    name = models.CharField(max_length=255, help_text="Value of the identifier. The meaning depends on the identifier type: <ul><li>type=AS: ASN</li><li>type=IX: PeeringDB IX ID</li><li>type=MB: IXP member (format: ix_id;asn)</li><li>type=IP: Interface IP of an IXP member</li></ul>")
+    type = models.CharField(max_length=4, help_text="Type of the identifier. Possible values are: <ul><li>AS: Autonomous System</li><li>IX: IXP</li><li>MB: IXP member</li><li>IP: IXP member IP</li></ul>")
+    af = models.IntegerField(help_text="Address family (IP version), values are either 4 or 6.")
+
+    objects = CachingManager()
+
+    class Meta:
+        base_manager_name = 'objects'  # Attribute name of CachingManager(), above
+
+    def __str__(self):
+        return "(%s) %s %s" % (self.type, self.name, self.af)
+
+
+class TR_hegemony(CachingMixin, models.Model):
+    timebin = models.DateTimeField(db_index=True, help_text="Timestamp of reported value. The computation uses four weeks of data, hence 2022-03-28T00:00 means the values are based on data from 2022-02-28T00:00 to 2022-03-28T00:00.")
+    origin = models.ForeignKey(TR_hegemony_identifier, on_delete=models.CASCADE, db_index=True,
+                               help_text="Dependent network, it can be any public ASN. Retrieve all dependencies of a network by setting only this parameter and a timebin.")
+    dependency = models.ForeignKey(TR_hegemony_identifier, on_delete=models.CASCADE, db_index=True,
+                                   help_text="Dependency. Transit network or IXP commonly seen in traceroutes towards the origin.")
+    hege = models.FloatField(default=0.0, help_text="AS Hegemony is the estimated fraction of paths towards the origin. The values range between 0 and 1, low values represent a small number of path (low dependency) and values close to 1 represent strong dependencies.")
+    af = models.IntegerField(default=0, help_text="Address family (IP version), values are either 4 or 6.")
+
+    objects = CachingManager()
+
+    class Meta:
+        base_manager_name = 'objects'  # Attribute name of CachingManager(), above
+
+    def __str__(self):
+        return f'{self.timebin} origin {self.origin.type} {self.origin.name} dep {self.dependency.type} {self.dependency.name} hege {self.hege}'
 
 
 # TODO Remove this?

@@ -40,7 +40,7 @@ from rest_framework.status import (
     HTTP_202_ACCEPTED 
 )
 
-from .models import ASN, Country, Delay, Forwarding, Delay_alarms, Forwarding_alarms, Disco_events, Disco_probes, Hegemony, HegemonyCone, Atlas_delay, Atlas_location, Atlas_delay_alarms, Hegemony_alarms, Hegemony_country, Hegemony_prefix, Metis_atlas_selection, Metis_atlas_deployment
+from .models import ASN, Country, Delay, Forwarding, Delay_alarms, Forwarding_alarms, Disco_events, Disco_probes, Hegemony, HegemonyCone, Atlas_delay, Atlas_location, Atlas_delay_alarms, Hegemony_alarms, Hegemony_country, Hegemony_prefix, Metis_atlas_selection, Metis_atlas_deployment, TR_hegemony
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -1129,7 +1129,41 @@ class MetisAtlasDeploymentFilter(HelpfulFilterSet):
     }
 
 
-###################### Views:
+class TRHegemonyFilter(HelpfulFilterSet):
+    origin_name = ListStringFilter(field_name='origin__name', help_text="Origin name. It can be a single value or a list of values separated by the pipe character (i.e. | ). The meaning of values depends on the identifier type: <ul><li>type=AS: ASN</li><li>type=IX: PeeringDB IX ID</li><li>type=MB: IXP member (format: ix_id;asn)</li><li>type=IP: Interface IP of an IXP member</li></ul>")
+    dependency_name = ListStringFilter(field_name='dependency__name', help_text="Dependency name. It can be a single value or a list of values separated by the pipe character (i.e. | ). The meaning of values depends on the identifier type: <ul><li>type=AS: ASN</li><li>type=IX: PeeringDB IX ID</li><li>type=MB: IXP member (format: ix_id;asn)</li><li>type=IP: Interface IP of an IXP member</li></ul>")
+    origin_type = django_filters.CharFilter(
+        field_name='origin__type', help_text="Type of the origin. Possible values are: Possible values are: <ul><li>AS: Autonomous System</li><li>IX: IXP</li><li>MB: IXP member</li><li>IP: IXP member IP</li></ul>")
+    dependency_type = django_filters.CharFilter(
+        field_name='dependency__type', help_text="Type of the dependency. Possible values are: Possible values are: <ul><li>AS: Autonomous System</li><li>IX: IXP</li><li>MB: IXP member</li><li>IP: IXP member IP</li></ul>")
+    origin_af = django_filters.NumberFilter(
+        field_name='origin__af', help_text="Address family (IP version) of the origin. Values are either 4 or 6.")
+    dependency_af = django_filters.NumberFilter(
+        field_name='dependency__af', help_text="Address family (IP version) of the dependency. Values are either 4 or 6.")
+
+    class Meta:
+        model = TR_hegemony
+        fields = {
+            'timebin': ['exact', 'lte', 'gte'],
+            'origin_name': ['exact'],
+            'dependency_name': ['exact'],
+            'origin_type': ['exact'],
+            'dependency_type': ['exact'],
+            'origin_af': ['exact'],
+            'dependency_af': ['exact'],
+            'hege': ['exact', 'lte', 'gte'],
+            'af': ['exact'],
+        }
+        ordering_fields = ('timebin', 'origin_name', 'hege', 'af')
+
+    filter_overrides = {
+        django_models.DateTimeField: {
+            'filter_class': filters.IsoDateTimeFilter
+        },
+    }
+
+
+# Views:
 cache_1month = [cache_control(max_age=2592000),]
 
 @method_decorator(cache_1month, name='list')
@@ -1538,7 +1572,45 @@ class MetisAtlasDeploymentView(generics.ListAPIView):
 
         return queryset.select_related("asn")
 
-###### Other pages :
+
+class TRHegemonyView(generics.ListAPIView):
+    """
+    List AS and IXP dependencies for all ASes visible in monitored traceroute data.
+    <ul>
+    <li><b>Limitations:</b> At most 31 days of data can be fetched per request. For bulk downloads see: <a href="https://ihr-archive.iijlab.net/" target="_blank">https://ihr-archive.iijlab.net/</a>.</li>
+    </ul>
+    """
+    serializer_class = TRHegemonySerializer
+    filter_class = TRHegemonyFilter
+
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        last = self.request.query_params.get('timebin',
+                                             self.request.query_params.get('timebin__gte', None))
+        if last is not None:
+            # Cache forever content that is more than a week old
+            today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=timezone.utc)
+            past_days = today - timedelta(days=7)
+            if arrow.get(last).date() < past_days:
+                patch_cache_control(response, max_age=15552000)
+
+        return response
+
+    def get_queryset(self):
+        queryset = TR_hegemony.objects
+        if ('timebin' not in self.request.query_params
+                and 'timebin__lte' not in self.request.query_params
+                and 'timebin__gte' not in self.request.query_params):
+            # Set default timebin value
+            today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=timezone.utc)
+            past_days = today - timedelta(days=6)
+            queryset = queryset.filter(timebin__gte=past_days)
+        else:
+            check_timebin(self.request.query_params, max_range=31)
+        return TR_hegemony.objects.select_related("origin", "dependency")
+
+# Other pages :
+
 
 class DateTimeEncoder(json.JSONEncoder):
     def default(self, o):
