@@ -331,4 +331,5 @@ class TRHegemonySerializer(serializers.ModelSerializer):
                 'dependency_name',
                 'dependency_af',
                 'hege',
-                'af')
+                'af',
+                'nbsamples')
