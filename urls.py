@@ -7,7 +7,7 @@ from drf_yasg import openapi
 
 
 from . import views
-from .user_api import urls as user_urls
+#from .user_api import urls as user_urls
 
 #from rest_framework_swagger.views import get_swagger_view
 #schema_view = get_swagger_view(title='API')
@@ -15,16 +15,17 @@ from drf_yasg.generators import OpenAPISchemaGenerator
 
 
 exposed_api = [
-    url(r'^user/sendregisteremail$', views.UserSendEmailView.as_view(), name='UserSendEmailListView'),
-    url(r'^user/sendforgetpasswordemail$', views.UserSendForgetPasswordEmailView.as_view(), name='UserSendForgetPasswordEmailListView'),
-    url(r'^user/register$', views.UserRegisterView.as_view(), name='UserRegisterListView'),
-	url(r'^user/login$', views.UserLoginView.as_view(), name='UserLoginListView'),
-	url(r'^user/logout$', views.UserLogoutView.as_view(), name='UserLogoutListView'),
-    url(r'^user/changepassword$', views.UserChangePasswordView.as_view(), name='UserChangePasswordListView'),
-	url(r'^user/forgetpassword$', views.UserForgetPasswordView.as_view(), name='UserForgetPasswordListView'),
+    # User webpage not yet integrated 
+    #url(r'^user/sendregisteremail$', views.UserSendEmailView.as_view(), name='UserSendEmailListView'),
+    #url(r'^user/sendforgetpasswordemail$', views.UserSendForgetPasswordEmailView.as_view(), name='UserSendForgetPasswordEmailListView'),
+    #url(r'^user/register$', views.UserRegisterView.as_view(), name='UserRegisterListView'),
+#	url(r'^user/login$', views.UserLoginView.as_view(), name='UserLoginListView'),
+#	url(r'^user/logout$', views.UserLogoutView.as_view(), name='UserLogoutListView'),
+#    url(r'^user/changepassword$', views.UserChangePasswordView.as_view(), name='UserChangePasswordListView'),
+#	url(r'^user/forgetpassword$', views.UserForgetPasswordView.as_view(), name='UserForgetPasswordListView'),
 
-	url(r'^user/savechannel$', views.UserSaveChannelView.as_view(), name='UserSaveChannelListView'),
-	url(r'^user/getchannel$', views.UserGetChannelView.as_view(), name='UserGetChannelListView'),
+#	url(r'^user/savechannel$', views.UserSaveChannelView.as_view(), name='UserSaveChannelListView'),
+#	url(r'^user/getchannel$', views.UserGetChannelView.as_view(), name='UserGetChannelListView'),
 
     url(r'^networks/$', views.NetworkView.as_view(), name='networkListView'),
     url(r'^countries/$', views.CountryView.as_view(), name='countryListView'),
@@ -72,21 +73,6 @@ urlpatterns = [
     url(r'^monitoredAsn/$', views.ASNList.as_view(), name='asnList'),
     url(r'^monitoredCountry/$', views.CountryList.as_view(), name='countryList'),
 
-    # to remove?
-    #url(r'^$', TemplateView.as_view(template_name='index.html')),
-    # url(r'^disco/$', views.index_disco, name='disco'),
-    #url(r'^(?P<pk>-?[0-9]+)/asn/$', views.ASNDetail.as_view(), name='asnDetail'),
-    #url(r'^(?P<pk>[A-Z]+)/country/$', views.CountryDetail.as_view(), name='countryDetail'),
-    #url(r'^(?P<pk>[0-9]+)/disco/$', views.DiscoDetail.as_view(), name='discoDetail'),
-    # TODO remove /data/ endpoints
-    #url(r'^data/delay/$', views.delayData, name='delayData'),
-    #url(r'^data/forwarding/$', views.forwardingData, name='forwardingData'),
-    #url(r'^data/disco/$', views.discoData, name='discoData'),
-    #url(r'^data/geodisco/$', views.discoGeoData, name='discoGeoData'),
-    #url(r'^data/hegemony/$', views.hegemonyData, name='hegemonyData'),
-    #url(r'^data/hegemonyCone/$', views.coneData, name='coneData'),
-    #url(r'^api/$', views.restful_API, name="root"),
-
     # old API endpoints
     url(r'^delay_alarms/$', views.DelayAlarmsView.as_view(), name='delayAlarmsListView'),
     url(r'^forwarding_alarms/$', views.ForwardingAlarmsView.as_view(), name='forwardingAlarmsListView'),
@@ -96,5 +82,6 @@ urlpatterns = [
     url(r'^hegemony_cone/$', views.HegemonyConeView.as_view(), name='hegemonyConeListView'),
     url(r'^network_delay_locations/$', views.NetworkDelayLocationsView.as_view(), name='networkDelayLocationsListView'),
     url(r'^network_delay_alarms/$', views.NetworkDelayAlarmsView.as_view(), name='networkDelayAlarmsListView'),
-    *user_urls.urlpatterns
+    # User webpage not yet integrated 
+    #*user_urls.urlpatterns
 ] + exposed_api

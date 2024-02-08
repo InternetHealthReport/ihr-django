@@ -1591,7 +1591,7 @@ class TRHegemonyView(generics.ListAPIView):
             # Cache forever content that is more than a week old
             today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=timezone.utc)
             past_days = today - timedelta(days=7)
-            if arrow.get(last).date() < past_days:
+            if arrow.get(last).datetime < past_days:
                 patch_cache_control(response, max_age=15552000)
 
         return response
