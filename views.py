@@ -286,8 +286,10 @@ class HegemonyFilter(HelpfulFilterSet):
 
 
 class HegemonyAlarmsFilter(HelpfulFilterSet):
-    asn = ListIntegerFilter(help_text="ASN of the anomalous dependency (transit network). Can be a single value or a list of comma separated values.")
-    originasn = ListIntegerFilter(help_text="ASN of the reported dependent network. Can be a single value or a list of comma separated values.")
+    asn = ListIntegerFilter(help_text="ASN of the anomalous dependency (transit network). Can be a single value or a list of comma-separated values.")
+    originasn = ListIntegerFilter(help_text="ASN of the reported dependent network. Can be a single value or a list of comma-separated values.")
+    
+    deviation_combined = ListFloatFilter(help_text="Combined deviation filter (e.g., [20, -20]).")
 
     class Meta:
         model = Hegemony_alarms
@@ -303,6 +305,13 @@ class HegemonyAlarmsFilter(HelpfulFilterSet):
             'filter_class': filters.IsoDateTimeFilter
         },
     }
+
+    def filter_deviation_combined(self, queryset, name, value):
+        if value:
+            queryset = queryset.filter(
+                Q(deviation__gte=value[0]) | Q(deviation__lte=-value[1])
+            )
+        return queryset
 
 class HegemonyCountryFilter(HelpfulFilterSet):
     asn = ListIntegerFilter(help_text="Dependency. Network commonly seen in BGP paths towards monitored country. Can be a single value or a list of comma separated values.")
@@ -1329,6 +1338,16 @@ class HegemonyAlarmsView(generics.ListAPIView):
                 patch_cache_control(response, max_age=15552000)
 
         return response
+
+    def get_queryset(self):
+        check_timebin(self.request.query_params)
+        queryset = Hegemony_alarms.objects.all()
+
+        # Use filter_deviation_combined from HegemonyAlarmsFilter
+        filter_instance = HegemonyAlarmsFilter(self.request.query_params, queryset=queryset)
+        queryset = filter_instance.filter_deviation_combined(queryset, 'deviation_combined', self.request.query_params.getlist('deviation_combined'))
+
+        return queryset```
 
     def get_queryset(self):
         check_timebin(self.request.query_params)
