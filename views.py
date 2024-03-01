@@ -148,6 +148,11 @@ class ListIntegerFilter(ListFilter):
     def customize(self, value):
         return int(value)
 
+class ListFloatFilter(ListFilter):
+
+    def customize(self, value):
+        return float(value)
+
 class ListStringFilter(ListFilter):
 
     def filter(self, qs, value):
