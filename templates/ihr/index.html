@@ -119,7 +119,6 @@
             for (var stream in rawdata){
                 slat.push(rawdata[stream]["lat"]);
                 slon.push(rawdata[stream]["lon"]);
-                stext.push("<b><a href='{% url "ihr:discoDetail" 12345 %}'>".replace(/12345/, rawdata[stream]["eventid"].toString())+rawdata[stream]["dtStart"]+"</a></b>");
                 ssize.push(20);
                 slvl.push(rawdata[stream]["lvl"]);
                 spos.push("top center")
