@@ -166,8 +166,6 @@
 
         Plotly.newPlot("plotDisco", [], layout);
 
-        Plotly.d3.json("{% url "ihr:discoData" %}?date="+dt+"&last="+last, function(data){ addPlotly(data, "plotDisco", "AS{{ asn.streamname }}", last); } );
-
     };
 
 
