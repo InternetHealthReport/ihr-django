@@ -224,8 +224,6 @@ function makeplot_disco(dt, last) {
     };
 
     Plotly.newPlot("plotDisco", [], layout);
-    Plotly.d3.json("{% url "ihr:discoData" %}?asn={{ asn.number }}&date="+dt+"&last="+last, function(data){ addPlotly(data, "plotDisco", "Disconnections", 1, 0, 20, last, "AS{{ asn.number }}"); } );
-
     var mainPlot = document.getElementById('plotDisco');
     mainPlot.on('plotly_click', discoPlotClick); 
 
