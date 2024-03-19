@@ -1698,53 +1698,6 @@ def search(request):
     asn = get_object_or_404(ASN, number=reqNumber)
     return HttpResponseRedirect(reverse("ihr:asnDetail", args=(asn.number,)))
 
-def eventToStepGraph(dtStart, dtEnd, stime, etime, lvl, eventid):
-    """Convert a disco event to a list of x, y ,eventid values for the step
-    graph.
-    """
-
-    x = [dtStart]
-    y = ["0"]
-    ei = ["0"]
-
-    # change the first value if there is an event starting before dtStart
-    if len(stime) and min(stime) < dtStart:
-        idx = stime.index(min(stime))
-        y[0] = lvl[idx]
-        ei[0] = eventid[idx]
-        x.append(etime[idx])
-        x.append(etime[idx])
-        y.append(y[0])
-        y.append("0")
-        ei.append(ei[0])
-        ei.append("0")
-
-        stime.pop(idx)
-        etime.pop(idx)
-        lvl.pop(idx)
-        eventid.pop(idx)
-
-    for s, e, l, i in zip(stime,etime,lvl,eventid):
-        x.append(s)
-        x.append(s)
-        x.append(e)
-        x.append(e)
-        y.append("0")
-        y.append(l)
-        y.append(l)
-        y.append("0")
-        ei.append("0")
-        ei.append(i)
-        ei.append(i)
-        ei.append("0")
-
-    if x[-1] < dtEnd:
-        x.append(dtEnd)
-        y.append("0")
-        ei.append("0")
-
-    return x, y, ei
-
 class ASNDetail(generic.DetailView):
     model = ASN
 
