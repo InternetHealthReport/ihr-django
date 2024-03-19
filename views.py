@@ -1698,30 +1698,6 @@ def search(request):
     asn = get_object_or_404(ASN, number=reqNumber)
     return HttpResponseRedirect(reverse("ihr:asnDetail", args=(asn.number,)))
 
-def forwardingData(request):
-    asn = get_object_or_404(ASN, number=request.GET["asn"])
-
-    dtEnd = datetime.now(pytz.utc)
-    if "date" in request.GET and request.GET["date"].count("-") == 2:
-        date = request.GET["date"].split("-")
-        dtEnd = datetime(int(date[0]), int(date[1]), int(date[2]),23,59, tzinfo=pytz.utc)
-
-    last = LAST_DEFAULT
-    if "last" in request.GET:
-        last = int(request.GET["last"])
-        if last > 356:
-            last = 356
-
-    dtStart = dtEnd - timedelta(last)
-
-    data = Forwarding.objects.filter(asn=asn.number, timebin__gte=dtStart,  timebin__lte=dtEnd).order_by("timebin")
-    formatedData ={"AS"+str(asn.number): {
-            "x": list(data.values_list("timebin", flat=True)),
-            "y": list(data.values_list("magnitude", flat=True))
-            }}
-    return JsonResponse(formatedData, encoder=DateTimeEncoder)
-
-
 def eventToStepGraph(dtStart, dtEnd, stime, etime, lvl, eventid):
     """Convert a disco event to a list of x, y ,eventid values for the step
     graph.
