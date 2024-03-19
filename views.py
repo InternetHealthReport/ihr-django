@@ -1745,48 +1745,6 @@ def eventToStepGraph(dtStart, dtEnd, stime, etime, lvl, eventid):
 
     return x, y, ei
 
-
-def discoGeoData(request):
-    # format the end date
-    minLevel=8
-    dtEnd = datetime.now(pytz.utc)
-    if "date" in request.GET and request.GET["date"].count("-") == 2:
-        date = request.GET["date"].split("-")
-        dtEnd = datetime(int(date[0]), int(date[1]), int(date[2]), 23, 59, tzinfo=pytz.utc)
-
-    # set the data duration
-    last = LAST_DEFAULT
-    if "last" in request.GET:
-        last = int(request.GET["last"])
-        if last > 356:
-            last = 356
-
-    dtStart = dtEnd - timedelta(last)
-
-    # find corresponding ASN or country
-    streams = Disco_events.objects.filter(endtime__gte=dtStart,
-        starttime__lte=dtEnd,avglevel__gte=minLevel).exclude(streamtype='asn').distinct("streamname").values("streamname", "starttime",  "avglevel", "id")
-
-    formatedData = {}
-    for stream in streams:
-        eventid = stream["id"]
-
-        probeData = Disco_probes.objects.filter(event=eventid ).values("lat", "lon")
-        # eventid=list(data.values_list("id", flat=True))
-
-        for probe in probeData:
-            formatedData[stream["streamname"]] = {
-                "lvl": stream["avglevel"],
-                "dtStart": stream["starttime"],
-                "eventid": eventid,
-                "lat": probe["lat"],
-                "lon": probe["lon"],
-                }
-            # plotting requires only one probe
-            break
-
-    return JsonResponse(formatedData, encoder=DateTimeEncoder)
-
 def discoData(request):
     # format the end date
     minLevel = 8 
