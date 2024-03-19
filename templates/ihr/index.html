@@ -195,20 +195,12 @@
             },
         };
         Plotly.newPlot("plotDelayTier1", [], layout);
-        {% for asn in topTier1 %}
-        Plotly.d3.json("{% url "ihr:delayData" %}?asn={{ asn.number }}&date="+dt+"&last="+last, function(data){ addPlotly(data, "plotDelayTier1", "{{ asn.name }}", last) } );
-        {% endfor %}
 
         var layout = {
             yaxis: {
                 title: 'Delay Change Level',
             },
         };
-
-        <!--Plotly.newPlot("plotDelayRoot", [], layout);-->
-        <!--{% for asn in rootServers %}-->
-        <!--Plotly.d3.json("{% url "ihr:delayData" %}?asn={{ asn.number }}&date="+dt+"&last="+last, function(data){ addPlotly(data, "plotDelayRoot", "{{ asn.name|truncatewords:3 }}", last) } );-->
-        <!--{% endfor %}-->
     };
 
     function makeplot_disco(dt, last) {
