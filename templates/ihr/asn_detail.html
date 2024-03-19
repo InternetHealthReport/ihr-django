@@ -202,7 +202,6 @@ function makeplot_tartiflette(dt, last) {
     };
 
     Plotly.newPlot("plotTartiflette", [], layout);
-    Plotly.d3.json("{% url "ihr:forwardingData" %}?asn={{ asn.number }}&date="+dt+"&last="+last, function(data){ addPlotly(data, "plotTartiflette", "Forwarding anomalies", 2, -15, 15, last, "AS{{ asn.number }}"); } );
 
     var mainPlot = document.getElementById('plotTartiflette');
     mainPlot.on('plotly_click', tartiflettePlotClick); 
