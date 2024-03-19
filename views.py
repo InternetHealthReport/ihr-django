@@ -1745,56 +1745,6 @@ def eventToStepGraph(dtStart, dtEnd, stime, etime, lvl, eventid):
 
     return x, y, ei
 
-def hegemonyData(request):
-    asn = get_object_or_404(ASN, number=request.GET["originasn"])
-    af=4
-    if "af" in request.GET and request.GET["af"] in ["4","6"]:
-        af=request.GET["af"]
-
-    dtEnd = datetime.now(pytz.utc)
-    if "date" in request.GET and request.GET["date"].count("-") == 2:
-        date = request.GET["date"].split("-")
-        dtEnd = datetime(int(date[0]), int(date[1]), int(date[2]),23,59, tzinfo=pytz.utc)
-
-    last = LAST_DEFAULT
-    if "last" in request.GET:
-        last = int(request.GET["last"])
-        if last > 365:
-            last = 365
-
-    dtStart = dtEnd - timedelta(last)
-
-    rawData = Hegemony.objects.filter(originasn=asn.number, af=af, timebin__gte=dtStart,  timebin__lte=dtEnd, hege__gte=0.0001).order_by("timebin")
-    cache = list(rawData)
-    formatedData = {}
-    allAsn = set()
-    seenAsn = set()
-    currentTimebin = None
-    for row in cache:
-        a = row.asn_id
-        if a==asn.number:
-            continue
-
-        if currentTimebin is None:
-            currentTimebin = row.timebin
-
-        if currentTimebin != row.timebin :
-            while currentTimebin+timedelta(minutes=HEGE_GRANULARITY/2) < row.timebin :
-                for a0 in allAsn.difference(seenAsn):
-                    formatedData["AS"+str(a0)]["x"].append(currentTimebin)
-                    formatedData["AS"+str(a0)]["y"].append(0)
-                # currentTimebin = row.timebin
-                currentTimebin += timedelta(minutes=HEGE_GRANULARITY)
-                seenAsn = set()
-
-        seenAsn.add(a)
-        if "AS"+str(a) not in formatedData:
-            formatedData["AS"+str(a)] = {"x":[], "y":[]}
-            allAsn.add(a)
-        formatedData["AS"+str(a)]["x"].append(row.timebin)
-        formatedData["AS"+str(a)]["y"].append(row.hege)
-
-    return JsonResponse(formatedData, encoder=DateTimeEncoder)
 
 def coneData(request):
     asn = get_object_or_404(ASN, number=request.GET["asn"])
