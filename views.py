@@ -1745,37 +1745,6 @@ def eventToStepGraph(dtStart, dtEnd, stime, etime, lvl, eventid):
 
     return x, y, ei
 
-
-def coneData(request):
-    asn = get_object_or_404(ASN, number=request.GET["asn"])
-    af=4
-    if "af" in request.GET and request.GET["af"] in ["4","6"]:
-        af=request.GET["af"]
-
-    dtEnd = datetime.now(pytz.utc)
-    if "date" in request.GET and request.GET["date"].count("-") == 2:
-        date = request.GET["date"].split("-")
-        dtEnd = datetime(int(date[0]), int(date[1]), int(date[2]),23,59, tzinfo=pytz.utc)
-
-    last = LAST_DEFAULT
-    if "last" in request.GET:
-        last = int(request.GET["last"])
-        if last > 356:
-            last = 356
-
-    dtStart = dtEnd - timedelta(last)
-
-    data = HegemonyCone.objects.filter(asn=asn.number, af=af, timebin__gte=dtStart,  timebin__lte=dtEnd).order_by("timebin")
-    # data = Hegemony.objects.filter(asn=asn.number, af=af, timebin__gte=dtStart,  timebin__lte=dtEnd).exclude(originasn=0).exclude(originasn=asn.number).values("timebin").annotate(nb_asn=Count("originasn", distinct=True)).order_by("timebin")
-
-    formatedData ={"AS"+str(asn.number): {
-            "x": list(data.values_list("timebin", flat=True)),
-            "y": list(data.values_list("conesize", flat=True))
-            }}
-
-    return JsonResponse(formatedData, encoder=DateTimeEncoder)
-
-
 class ASNDetail(generic.DetailView):
     model = ASN
 
