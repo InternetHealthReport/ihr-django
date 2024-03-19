@@ -250,7 +250,6 @@ title: 'Number of ASes<br>dependent on AS{{ asn.number}}',
     };
 
     Plotly.newPlot("plotHegemony", [], layout);
-    Plotly.d3.json("{% url "ihr:coneData" %}?asn={{ asn.number }}&date="+dt+"&last="+last+"&af="+af, function(data){ addPlotly(data, "plotHegemony", "Number of ASes", 2, 0, 5, last, "AS{{ asn.number }}"); } );
 
     var mainPlot = document.getElementById('plotHegemony');
     mainPlot.on('plotly_click', hegemonyPlotClick); 
