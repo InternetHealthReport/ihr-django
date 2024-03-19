@@ -1745,68 +1745,6 @@ def eventToStepGraph(dtStart, dtEnd, stime, etime, lvl, eventid):
 
     return x, y, ei
 
-def discoData(request):
-    # format the end date
-    minLevel = 8 
-    dtEnd = datetime.now(pytz.utc)
-    if "date" in request.GET and request.GET["date"].count("-") == 2:
-        date = request.GET["date"].split("-")
-        dtEnd = datetime(int(date[0]), int(date[1]), int(date[2]), 23, 59, tzinfo=pytz.utc)
-
-    # set the data duration
-    last = LAST_DEFAULT
-    if "last" in request.GET:
-        last = int(request.GET["last"])
-        if last > 365:
-            last = 365
-
-    dtStart = dtEnd - timedelta(last)
-
-    # find corresponding ASN or country
-    if "asn" in request.GET:
-        asn = get_object_or_404(ASN, number=request.GET["asn"])
-        streams= [{"streamtype":"asn", "streamname": asn.number}]
-    elif "cc" in request.GET:
-        country = get_object_or_404(Country, code=request.GET["cc"])
-        streams= [{"streamtype":"country", "streamname": country.code}]
-    else:
-        streams = Disco_events.objects.filter(endtime__gte=dtStart,
-            starttime__lte=dtEnd,avglevel__gte=minLevel).exclude(streamtype="admin1").exclude(streamtype='admin2').exclude(streamname="All").distinct("streamname").values("streamname", "streamtype")
-
-    formatedData = {}
-    for stream in streams:
-        streamtype = stream["streamtype"]
-        streamname = stream["streamname"]
-
-        data = Disco_events.objects.filter(streamtype=streamtype, streamname=streamname,
-                endtime__gte=dtStart,  starttime__lte=dtEnd,avglevel__gte=minLevel).order_by("starttime")
-        stime = list(data.values_list("starttime", flat=True))
-        etime = list(data.values_list("endtime", flat=True))
-        lvl =   list(data.values_list("avglevel", flat=True))
-        eventid=list(data.values_list("id", flat=True))
-
-        x, y ,ei = eventToStepGraph(dtStart, dtEnd, stime, etime, lvl, eventid)
-
-        df = pd.DataFrame({"lvl": y, "eid": ei}, index=x)
-        prefix = "CC" if streamtype=="country" else "AS"
-        formatedData[prefix+str(streamname)] = {
-                "streamtype": streamtype,
-                "streamname": streamname,
-                "dtStart": dtStart,
-                "dtEnd": dtEnd,
-                "stime": stime,
-                "etime": etime,
-                "rawx": x,
-                "rawy": y,
-                "rawe": ei,
-                "x": list(df.index.to_pydatetime()),
-                "y": list(df["lvl"].values),
-                "eventid": list(df["eid"].values),
-                }
-
-    return JsonResponse(formatedData, encoder=DateTimeEncoder)
-
-
 def hegemonyData(request):
     asn = get_object_or_404(ASN, number=request.GET["originasn"])
     af=4
@@ -1886,55 +1824,6 @@ def coneData(request):
             }}
 
     return JsonResponse(formatedData, encoder=DateTimeEncoder)
-
-
-# def discoData(request):
-    # if "asn" in request.GET:
-        # streamtype = "asn"
-        # asn = get_object_or_404(ASN, number=request.GET["asn"])
-        # streamname = asn.number
-    # elif "cc" in request.GET:
-        # streamtype= "country"
-        # country = get_object_or_404(Country, code=request.GET["cc"])
-        # streamname = country.code
-
-    # dtEnd = datetime.now(pytz.utc)
-    # if "date" in request.GET and request.GET["date"].count("-") == 2:
-        # date = request.GET["date"].split("-")
-        # dtEnd = datetime(int(date[0]), int(date[1]), int(date[2]), tzinfo=pytz.utc)
-
-    # last = 30
-    # if "last" in request.GET:
-        # last = int(request.GET["last"])
-        # if last > 356:
-            # last = 356
-
-    # dtStart = dtEnd - timedelta(last)
-
-    # data = Disco_events.objects.filter(streamtype=streamtype, streamname=streamname,
-            # endtime__gte=dtStart,  starttime__lte=dtEnd).order_by("starttime")
-    # stime = list(data.values_list("starttime", flat=True))
-    # etime = list(data.values_list("endtime", flat=True))
-    # lvl =   list(data.values_list("avglevel", flat=True))
-    # eventid=list(data.values_list("id", flat=True))
-    # x = []
-    # y = []
-    # ei = []
-    # for s, e, l, i in zip(stime,etime,lvl,eventid):
-        # x.append(s)
-        # x.append(e)
-        # y.append(l)
-        # y.append(l)
-        # ei.append(i)
-        # ei.append(i)
-
-    # formatedData = {
-            # "x": x,
-            # "y": y,
-            # "eventid": ei,
-            # }
-    # return JsonResponse(formatedData, encoder=DateTimeEncoder)
-
 
 
 class ASNDetail(generic.DetailView):
