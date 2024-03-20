@@ -202,8 +202,6 @@ function makeplot_tartiflette(dt, last) {
     };
 
     Plotly.newPlot("plotTartiflette", [], layout);
-    Plotly.d3.json("{% url "ihr:delayData" %}?asn={{ asn.number }}&date="+dt+"&last="+last, function(data){ addPlotly(data, "plotTartiflette", "Delay Changes", 1, -5, 50, last, "AS{{ asn.number }}"); } );
-    Plotly.d3.json("{% url "ihr:forwardingData" %}?asn={{ asn.number }}&date="+dt+"&last="+last, function(data){ addPlotly(data, "plotTartiflette", "Forwarding anomalies", 2, -15, 15, last, "AS{{ asn.number }}"); } );
 
     var mainPlot = document.getElementById('plotTartiflette');
     mainPlot.on('plotly_click', tartiflettePlotClick); 
@@ -226,8 +224,6 @@ function makeplot_disco(dt, last) {
     };
 
     Plotly.newPlot("plotDisco", [], layout);
-    Plotly.d3.json("{% url "ihr:discoData" %}?asn={{ asn.number }}&date="+dt+"&last="+last, function(data){ addPlotly(data, "plotDisco", "Disconnections", 1, 0, 20, last, "AS{{ asn.number }}"); } );
-
     var mainPlot = document.getElementById('plotDisco');
     mainPlot.on('plotly_click', discoPlotClick); 
 
@@ -254,22 +250,6 @@ title: 'Number of ASes<br>dependent on AS{{ asn.number}}',
     };
 
     Plotly.newPlot("plotHegemony", [], layout);
-    Plotly.d3.json("{% url "ihr:hegemonyData" %}?originasn={{ asn.number }}&date="+dt+"&last="+last+"&af="+af, 
-            function(data){ 
-                var nbAsns=0;
-                for (var asn in data) {
-                    // check if the property/key is defined in the object itself, not in parent
-                    if (data.hasOwnProperty(asn)) {           
-                        addPlotly(data, "plotHegemony", asn , 1, 0, 1, last, asn); 
-                        nbAsns+=1;
-                    }
-                }
-                if(nbAsns==0){
-                    plotlyMessage("plotHegemony", 'This network has no significant AS dependency ¯\\_(ツ)_/¯')
-
-                }
-            } );
-    Plotly.d3.json("{% url "ihr:coneData" %}?asn={{ asn.number }}&date="+dt+"&last="+last+"&af="+af, function(data){ addPlotly(data, "plotHegemony", "Number of ASes", 2, 0, 5, last, "AS{{ asn.number }}"); } );
 
     var mainPlot = document.getElementById('plotHegemony');
     mainPlot.on('plotly_click', hegemonyPlotClick); 
