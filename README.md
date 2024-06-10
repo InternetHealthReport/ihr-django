@@ -46,11 +46,12 @@ git clone git@github.com:InternetHealthReport/ihr-django.git ihr
 
 ```
 
-Then copy settings.py, urls.py, wsgi.py, Dockerfile,docker compose to the correct place:
+Then copy settings.py, urls.py, wsgi.py, Dockerfile, docker compose and environment file to the correct place:
 ```zsh
 cp ihr/config/*.py internetHealthReport/
 cp ihr/config/Dockerfile .
 cp ihr/config/docker-compose.yml .
+cp ihr/config/.env .
 ```
 You may have to adjust some variables in settings.py to match your database, smtp account, recapcha credentials.
 

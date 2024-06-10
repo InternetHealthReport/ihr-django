@@ -20,17 +20,16 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/1.9/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'put_some_random_text_here'
-SECRET_KEY_PSQL = '123password456'
-RECAPTCHA_SECRET = ''
-EMAIL_HOST_PASSWORD = '' #os.environ['EMAIL_HOST_PASSWORD']   # set environ yourself
+SECRET_KEY = os.environ.get("SECRET_KEY")
+RECAPTCHA_SECRET = os.environ.get("RECAPTCHA_SECRET")
+EMAIL_HOST_PASSWORD = os.environ['EMAIL_HOST_PASSWORD']
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = bool(os.environ.get("DEBUG", default=0))
 
-ALLOWED_HOSTS = ["localhost","127.0.0.1","ihr.iijlab.net"]
+ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS").split(" ")
 
-SITE_ID = 1
+SITE_ID = os.environ.get("SITE_ID")
 
 # Application definition
 
@@ -61,7 +60,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-     'django.middleware.cache.CacheMiddleware',
+    'django.middleware.cache.CacheMiddleware',
     # 'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -80,7 +79,7 @@ ROOT_URLCONF = 'internetHealthReport.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': ["templates","/var/www/html/ihr"],
+        'DIRS': ["templates", "/var/www/html/ihr"],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -100,7 +99,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 100000,
     # 'DEFAULT_FILTER_BACKENDS': ('django_filters.rest_framework.DjangoFilterBackend',)
-    'DEFAULT_FILTER_BACKENDS': ('ihr.apps.NoMarkupDjangoFilterBackend','rest_framework.filters.OrderingFilter',),
+    'DEFAULT_FILTER_BACKENDS': ('ihr.apps.NoMarkupDjangoFilterBackend', 'rest_framework.filters.OrderingFilter',),
     'HTML_SELECT_CUTOFF': 100,
     'DEFAULT_THROTTLE_CLASSES': (
         'rest_framework.throttling.AnonRateThrottle',
@@ -120,13 +119,13 @@ REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema'
 }
 
-#CACHES = {
+# CACHES = {
 #    'default': {
 #        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
 #        'LOCATION': '127.0.0.1:11211',
 #        'TIMEOUT': 3600
 #    },
-#}
+# }
 
 # Database
 # https://docs.djangoproject.com/en/1.9/ref/settings/#databases
@@ -136,11 +135,11 @@ DATABASES = {
         # 'ENGINE': 'django.db.backends.sqlite3',
         # 'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'ihr',
-        'USER': 'django',
-        'PASSWORD': SECRET_KEY_PSQL,
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'NAME': os.environ.get("DB_NAME"),
+        'USER': os.environ.get("DB_USER"),
+        'PASSWORD': os.environ.get("DB_PASSWORD"),
+        'HOST': os.environ.get("DB_HOST"),
+        'PORT': os.environ.get("DB_PORT")
     }
 }
 
@@ -190,13 +189,13 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = '/home/romain/ihr/internetHealthReport/ihr/static/'
 
-EMAIL_USE_TLS = True  
-EMAIL_HOST = 'smtp.gmail.com'  
-EMAIL_HOST_USER = 'romain.fontugne@gmail.com'  # this is my email address, use yours
-EMAIL_PORT = 587  
+EMAIL_USE_TLS = True
+EMAIL_HOST = os.environ.get("EMAIL_HOST")
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
+EMAIL_PORT = 587
 
 ADMINS = (
-    ('Romain Fontugne', 'romain.fontugne@gmail.com'),   # email will be sent to your_email
+    ('IHR administrators', 'admin@ihr.live'),   # email will be sent this email
 )
 
 MANAGERS = ADMINS
