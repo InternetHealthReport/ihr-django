@@ -99,7 +99,7 @@ Start django:
 ./manage.py runserver
 ```
 
-## if you want to use docker <a name = "docker"></a>
+## Setup with docker <a name = "docker"></a>
 
 
 install docker
