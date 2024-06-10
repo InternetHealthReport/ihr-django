@@ -170,7 +170,7 @@ exit
 
 Create tables:
 ```zsh
-./manage.py makemigrations
+./manage.py makemigrations ihr
 ./manage.py migrate
 ```
 
