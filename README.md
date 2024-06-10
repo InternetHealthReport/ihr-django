@@ -54,7 +54,7 @@ cp ihr/config/.env .
 ```
 You may have to adjust some variables in .env (or settings.py if you don't use docker) to match your database, smtp account, recapcha credentials.
 
-## If you wish to use your machine <a name = "machine"></a>
+## Setup without docker <a name = "machine"></a>
 
 install dependencies
 ```zsh
