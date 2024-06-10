@@ -113,58 +113,6 @@
     </div>
 <script>
 
-    function addGeoPlot(dt, last){
-        Plotly.d3.json("{% url "ihr:discoGeoData" %}?date="+dt+"&last="+last, function(err, rawdata){
-            var slat = [], slon = [], stext = [], ssize = [], slvl = [], spos=[]; 
-            for (var stream in rawdata){
-                slat.push(rawdata[stream]["lat"]);
-                slon.push(rawdata[stream]["lon"]);
-                ssize.push(20);
-                slvl.push(rawdata[stream]["lvl"]);
-                spos.push("top center")
-            }
-
-            var data = [{ 
-                type: 'scattergeo', 
-                lat: slat, 
-                lon: slon, 
-                text: stext, 
-                mode:'markers+text', 
-                textposition:spos, 
-                hoverinfo: 'none',
-                marker: { 
-                    size: ssize,
-                    color: slvl,
-                    cmin: 0, 
-                    cmax: 25, 
-                    colorscale: 'Reds', 
-                }, 
-                textfont:{
-                        color:'#000000',
-                        style:'bold',
-                },
-                name: 'Geographical Disconnections' 
-            }]; 
-
-            var layout = { 
-                geo:{
-                    showframe: false,
-                    showcoastlines: false,
-                    showland: true, 
-                    landcolor: 'rgb(215, 215, 215)',
-                    countrycolor: 'rgb(235, 235, 235)',
-                    showcountries:  true,
-                },
-                margin: {
-                    t: 10,
-                    b: 10,
-                },
-            }; 
-
-            Plotly.newPlot('plotGeoDisco', data, layout); 
-        });
-    }
-
     function updateArg(search, arg, val){
 
         if(search.indexOf(arg) == -1){
@@ -194,20 +142,12 @@
             },
         };
         Plotly.newPlot("plotDelayTier1", [], layout);
-        {% for asn in topTier1 %}
-        Plotly.d3.json("{% url "ihr:delayData" %}?asn={{ asn.number }}&date="+dt+"&last="+last, function(data){ addPlotly(data, "plotDelayTier1", "{{ asn.name }}", last) } );
-        {% endfor %}
 
         var layout = {
             yaxis: {
                 title: 'Delay Change Level',
             },
         };
-
-        <!--Plotly.newPlot("plotDelayRoot", [], layout);-->
-        <!--{% for asn in rootServers %}-->
-        <!--Plotly.d3.json("{% url "ihr:delayData" %}?asn={{ asn.number }}&date="+dt+"&last="+last, function(data){ addPlotly(data, "plotDelayRoot", "{{ asn.name|truncatewords:3 }}", last) } );-->
-        <!--{% endfor %}-->
     };
 
     function makeplot_disco(dt, last) {
@@ -225,8 +165,6 @@
         };
 
         Plotly.newPlot("plotDisco", [], layout);
-
-        Plotly.d3.json("{% url "ihr:discoData" %}?date="+dt+"&last="+last, function(data){ addPlotly(data, "plotDisco", "AS{{ asn.streamname }}", last); } );
 
     };
 
