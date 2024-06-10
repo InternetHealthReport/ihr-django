@@ -31,7 +31,7 @@ Install django:
 ```zsh
 cd ihr
 . bin/activate
-pip install django
+pip install django==2.2.27
 ```
 
 Create a new django project:
@@ -94,7 +94,7 @@ Remove migration files and create tables: (TODO move production migration files 
 find . -path "*/migrations/*.py" -not -name "__init__.py" -delete
 find . -path "*/migrations/*.pyc"  -delete
 ./manage.py makemigrations
-manage.py migrate
+./manage.py migrate
 ```
 
 Start django:

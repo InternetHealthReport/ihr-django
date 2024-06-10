@@ -3,7 +3,7 @@ arrow==1.2.3
 asgiref==3.4.1
 async-timeout==4.0.2
 certifi==2022.12.7
-charset-normalizer
+charset-normalizer==3.3.2
 coreapi==2.3.3
 coreschema==0.0.4
 Django==2.2.27
@@ -35,7 +35,7 @@ python-dateutil==2.8.2
 python-memcached==1.59
 pytz==2022.7.1
 redis==4.3.6
-requests
+requests==2.32.3
 ruamel.yaml==0.17.21
 ruamel.yaml.clib==0.2.7
 six==1.16.0
