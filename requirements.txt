@@ -3,7 +3,7 @@ arrow==1.2.3
 asgiref==3.4.1
 async-timeout==4.0.2
 certifi==2022.12.7
-charset-normalizer==3.0.1
+charset-normalizer==2.0.0
 coreapi==2.3.3
 coreschema==0.0.4
 Django==2.2.27
