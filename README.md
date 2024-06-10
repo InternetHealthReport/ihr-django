@@ -7,8 +7,8 @@ This is the implementation for the IHR API: https://ihr.iijlab.net/ihr/en-us/api
 # 📝 Table of Contents
 
 - [basic installation for all](#install-all)
-  - [If you wish to use your machine](#machine)
-  - [using docker](#docker)
+  - [Setup without docker](#machine)
+  - [Setup using docker (recommended)](#docker)
     - [connecting to an existing postgres server](#docker-psql)
 - [Add test data to the database](#add-test-data)
 
