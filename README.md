@@ -9,8 +9,7 @@ This is the implementation for the IHR API: https://ihr.iijlab.net/ihr/en-us/api
 - [basic installation for all](#install-all)
   - [If you wish to use your machine](#machine)
   - [using docker](#docker)
-    - [using docker with local database](#docker-local)
-    - [using docker with image database](#docker-remote)
+    - [connecting to an existing postgres server](#docker-psql)
 - [Add test data to the database](#add-test-data)
 
 
@@ -53,7 +52,7 @@ cp ihr/config/Dockerfile .
 cp ihr/config/docker-compose.yml .
 cp ihr/config/.env .
 ```
-You may have to adjust some variables in settings.py to match your database, smtp account, recapcha credentials.
+You may have to adjust some variables in .env (or settings.py if you don't use docker) to match your database, smtp account, recapcha credentials.
 
 ## If you wish to use your machine <a name = "machine"></a>
 
@@ -68,7 +67,7 @@ make sure that the host of database in the settings is localhost
     cd internetHealthReport
     nano settings.py
 ```
-scroll down to the DATABASES section and make sure that the host is localhost
+replace all `os.environ.get` instances (see .env for default values).
     
 
 Create the database and django user (change password as needed):
@@ -89,10 +88,8 @@ postgres=#\q
 exit
 ```
 
-Remove migration files and create tables: (TODO move production migration files to a different repository)
+Create tables:
 ```zsh
-find . -path "*/migrations/*.py" -not -name "__init__.py" -delete
-find . -path "*/migrations/*.pyc"  -delete
 ./manage.py makemigrations
 ./manage.py migrate
 ```
@@ -115,16 +112,12 @@ sudo apt install docker
 make sure that the host of database in the settings is db
     
 ```zsh
-    cd internetHealthReport
-    nano settings.py
+    nano .env
 ```
-scroll down to the DATABASES section and make sure that the host is db
+update variables to match your database settings
     
 
-
-make sure you are in the internetHealthReport directory
-
-## if you want to use docker with local postgres <a name = "docker-local"></a>
+## Connecting to an existing postgres server<a name = "docker-psql"></a>
 
 Get your local ip address
 
@@ -136,14 +129,8 @@ you will get something like that
 ```zsh
 xxx.xxx.x.xx
 ```
-copy the first IP address and paste it in the docker compose file in extra hosts section
-
-```zsh
-    extra_hosts:
-      - "database:xxx.xxx.x.xx"
-```
-
-allow your postgres to accept connections from outside
+copy the first IP address and paste it in the .env file.
+Also you should allow your postgres to accept connections from outside:
 
 ```zsh
 sudo nano /etc/postgresql/**/main/postgresql.conf
@@ -180,63 +167,7 @@ start the docker container
 ```zsh
 docker compose up
 ```
-and of course you need to have a postgres database running on your machine 
-
-## if you want to use docker with remote postgres <a name = "docker-remote"></a>
-
-uncomment the postgres image and volume database in docker compose
-
-```zsh
-    #   db:
-    #     image: kartoza/postgis:9.6-2.4
-    #     volumes:
-    #       - postgres_data:/var/lib/postgresql/data/
-    #     environment:
-    #       - POSTGRES_USER=django
-    #       - POSTGRES_PASSWORD=123password456
-    #       - POSTGRES_DB=ihr
-
-    # volumes:
-    #   postgres_data:
-```
-
-make sure in settings in DATABASES the host is db not database
-
-and then start the container 
-    
-```zsh
-    docker compose up
-```
-
-
-If this is the first time to run the container, you need to apply the migration files
-
-```zsh
-docker ps
-```
-
-you will find something like that 
-    
-```zsh
-    CONTAINER ID   IMAGE                                        COMMAND                  CREATED          STATUS          PORTS                    NAMES
-    1c1c1c1c1c1c   internethealthreport-django-app         "python manage.py ru…"       20 seconds ago   Up 19 seconds
-```
-
-copy the container id and run the following command
-
-```zsh
-docker exec -it 1c1c1c1c1c1c /bin/bash
-```
-
-you will be inside the container
-
-```zsh
-python manage.py migrate
-```
-
-congratulations, you have a running django server
-
-Go to http://127.0.0.1:8000/hegemony/ to check if it is working.
+And of course you need to have a postgres database running on your machine with the database and user specified in the .env file.
 
 ## Add test data to the database <a name = "add-test-data"></a>
 In the production database some of the ids are changed to BIGINT. We should
