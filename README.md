@@ -48,6 +48,7 @@ git clone git@github.com:InternetHealthReport/ihr-django.git ihr
 Then copy settings.py, urls.py, wsgi.py, Dockerfile, docker compose and environment file to the correct place:
 ```zsh
 cp ihr/config/*.py internetHealthReport/
+cp ihr/config/gunicorn_config.py ./
 cp ihr/config/Dockerfile .
 cp ihr/config/docker-compose.yml .
 cp ihr/config/.env .
