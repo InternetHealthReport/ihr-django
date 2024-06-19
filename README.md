@@ -6,14 +6,15 @@ This is the implementation for the IHR API: https://ihr.iijlab.net/ihr/en-us/api
 
 # 📝 Table of Contents
 
-- [basic installation for all](#install-all)
-  - [If you wish to use your machine](#machine)
-  - [using docker](#docker)
-    - [connecting to an existing postgres server](#docker-psql)
+- [Getting started](#install-all)
+  - [Setup without docker](#machine)
+  - [Setup using docker (recommended)](#docker)
+    - [Connecting to an existing postgres server](#docker-psql)
+  - [Create initial database](#initial-db)
 - [Add test data to the database](#add-test-data)
 
 
-## basic installation for all <a name = "install-all"></a>
+## Getting started <a name = "install-all"></a>
 
 Required packages for Ubuntu:
 ```zsh
@@ -55,7 +56,7 @@ cp ihr/config/.env .
 ```
 You may have to adjust some variables in .env (or settings.py if you don't use docker) to match your database, smtp account, recapcha credentials.
 
-## If you wish to use your machine <a name = "machine"></a>
+## Setup without docker <a name = "machine"></a>
 
 install dependencies
 ```zsh
@@ -70,37 +71,14 @@ make sure that the host of database in the settings is localhost
 ```
 replace all `os.environ.get` instances (see .env for default values).
     
-
-Create the database and django user (change password as needed):
-```zsh
-sudo su postgres
-psql
-postgres=# CREATE DATABASE ihr;
-CREATE DATABASE
-postgres=# CREATE USER django WITH PASSWORD '123password456';
-CREATE ROLE
-postgres=# ALTER ROLE django SET client_encoding TO 'utf8';
-ALTER ROLE
-postgres=# ALTER ROLE django SET timezone TO 'UTC';
-ALTER ROLE
-postgres=# GRANT ALL PRIVILEGES ON DATABASE ihr TO django;
-GRANT
-postgres=#\q
-exit
-```
-
-Create tables:
-```zsh
-./manage.py makemigrations
-./manage.py migrate
-```
+[Create initial database.](#initial-db)
 
 Start django:
 ```zsh
 ./manage.py runserver
 ```
 
-## if you want to use docker <a name = "docker"></a>
+## Setup with docker <a name = "docker"></a>
 
 
 install docker
@@ -162,13 +140,41 @@ host    all             all            172.xx.0.00/16            md5
 ```
 xx may vary depending on postgres version but in newer versions it is 20 else it could be 17
 
+[Create initial database.](#initial-db)
 
-start the docker container
+Start the docker container
 
 ```zsh
 docker compose up
 ```
 And of course you need to have a postgres database running on your machine with the database and user specified in the .env file.
+
+# Initialize the database <a name = "initial-db"></a>
+
+Create the database and django user (change password as needed):
+```zsh
+sudo su postgres
+psql
+postgres=# CREATE DATABASE ihr;
+CREATE DATABASE
+postgres=# CREATE USER django WITH PASSWORD '123password456';
+CREATE ROLE
+postgres=# ALTER ROLE django SET client_encoding TO 'utf8';
+ALTER ROLE
+postgres=# ALTER ROLE django SET timezone TO 'UTC';
+ALTER ROLE
+postgres=# GRANT ALL PRIVILEGES ON DATABASE ihr TO django;
+GRANT
+postgres=#\q
+exit
+```
+
+Create tables:
+```zsh
+./manage.py makemigrations ihr
+./manage.py migrate
+```
+
 
 ## Add test data to the database <a name = "add-test-data"></a>
 In the production database some of the ids are changed to BIGINT. We should
