@@ -27,24 +27,24 @@ exposed_api = [
 #	url(r'^user/savechannel$', views.UserSaveChannelView.as_view(), name='UserSaveChannelListView'),
 #	url(r'^user/getchannel$', views.UserGetChannelView.as_view(), name='UserGetChannelListView'),
 
-    url(r'^networks/$', views.NetworkView.as_view(), name='networkListView'),
-    url(r'^countries/$', views.CountryView.as_view(), name='countryListView'),
-    url(r'^link/delay/$', views.DelayView.as_view(), name='delayListView'),
-    url(r'^link/forwarding/$', views.ForwardingView.as_view(), name='forwardingListView'),
-    url(r'^link/delay/alarms/$', views.DelayAlarmsView.as_view(), name='delayAlarmsListView'),
-    url(r'^link/forwarding/alarms/$', views.ForwardingAlarmsView.as_view(), name='forwardingAlarmsListView'),
-    url(r'^disco/events/$', views.DiscoEventsView.as_view(), name='discoEventsListView'),
-    url(r'^hegemony/$', views.HegemonyView.as_view(), name='hegemonyListView'),
-    url(r'^hegemony/alarms/$', views.HegemonyAlarmsView.as_view(), name='hegemonyAlarmsListView'),
-    url(r'^hegemony/countries/$', views.HegemonyCountryView.as_view(), name='hegemonyCountryListView'),
-    url(r'^hegemony/prefixes/$', views.HegemonyPrefixView.as_view(), name='hegemonyPrefixListView'),
-    url(r'^hegemony/cones/$', views.HegemonyConeView.as_view(), name='hegemonyConeListView'),
-    url(r'^network_delay/$', views.NetworkDelayView.as_view(), name='networkDelayListView'),
-    url(r'^network_delay/locations/$', views.NetworkDelayLocationsView.as_view(), name='networkDelayLocationsListView'),
-    url(r'^network_delay/alarms/$', views.NetworkDelayAlarmsView.as_view(), name='networkDelayAlarmsListView'),
-    url(r'^metis/atlas/selection/$', views.MetisAtlasSelectionView.as_view(), name='metisAtlasSelectionListView'),
-    url(r'^metis/atlas/deployment/$', views.MetisAtlasDeploymentView.as_view(), name='metisAtlasDeploymentListView'),
-    url(r'^tr_hegemony/$', views.TRHegemonyView.as_view(), name='trHegemonyListView'),
+    url(r'^ihr/api/networks/$', views.NetworkView.as_view(), name='networkListView'),
+    url(r'^ihr/api/countries/$', views.CountryView.as_view(), name='countryListView'),
+    url(r'^ihr/api/link/delay/$', views.DelayView.as_view(), name='delayListView'),
+    url(r'^ihr/api/link/forwarding/$', views.ForwardingView.as_view(), name='forwardingListView'),
+    url(r'^ihr/api/link/delay/alarms/$', views.DelayAlarmsView.as_view(), name='delayAlarmsListView'),
+    url(r'^ihr/api/link/forwarding/alarms/$', views.ForwardingAlarmsView.as_view(), name='forwardingAlarmsListView'),
+    url(r'^ihr/api/disco/events/$', views.DiscoEventsView.as_view(), name='discoEventsListView'),
+    url(r'^ihr/api/hegemony/$', views.HegemonyView.as_view(), name='hegemonyListView'),
+    url(r'^ihr/api/hegemony/alarms/$', views.HegemonyAlarmsView.as_view(), name='hegemonyAlarmsListView'),
+    url(r'^ihr/api/hegemony/countries/$', views.HegemonyCountryView.as_view(), name='hegemonyCountryListView'),
+    url(r'^ihr/api/hegemony/prefixes/$', views.HegemonyPrefixView.as_view(), name='hegemonyPrefixListView'),
+    url(r'^ihr/api/hegemony/cones/$', views.HegemonyConeView.as_view(), name='hegemonyConeListView'),
+    url(r'^ihr/api/network_delay/$', views.NetworkDelayView.as_view(), name='networkDelayListView'),
+    url(r'^ihr/api/network_delay/locations/$', views.NetworkDelayLocationsView.as_view(), name='networkDelayLocationsListView'),
+    url(r'^ihr/api/network_delay/alarms/$', views.NetworkDelayAlarmsView.as_view(), name='networkDelayAlarmsListView'),
+    url(r'^ihr/api/metis/atlas/selection/$', views.MetisAtlasSelectionView.as_view(), name='metisAtlasSelectionListView'),
+    url(r'^ihr/api/metis/atlas/deployment/$', views.MetisAtlasDeploymentView.as_view(), name='metisAtlasDeploymentListView'),
+    url(r'^ihr/api/tr_hegemony/$', views.TRHegemonyView.as_view(), name='trHegemonyListView'),
 ]
 
 schema_view = get_schema_view(
@@ -62,27 +62,12 @@ schema_view = get_schema_view(
       public=True,
       permission_classes=(permissions.AllowAny,),
       patterns=exposed_api,
-      url='https://ihr.iijlab.net/ihr/api/'
  )
 
 app_name = 'ihr'
 urlpatterns = [
-    url(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
+    url(r'^ihr/api/swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
     # refered in the base.html template
-    url(r'^$', views.index, name='index'),
-    url(r'^search/$', views.search, name='search'),
-    url(r'^monitoredAsn/$', views.ASNList.as_view(), name='asnList'),
-    url(r'^monitoredCountry/$', views.CountryList.as_view(), name='countryList'),
-
-    # old API endpoints
-    url(r'^delay_alarms/$', views.DelayAlarmsView.as_view(), name='delayAlarmsListView'),
-    url(r'^forwarding_alarms/$', views.ForwardingAlarmsView.as_view(), name='forwardingAlarmsListView'),
-    url(r'^disco_events/$', views.DiscoEventsView.as_view(), name='discoEventsListView'),
-    url(r'^disco_probes/$', views.DiscoProbesView.as_view(), name='discoProbesListView'),
-    url(r'^hegemony_alarms/$', views.HegemonyAlarmsView.as_view(), name='hegemonyAlarmsListView'),
-    url(r'^hegemony_cone/$', views.HegemonyConeView.as_view(), name='hegemonyConeListView'),
-    url(r'^network_delay_locations/$', views.NetworkDelayLocationsView.as_view(), name='networkDelayLocationsListView'),
-    url(r'^network_delay_alarms/$', views.NetworkDelayAlarmsView.as_view(), name='networkDelayAlarmsListView'),
-    # User webpage not yet integrated 
+        # User webpage not yet integrated 
     #*user_urls.urlpatterns
 ] + exposed_api
