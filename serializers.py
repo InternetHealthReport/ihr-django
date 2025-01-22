@@ -1,57 +1,70 @@
 from rest_framework import serializers
-from .models import ASN, Country, Delay,  Forwarding, Delay_alarms, Forwarding_alarms, Disco_events, Disco_probes, Hegemony, HegemonyCone, Atlas_location, Atlas_delay, Atlas_delay_alarms, Hegemony_alarms, Hegemony_country, Hegemony_prefix, Metis_atlas_selection, Metis_atlas_deployment, TR_hegemony
+from django.core.validators import validate_email  # For better email validation
+from django.contrib.auth.hashers import make_password
+from .models import ASN, Country, Delay,  Forwarding, Delay_alarms, Forwarding_alarms, Disco_events, Disco_probes, Hegemony, HegemonyCone, Atlas_location, Atlas_delay, Atlas_delay_alarms, Hegemony_alarms, Hegemony_country, Hegemony_prefix, Metis_atlas_selection, Metis_atlas_deployment, TR_hegemony, IHRUser 
 
-class UserRegisterSerializer(serializers.Serializer):
-    email = serializers.EmailField(required=True)
-    password = serializers.CharField(required=True)
-    code = serializers.CharField(required=True)
+class UserRegisterSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, min_length=8) # Minimum password length
+    code = serializers.CharField(required=True, min_length=6, max_length=6) # Exact code length
 
-    def validate(self, data):
-        return data
+     # Enhanced email validation
+    class Meta:
+        model = IHRUser
+        fields = ('email', 'password', 'code')  # List fields explicitly
+        extra_kwargs = {
+            'email': {'validators': [validate_email]},
+        }
 
+    def validate_email(self, value):
+        if IHRUser.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Email already registered.")
+        return value
 
-class UserSerializer(serializers.Serializer):
-        email = serializers.EmailField(required=True)
-        password = serializers.CharField(required=True)
-        
-        def validate(self, data):
-                return data
+    def create(self, validated_data):
+        validated_data['password'] = make_password(validated_data['password'])
+        user = IHRUser.objects.create(**validated_data)  # Or use create_user
+        return user
+
+class UserSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=True, min_length=8)
+
+    class Meta:
+        model = IHRUser
+        fields = ('email', 'password')
+        extra_kwargs = {
+            'email': {'validators': [validate_email]},
+        }
 
 class UserEmailSerializer(serializers.Serializer):
-    email = serializers.EmailField(required=True)
+    email = serializers.EmailField(required=True, validators=[validate_email])
 
-    def validate(self, data):
-        return data
-    
+
 class UserLoginSerializer(serializers.Serializer):
-    email = serializers.EmailField(required=True)
+    email = serializers.EmailField(required=True, validators=[validate_email])
     password = serializers.CharField(required=True)
-
-    def validate(self, data):
-        return data
     
 class UserChangePasswordSerializer(serializers.Serializer):
-    email = serializers.EmailField(required=True)
+    email = serializers.EmailField(required=True, validators=[validate_email])
     password = serializers.CharField(required=True)
-    new_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True, min_length=8)
 
     def validate(self, data):
+        #Prevent users from reusing the same password.
+        if data['password'] == data['new_password']:
+            raise serializers.ValidationError("New password cannot be the same as the old password.")
         return data
 
 class UserForgetPasswordSerializer(serializers.Serializer):
-    email = serializers.EmailField(required=True)
-    new_password = serializers.CharField(required=True)
-    code = serializers.CharField(required=True)
+    email = serializers.EmailField(required=True, validators=[validate_email])
+    new_password = serializers.CharField(required=True, min_length=8)
+    code = serializers.CharField(required=True, min_length=6, max_length=6)
     
     def validate(self, data):
         return data
 
 class DelaySerializer(serializers.ModelSerializer):
     queryset = Delay.objects.select_related("asn")
-    asn_name = serializers.PrimaryKeyRelatedField(
-            queryset=queryset, source='asn.name', 
-            help_text="Name of the Autonomous System corresponding to the reported IP address.")
-    magnitude = serializers.FloatField(help_text="Amplitude of the delay change")
+    asn_name = serializers.StringRelatedField(source='asn', read_only=True) 
 
     class Meta:
         model = Delay
@@ -60,52 +73,23 @@ class DelaySerializer(serializers.ModelSerializer):
 class DelayAlarmsSerializer(serializers.ModelSerializer):
     queryset = Delay_alarms.objects.prefetch_related('msmid', "asn").all()
     msmid = serializers.StringRelatedField(many=True)
-    asn_name = serializers.PrimaryKeyRelatedField(
-            queryset=queryset, source='asn.name', 
-            help_text="Name of the Autonomous System corresponding to the reported IP address.")
+    asn_name = serializers.StringRelatedField(source='asn', read_only=True)
 
     class Meta:
         model = Delay_alarms
-        fields = ('asn',
-                'asn_name',
-                'timebin',
-                'link',
-                'medianrtt',
-                'diffmedian',
-                'deviation',
-                'nbprobes',
-                'msm_prb_ids',
-                'msmid')
+        fields = '__all__'
 
 class ForwardingSerializer(serializers.ModelSerializer):
-    queryset = Forwarding.objects.select_related("asn")
-    asn_name = serializers.PrimaryKeyRelatedField(
-            queryset=queryset, source='asn.name', 
-            help_text="Name of the Autonomous System corresponding to the reported IP address.")
-
+    asn_name = serializers.StringRelatedField(source='asn', read_only=True)
     class Meta:
         model = Forwarding
-        fields = ('asn', 'timebin', 'magnitude', 'asn_name')
+        fields = '__all__'  
 
 class ForwardingAlarmsSerializer(serializers.ModelSerializer):
-    queryset = Forwarding_alarms.objects.prefetch_related('msmid', 'asn').all()
-    msmid = serializers.StringRelatedField(many=True)
-    asn_name = serializers.PrimaryKeyRelatedField(
-            queryset=queryset, source='asn.name', 
-            help_text="Name of the Autonomous System corresponding to the reported IP address.")
-
+    asn_name = serializers.StringRelatedField(source='asn', read_only=True)
     class Meta:
         model = Forwarding_alarms
-        fields = ('asn',
-                'asn_name',
-                'timebin',
-                'ip',
-                'correlation',
-                'pktdiff',
-                'previoushop',
-                'responsibility',
-                'msm_prb_ids',
-                'msmid')
+        fields = '__all__'
 
 class DiscoProbesSerializer(serializers.ModelSerializer):
     class Meta:
